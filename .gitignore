@@ -1,0 +1,46 @@
+# Dependencies
+node_modules/
+vendor/
+__pycache__/
+*.pyc
+target/
+
+# Build
+dist/
+build/
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Test coverage
+coverage/
+.coverage
+htmlcov/
+.pytest_cache/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Python venv
+.venv/
+venv/

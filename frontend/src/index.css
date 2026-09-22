@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Achromatic UI on purpose: the analyzed image is the only color on screen. */
+@theme {
+  --font-sans: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --color-paper: #fafaf9;
+  --color-ink: #1c1c1c;
+  --color-graphite: #52525b;
+  --color-rule: #d4d4d8;
+  --color-focus: #1d4ed8;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body { @apply bg-paper text-ink font-sans; }
+:focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
