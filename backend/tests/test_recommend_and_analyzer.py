@@ -1,10 +1,14 @@
 import pytest
 from PIL import Image, ImageDraw
 
-from app import config
+from app.services import texts
 from app.services.analyzer import analyze_elements, analyze_image
 from app.services.recommend import recommend, verify
 from app.services.wcag import contrast_ratio
+
+
+def _has_hangul(s: str) -> bool:
+    return any("가" <= ch <= "힣" for ch in s)
 
 
 def test_every_recommendation_passes_reverification():
@@ -40,7 +44,7 @@ def test_analyze_image_red_green_status():
     assert out["palette"][0]["hex"] == "#FFFFFF"
     assert any(p["verdict"] in ("FAIL", "WARNING") for p in out["confusable_pairs"])
     assert 0 <= out["score"] <= 100
-    assert out["score_notice"] == config.SCORE_NOTICE
+    assert out["score_notice"] == texts.SCORE_NOTICE["ko"]
 
 
 def test_developer_button_danger():
@@ -57,3 +61,36 @@ def test_developer_button_danger():
     other = "#FF0000" if "{ color" in fix else "#FFFFFF"
     assert contrast_ratio(new_hex, other) >= 4.5
     assert out["summary"]["fail"] == 1
+
+
+def test_analyze_image_english_output():
+    img = Image.new("RGB", (60, 60), "#FFFFFF")
+    d = ImageDraw.Draw(img)
+    d.rectangle([10, 10, 50, 50], fill="#FF0000")  # 4.0:1 on white -> LOW_CONTRAST issue
+    out = analyze_image(img, "deutan", "user", "en")
+    assert out["result_message"] == texts.RESULT_MESSAGES["FAIL"]["en"]
+    assert out["score_notice"] == texts.SCORE_NOTICE["en"]
+    assert out["issues"]
+    for issue in out["issues"]:
+        assert not _has_hangul(issue["message"])
+
+
+def test_analyze_elements_english_output():
+    out = analyze_elements([{
+        "selector": ".button-danger", "text": "delete",
+        "color": "#FFFFFF", "background": "#FF0000", "font_size_px": 16, "font_weight": 400,
+    }], "protan", "en")
+    assert out["result_message"] == texts.DEV_RESULT["FAIL"]["en"].format(failed=1)
+    assert not _has_hangul(out["result_message"])
+    for box in out["solution_boxes"]:
+        assert not _has_hangul(box["problem"])
+        assert not _has_hangul(box["non_color_fix"])
+
+
+def test_recommend_english_output():
+    rec = recommend("#FF5252", "#FFFFFF", "deutan", "en")
+    assert rec["candidates"]
+    for c in rec["candidates"]:
+        assert not _has_hangul(c["reason"])
+    for tip in rec["non_color_tips"]:
+        assert not _has_hangul(tip)

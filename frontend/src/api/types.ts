@@ -1,4 +1,5 @@
 export type CvdType = 'protan' | 'deutan' | 'tritan'
+export type Lang = 'ko' | 'en'
 export type Verdict = 'PASS' | 'WARNING' | 'FAIL'
 export type Grade = 'STRONG' | 'RECOMMENDED' | 'CONDITIONAL'
 

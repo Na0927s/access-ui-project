@@ -1,4 +1,4 @@
-import type { CvdType, DeveloperAnalysis, ElementInput, ImageAnalysis } from './types'
+import type { CvdType, DeveloperAnalysis, ElementInput, ImageAnalysis, Lang } from './types'
 
 async function handle<T>(res: Response): Promise<T> {
   const text = await res.text()
@@ -20,19 +20,25 @@ export async function analyzeImage(
   file: File,
   cvdType: CvdType,
   mode: 'user' | 'developer',
+  lang: Lang,
 ): Promise<ImageAnalysis> {
   const form = new FormData()
   form.append('file', file)
   form.append('cvd_type', cvdType)
   form.append('mode', mode)
+  form.append('lang', lang)
   return handle(await fetch('/api/analysis/image', { method: 'POST', body: form }))
 }
 
-export async function analyzeElements(elements: ElementInput[], cvdType: CvdType): Promise<DeveloperAnalysis> {
+export async function analyzeElements(
+  elements: ElementInput[],
+  cvdType: CvdType,
+  lang: Lang,
+): Promise<DeveloperAnalysis> {
   return handle(await fetch('/api/developer/analyze', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ cvd_type: cvdType, elements }),
+    body: JSON.stringify({ cvd_type: cvdType, elements, lang }),
   }))
 }
 
@@ -42,22 +48,12 @@ export interface Explanation {
   issues: { id: number; explanation: string }[]
 }
 
-export async function explain(analysis: object, lang: 'ko' | 'en', mode: 'user' | 'developer') {
+export async function explain(analysis: object, lang: Lang, mode: 'user' | 'developer') {
   return handle<Explanation>(
     await fetch('/api/ai/explain', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang, mode, analysis }),
-    }),
-  )
-}
-
-export async function translate(texts: string[], targetLang: 'ko' | 'en') {
-  return handle<{ source: 'ai' | 'fallback'; texts: string[] }>(
-    await fetch('/api/ai/translate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ target_lang: targetLang, texts }),
     }),
   )
 }

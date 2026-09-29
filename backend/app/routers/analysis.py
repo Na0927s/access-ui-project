@@ -13,11 +13,14 @@ async def analyze_image_endpoint(
     file: UploadFile = File(...),
     cvd_type: str = Form(...),
     mode: str = Form("user"),
+    lang: str = Form("ko"),
 ):
     if cvd_type not in ("protan", "deutan", "tritan"):
         raise api_error("INVALID_CVD_TYPE")
     if mode not in ("user", "developer"):
         raise api_error("INVALID_MODE")
+    if lang not in ("ko", "en"):
+        raise api_error("INVALID_LANG")
     if file.content_type not in config.ALLOWED_CONTENT_TYPES:
         raise api_error("UNSUPPORTED_FORMAT")
 
@@ -34,7 +37,7 @@ async def analyze_image_endpoint(
         raise api_error("INVALID_IMAGE") from e
 
     try:
-        return analyze_image(img, cvd_type, mode)
+        return analyze_image(img, cvd_type, mode, lang)
     except Exception as e:  # never leak internals
         raise api_error("ANALYSIS_FAILED") from e
     finally:

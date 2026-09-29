@@ -7,10 +7,11 @@ from PIL import Image
 
 from .. import config
 from .color import delta_e
-from .cvd import LABELS_KO, simulate_hex, simulate_image
+from .cvd import simulate_hex, simulate_image
 from .palette import extract_palette, flatten_on_white, resize_max_side
 from .recommend import recommend
 from .scoring import calculate_score
+from . import texts
 from .wcag import contrast_ratio, is_large_text, judge
 
 
@@ -24,11 +25,7 @@ def confusion_verdict(d_orig: float, d_sim: float) -> str | None:
     return "PASS"
 
 
-# Overall verdict messages (design doc section 6/7 example sentences).
-RESULT_MESSAGES = {
-    "PASS": "색상 구별에 큰 문제가 발견되지 않았습니다.",
-    "FAIL": "선택한 색각 이상 유형에서 일부 색상을 구별하기 어려울 수 있습니다.",
-}
+# Overall verdict messages live in texts.RESULT_MESSAGES (ko/en, design doc section 6/7).
 
 
 def _image_to_data_url(img: Image.Image) -> str:
@@ -37,8 +34,8 @@ def _image_to_data_url(img: Image.Image) -> str:
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
 
 
-def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user") -> dict:
-    label = LABELS_KO[cvd_type]
+def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str = "ko") -> dict:
+    label = texts.CVD_LABELS[cvd_type][lang]
     width, height = img.size
 
     sim = simulate_image(resize_max_side(img, config.SIMULATION_MAX_SIDE), cvd_type)
@@ -77,12 +74,11 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user") -> dict:
             "id": next_id, "type": "LOW_CONTRAST",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["fg"], p["bg"]],
-            "message": f"{p['fg']}와 {p['bg']}의 대비율이 {p['ratio']:.2f}:1로 "
-                       f"일반 텍스트 기준(4.5:1)에 미달할 가능성이 있습니다.",
+            "message": texts.LOW_CONTRAST_ISSUE[lang].format(fg=p["fg"], bg=p["bg"], ratio=f"{p['ratio']:.2f}"),
         })
         next_id += 1
         if mode == "developer":
-            recommendations.append(recommend(p["fg"], p["bg"], cvd_type))
+            recommendations.append(recommend(p["fg"], p["bg"], cvd_type, lang))
     for p in confusable_pairs:
         if p["verdict"] == "PASS":
             continue
@@ -90,12 +86,11 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user") -> dict:
             "id": next_id, "type": "COLOR_CONFUSION",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["a"], p["b"]],
-            "message": f"{label} 색각이상 환경에서 {p['a']}와 {p['b']}의 구분이 어려울 가능성이 있습니다. "
-                       f"색상만으로 정보를 전달한다면 아이콘이나 텍스트를 함께 사용하세요.",
+            "message": texts.COLOR_CONFUSION_ISSUE[lang].format(label=label, a=p["a"], b=p["b"]),
         })
         next_id += 1
         if mode == "developer":
-            recommendations.append(recommend(p["a"], p["b"], cvd_type))
+            recommendations.append(recommend(p["a"], p["b"], cvd_type, lang))
 
     score = calculate_score(
         [p["verdict"] for p in contrast_pairs],
@@ -111,16 +106,16 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user") -> dict:
         "confusable_pairs": confusable_pairs,
         "issues": issues,
         "verdict": verdict,
-        "result_message": RESULT_MESSAGES[verdict],
+        "result_message": texts.RESULT_MESSAGES[verdict][lang],
         "score": score,
-        "score_notice": config.SCORE_NOTICE,
+        "score_notice": texts.SCORE_NOTICE[lang],
     }
     if mode == "developer":
         response["recommendations"] = recommendations
     return response
 
 
-def analyze_elements(elements: list[dict], cvd_type: str) -> dict:
+def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> dict:
     results, boxes = [], []
     for el in elements:
         ratio = contrast_ratio(el["color"], el["background"])
@@ -141,7 +136,7 @@ def analyze_elements(elements: list[dict], cvd_type: str) -> dict:
             options = []
             for prop, cur, other in (("color", el["color"], el["background"]),
                                      ("background-color", el["background"], el["color"])):
-                rec = recommend(cur, other, cvd_type)
+                rec = recommend(cur, other, cvd_type, lang)
                 ok = [c for c in rec["candidates"] if c["grade"] in allowed]
                 if ok:
                     best = min(ok, key=lambda c: c["distance_from_current"])
@@ -150,30 +145,30 @@ def analyze_elements(elements: list[dict], cvd_type: str) -> dict:
             if options:
                 _, prop, fix = min(options)
                 css_fix = f"{el['selector']} {{ {prop}: {fix}; }}"
-            need = "3:1(큰 텍스트)" if large else "4.5:1"
+            need = texts.NEED_LARGE[lang] if large else "4.5:1"
             boxes.append({
                 "selector": el["selector"],
                 "check_type": "CONTRAST",
-                "problem": f"텍스트 대비율 {ratio:.2f}:1로 기준({need})에 미달합니다.",
+                "problem": texts.DEV_CONTRAST_PROBLEM[lang].format(ratio=f"{ratio:.2f}", need=need),
                 "css_fix": css_fix,
-                "non_color_fix": "색 변경만으로 어렵다면 배경색을 조정하거나 굵기·크기를 키우세요.",
+                "non_color_fix": texts.DEV_CONTRAST_TIP[lang],
             })
         elif d_sim < config.CONFUSION_WARN:
             boxes.append({
                 "selector": el["selector"],
                 "check_type": "LIGHTNESS",
-                "problem": f"{LABELS_KO[cvd_type]} 색각이상 환경에서 글자와 배경의 명암 차이가 작아집니다.",
+                "problem": texts.DEV_LIGHTNESS_PROBLEM[lang].format(label=texts.CVD_LABELS[cvd_type][lang]),
                 "css_fix": None,
-                "non_color_fix": "명도 차이를 더 크게 하거나 테두리·밑줄을 추가하세요.",
+                "non_color_fix": texts.DEV_LIGHTNESS_TIP[lang],
             })
 
     verdicts = [r["verdict"] for r in results]
     failed = verdicts.count("FAIL") + verdicts.count("WARNING")
     verdict = "FAIL" if failed else "PASS"
     result_message = (
-        "모든 요소가 명암 대비 기준을 통과했습니다."
+        texts.DEV_RESULT[verdict][lang]
         if verdict == "PASS"
-        else f"{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요."
+        else texts.DEV_RESULT[verdict][lang].format(failed=failed)
     )
     score = calculate_score(verdicts, [])
     return {
@@ -185,7 +180,7 @@ def analyze_elements(elements: list[dict], cvd_type: str) -> dict:
             "total": len(results), "pass": verdicts.count("PASS"),
             "warning": verdicts.count("WARNING"), "fail": verdicts.count("FAIL"), "score": score,
         },
-        "score_notice": config.SCORE_NOTICE,
+        "score_notice": texts.SCORE_NOTICE[lang],
     }
 
 

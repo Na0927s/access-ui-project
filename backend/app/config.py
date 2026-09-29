@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     anthropic_api_key: str = ""
     anthropic_model: str = "claude-sonnet-4-20250514"
-    allowed_origins: str = "http://localhost:5173"
+    allowed_origins: str = "http://localhost:5176"
 
     @property
     def origins(self) -> list[str]:
@@ -50,8 +50,3 @@ WCAG_AAA_NORMAL = 7.0
 DISTINCT_MIN = 10.0
 CONFUSION_FAIL = 5.0
 CONFUSION_WARN = 8.0
-
-SCORE_NOTICE = (
-    "접근성 점수는 본 서비스의 분석 항목을 기반으로 산출한 자체 평가 지표이며 "
-    "공식 WCAG 인증 점수가 아닙니다."
-)

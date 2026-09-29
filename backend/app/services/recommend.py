@@ -6,21 +6,10 @@ is re-checked for contrast AND for distinguishability after CVD simulation.
 import numpy as np
 
 from .. import config
+from . import texts
 from .color import cielab_to_hex, delta_e, hex_to_cielab
 from .cvd import simulate_hex
 from .wcag import contrast_ratio
-
-GRADE_REASON = {
-    "STRONG": "AAA 기준(7:1) 이상으로 일반 텍스트에 충분한 대비를 제공합니다.",
-    "RECOMMENDED": "AA 기준(4.5:1)을 만족해 일반 텍스트에 사용할 수 있습니다.",
-    "CONDITIONAL": "큰 텍스트나 UI 요소(3:1)에만 사용할 수 있습니다.",
-}
-
-NON_COLOR_TIPS = [
-    "상태를 나타내는 아이콘(✓, !, ✕)을 함께 표시하세요.",
-    "색 대신 또는 색과 함께 텍스트 라벨을 붙이세요.",
-    "테두리·밑줄·패턴처럼 모양으로도 구분되게 하세요.",
-]
 
 
 def grade_of(ratio: float) -> str | None:
@@ -33,7 +22,7 @@ def grade_of(ratio: float) -> str | None:
     return None
 
 
-def verify(candidate: str, against: str, cvd_type: str) -> dict | None:
+def verify(candidate: str, against: str, cvd_type: str, lang: str = "ko") -> dict | None:
     """Re-verification. Returns candidate info if it passes, else None."""
     ratio = contrast_ratio(candidate, against)
     grade = grade_of(ratio)
@@ -46,12 +35,12 @@ def verify(candidate: str, against: str, cvd_type: str) -> dict | None:
         "hex": candidate,
         "ratio": round(ratio, 2),
         "grade": grade,
-        "reason": GRADE_REASON[grade],
+        "reason": texts.GRADE_REASON[grade][lang],
         "distance_simulated": round(sim_dist, 3),
     }
 
 
-def recommend(current: str, against: str, cvd_type: str, limit: int = 3) -> dict:
+def recommend(current: str, against: str, cvd_type: str, lang: str = "ko", limit: int = 3) -> dict:
     base = hex_to_cielab(current)
     seen: set[str] = set()
     passed: list[dict] = []
@@ -63,7 +52,7 @@ def recommend(current: str, against: str, cvd_type: str, limit: int = 3) -> dict
             if cand in seen or cand == current.upper():
                 continue
             seen.add(cand)
-            info = verify(cand, against, cvd_type)
+            info = verify(cand, against, cvd_type, lang)
             if info:
                 info["distance_from_current"] = round(delta_e(cand, current), 3)
                 passed.append(info)
@@ -81,5 +70,5 @@ def recommend(current: str, against: str, cvd_type: str, limit: int = 3) -> dict
         "current": current.upper(),
         "against": against.upper(),
         "candidates": picked[:limit],
-        "non_color_tips": NON_COLOR_TIPS,
+        "non_color_tips": [tip[lang] for tip in texts.NON_COLOR_TIPS],
     }

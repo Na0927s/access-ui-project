@@ -29,7 +29,7 @@ MATRICES: dict[str, np.ndarray] = {
     ]),
 }
 
-LABELS_KO = {"protan": "적색 계열", "deutan": "녹색 계열", "tritan": "청색 계열"}
+# CVD display labels (ko/en) live in services/texts.py.
 
 
 def simulate_array(rgb01: np.ndarray, cvd_type: str) -> np.ndarray:

@@ -3,6 +3,7 @@ import json
 from fastapi import APIRouter
 
 from ..schemas import ExplainRequest, TranslateRequest
+from ..services import texts
 from ..services.ai_client import ask_json
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
@@ -15,12 +16,12 @@ EXPLAIN_SYSTEM = (
 )
 
 
-def _fallback_explain(analysis: dict) -> dict:
+def _fallback_explain(analysis: dict, lang: str) -> dict:
     issues = analysis.get("issues", [])
     if issues:
-        summary = f"{len(issues)}개의 접근성 문제가 발견되었습니다. 아래 추천 색상과 비색상 개선 방법을 확인해보세요."
+        summary = texts.FALLBACK_EXPLAIN["issues"][lang].format(count=len(issues))
     else:
-        summary = "발견된 주요 접근성 문제가 없습니다."
+        summary = texts.FALLBACK_EXPLAIN["no_issues"][lang]
     return {
         "source": "fallback",
         "summary": summary,
@@ -38,7 +39,7 @@ async def explain(req: ExplainRequest):
     )
     out = await ask_json(system, json.dumps(data, ensure_ascii=False))
     if not out or "summary" not in out:
-        return _fallback_explain(data)
+        return _fallback_explain(data, req.lang)
     return {"source": "ai", "summary": out["summary"], "issues": out.get("issues", [])}
 
 

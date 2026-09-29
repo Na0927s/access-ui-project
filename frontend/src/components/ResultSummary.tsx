@@ -1,13 +1,11 @@
 import { useEffect, useState } from 'react'
 import { explain, type Explanation } from '../api/client'
 import type { ImageAnalysis } from '../api/types'
-import { useT, useTranslated } from '../i18n/useT'
+import { useT } from '../i18n/useT'
 import { useUiStore } from '../stores/uiStore'
 import ColorChip from './ColorChip'
 import ScoreBlock from './ScoreBlock'
 import VerdictBadge from './VerdictBadge'
-
-const GRADE_LABEL = { STRONG: '✓ 강력 추천', RECOMMENDED: '✓ 추천', CONDITIONAL: '△ 조건부 추천' } as const
 
 export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mode: 'user' | 'developer' }) {
   const t = useT()
@@ -20,7 +18,11 @@ export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mod
     return () => { alive = false }
   }, [data, lang, mode])
 
-  const messages = useTranslated(data.issues.map((i) => i.message))
+  const GRADE_LABEL = {
+    STRONG: t('gradeStrong'),
+    RECOMMENDED: t('gradeRecommended'),
+    CONDITIONAL: t('gradeConditional'),
+  } as const
 
   return (
     <section aria-labelledby="result-content" className="flex flex-col gap-6 rounded-lg border border-rule bg-white p-5">
@@ -33,7 +35,7 @@ export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mod
 
       {ai && (
         <div className="rounded border border-rule p-3 text-sm">
-          <p className="mb-1 text-xs text-graphite">{ai.source === 'ai' ? 'AI 설명' : '요약 설명'}</p>
+          <p className="mb-1 text-xs text-graphite">{ai.source === 'ai' ? t('aiExplain') : t('plainExplain')}</p>
           <p>{ai.summary}</p>
         </div>
       )}
@@ -53,11 +55,11 @@ export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mod
           <p className="text-sm">✓ {t('noIssues')}</p>
         ) : (
           <ul className="flex flex-col gap-2">
-            {data.issues.map((issue, i) => (
+            {data.issues.map((issue) => (
               <li key={issue.id} className="flex flex-wrap items-center gap-2 text-sm">
                 <VerdictBadge verdict={issue.severity === 'HIGH' ? 'FAIL' : 'WARNING'} />
                 {issue.colors.map((c) => <ColorChip key={c} hex={c} />)}
-                <span>{messages[i] ?? issue.message}</span>
+                <span>{issue.message}</span>
               </li>
             ))}
           </ul>
@@ -83,7 +85,7 @@ export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mod
                     ))}
                   </ul>
                 ) : (
-                  <p className="mt-1 ml-4 text-graphite">색 변경만으로는 기준을 만족하기 어렵습니다. {r.non_color_tips[0]}</p>
+                  <p className="mt-1 ml-4 text-graphite">{t('colorHard')} {r.non_color_tips[0]}</p>
                 )}
               </li>
             ))}

@@ -12,6 +12,7 @@ import VerdictBadge from '../components/VerdictBadge'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 import { useResultStore } from '../stores/resultStore'
+import { useUiStore } from '../stores/uiStore'
 import { extractElements } from '../utils/extractElements'
 
 type Method = 'image' | 'code'
@@ -32,6 +33,7 @@ function imageIssuesToBoxes(data: ImageAnalysis): SolutionBox[] {
 
 export default function DeveloperModePage() {
   const t = useT()
+  const lang = useUiStore((s) => s.lang)
   const [method, setMethod] = useState<Method>('image')
   const [cvd, setCvd] = useState<CvdType | null>(null)
   const [file, setFile] = useState<File | null>(null)
@@ -55,21 +57,21 @@ export default function DeveloperModePage() {
   }
 
   const inspect = async () => {
-    if (!cvd) return setError('색각이상 유형을 선택해주세요.')
+    if (!cvd) return setError(t('errNoCvd'))
     setError(null)
     setLoading(true)
     try {
       if (method === 'image') {
-        if (!file) throw new Error('이미지를 먼저 업로드해주세요.')
-        const data = await analyzeImage(file, cvd, 'developer')
+        if (!file) throw new Error(t('errNoImage'))
+        const data = await analyzeImage(file, cvd, 'developer', lang)
         setImageResult(data)
         setCodeResult(null)
         if (user) addResult({ fileName: file.name, mode: 'developer-image', cvdType: cvd, score: data.score, data })
       } else {
-        if (!html.trim()) throw new Error('HTML 코드를 입력하거나 파일을 올려주세요.')
+        if (!html.trim()) throw new Error(t('errNoHtml'))
         const elements = await extractElements(html, css)
-        if (elements.length === 0) throw new Error('분석할 텍스트/색상 요소를 찾지 못했습니다.')
-        const data = await analyzeElements(elements, cvd)
+        if (elements.length === 0) throw new Error(t('errNoElements'))
+        const data = await analyzeElements(elements, cvd, lang)
         setCodeResult(data)
         setImageResult(null)
         if (user) addResult({ fileName: 'HTML/CSS 코드', mode: 'developer-code', cvdType: cvd, score: data.summary.score, data })
@@ -88,7 +90,7 @@ export default function DeveloperModePage() {
     <div className="flex flex-col gap-8">
       <h1 className="text-2xl font-bold">{t('developer')}</h1>
 
-      <div role="tablist" aria-label="입력 방식" className="flex gap-2">
+      <div role="tablist" aria-label={t('inputMethod')} className="flex gap-2">
         {(['image', 'code'] as const).map((m) => (
           <button
             key={m}
@@ -109,7 +111,7 @@ export default function DeveloperModePage() {
         ) : (
           <div className="flex flex-1 flex-col gap-3">
             <label className="text-sm font-semibold">
-              코드 파일 (.html, .css)
+              {t('codeFile')}
               <input
                 type="file"
                 accept=".html,.htm,.css,text/html,text/css"
@@ -120,15 +122,17 @@ export default function DeveloperModePage() {
             </label>
             <label className="text-sm font-semibold">
               HTML
-              <textarea value={html} onChange={(e) => setHtml(e.target.value)} rows={8}
+              <textarea value={html} onChange={(e) => setHtml(e.target.value)} rows={8} autoFocus
+                placeholder={t('htmlPlaceholder')}
                 className="mt-1 w-full rounded border border-rule bg-white p-2 font-mono text-xs" />
             </label>
             <label className="text-sm font-semibold">
               CSS
               <textarea value={css} onChange={(e) => setCss(e.target.value)} rows={6}
+                placeholder={t('cssPlaceholder')}
                 className="mt-1 w-full rounded border border-rule bg-white p-2 font-mono text-xs" />
             </label>
-            <p className="text-xs text-graphite">입력한 코드는 실행되지 않으며 스크립트는 제거된 뒤 분석됩니다.</p>
+            <p className="text-xs text-graphite">{t('codeSafe')}</p>
           </div>
         )}
         <div className="flex flex-col justify-between gap-4 md:w-40">
@@ -159,13 +163,13 @@ export default function DeveloperModePage() {
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-rule">
-                  <th className="py-2">선택자</th><th>글자색</th><th>배경색</th><th>대비율</th><th>판정</th>
+                  <th className="py-2">{t('selector')}</th><th>{t('textColor')}</th><th>{t('bgColor')}</th><th>{t('ratio')}</th><th>{t('verdictCol')}</th>
                 </tr>
               </thead>
               <tbody>
                 {codeResult.results.map((r, i) => (
                   <tr key={`${r.selector}-${i}`} className="border-b border-rule/60">
-                    <td className="py-2"><code>{r.selector}</code>{r.is_large_text && <span className="ml-1 text-xs text-graphite">(큰 텍스트)</span>}</td>
+                    <td className="py-2"><code>{r.selector}</code>{r.is_large_text && <span className="ml-1 text-xs text-graphite">({t('largeText')})</span>}</td>
                     <td><ColorChip hex={r.color} /></td>
                     <td><ColorChip hex={r.background} /></td>
                     <td className="tabular-nums">{r.ratio.toFixed(2)}:1</td>
@@ -193,16 +197,24 @@ export default function DeveloperModePage() {
                 <>
                   <ScoreBlock score={codeResult.summary.score} notice={codeResult.score_notice} />
                   <p className="mt-3 text-sm">
-                    전체 {codeResult.summary.total}개 · ✓ PASS {codeResult.summary.pass} · ⚠ WARNING {codeResult.summary.warning} · ✕ FAIL {codeResult.summary.fail}
+                    {t('devSummary')
+                      .replace('{total}', String(codeResult.summary.total))
+                      .replace('{pass}', String(codeResult.summary.pass))
+                      .replace('{warning}', String(codeResult.summary.warning))
+                      .replace('{fail}', String(codeResult.summary.fail))}
                   </p>
                 </>
               ) : imageResult && (
                 <>
                   <ScoreBlock score={imageResult.score} notice={imageResult.score_notice} />
-                  <p className="mt-3 text-sm">발견된 문제 {imageResult.issues.length}개 · 주요 색상 {imageResult.palette.length}개</p>
+                  <p className="mt-3 text-sm">
+                    {t('imgSummary')
+                      .replace('{issues}', String(imageResult.issues.length))
+                      .replace('{colors}', String(imageResult.palette.length))}
+                  </p>
                 </>
               )}
-              {boxes.length > 0 && <p className="mt-2 text-sm">우선 수정: <code>{boxes[0].selector}</code></p>}
+              {boxes.length > 0 && <p className="mt-2 text-sm">{t('fixFirst')}<code>{boxes[0].selector}</code></p>}
             </div>
           </section>
         </>

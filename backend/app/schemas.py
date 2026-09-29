@@ -25,6 +25,7 @@ class Element(BaseModel):
 
 class DeveloperRequest(BaseModel):
     cvd_type: CvdType
+    lang: Literal["ko", "en"] = "ko"
     elements: list[Element] = Field(min_length=1, max_length=500)
 
 

@@ -8,10 +8,12 @@ import UploadDropzone from '../components/UploadDropzone'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 import { useResultStore } from '../stores/resultStore'
+import { useUiStore } from '../stores/uiStore'
 
 // User mode intentionally has NO "문제 해결 방법 / 요약" section (developer mode only).
 export default function UserModePage() {
   const t = useT()
+  const lang = useUiStore((s) => s.lang)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [cvd, setCvd] = useState<CvdType | null>(null)
@@ -30,12 +32,12 @@ export default function UserModePage() {
   }
 
   const inspect = async () => {
-    if (!file) return setError('이미지를 먼저 업로드해주세요.')
-    if (!cvd) return setError('색각이상 유형을 선택해주세요.')
+    if (!file) return setError(t('errNoImage'))
+    if (!cvd) return setError(t('errNoCvd'))
     setError(null)
     setLoading(true)
     try {
-      const data = await analyzeImage(file, cvd, 'user')
+      const data = await analyzeImage(file, cvd, 'user', lang)
       setResult(data)
       if (user) addResult({ fileName: file.name, mode: 'user', cvdType: cvd, score: data.score, data })
     } catch (e) {
