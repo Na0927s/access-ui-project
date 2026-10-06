@@ -1,13 +1,19 @@
 <!doctype html>
+<!-- (한국어 요약) Vite 프로젝트의 HTML 템플릿 — React 앱이 #root에 마운트됨.
+     lang="ko": 스크린리더가 한국어로 읽도록 기본 언어 지정 -->
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
+    <!-- viewport: 모바일 기기에서 화면 폭에 맞춰 렌더링 (반응형 필수 설정) -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Access UI — 색각이상 웹 접근성 분석</title>
+    <!-- Pretendard 한글 웹폰트 (CDN 로드) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
   </head>
   <body>
+    <!-- React 앱이 렌더링되는 진입 지점 (main.tsx가 이 요소를 찾음) -->
     <div id="root"></div>
+    <!-- type="module": ES 모듈 방식으로 앱 진입 스크립트 로드 -->
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

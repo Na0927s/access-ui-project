@@ -1,4 +1,7 @@
 // Fixed UI strings. Dynamic analysis sentences come from the backend in the requested lang.
+// (한국어 요약) 화면 고정 문구 사전(한/영) — 메뉴·버튼·안내 문구 등이 키:값으로 정의됨.
+// 분석 결과 문구(백엔드가 생성)는 여기에 없고, 요청한 lang으로 백엔드가 직접 내려줌.
+// MessageKey 타입이 이 파일에서 자동 추론되므로, 키를 추가하면 타입 검사가 자동으로 따라옴.
 export const messages = {
   ko: {
     title: 'Access UI',

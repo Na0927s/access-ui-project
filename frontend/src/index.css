@@ -1,16 +1,23 @@
 @import "tailwindcss";
 
-/* Achromatic UI on purpose: the analyzed image is the only color on screen. */
+/* Achromatic UI on purpose: the analyzed image is the only color on screen.
+   (한국어) 서비스 UI는 의도적으로 무채색(아크로매틱)으로 설계 —
+   화면에서 유일하게 색을 가진 요소가 "분석 대상 이미지"가 되도록 하기 위함.
+   또한 색각이상 사용자가 서비스 자체를 사용하는 데 어려움이 없게 함 (규칙 8번). */
 @theme {
-  --font-sans: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --color-paper: #fafaf9;
-  --color-ink: #1c1c1c;
-  --color-graphite: #52525b;
-  --color-rule: #d4d4d8;
-  --color-focus: #1d4ed8;
+  --font-sans: "Pretendard", system-ui, -apple-system, "Segoe UI", sans-serif; /* 기본 폰트 */
+  --color-paper: #fafaf9;     /* 배경용 밝은 회색 */
+  --color-ink: #1c1c1c;       /* 주 텍스트·버튼용 진한 회색(거의 검정) */
+  --color-graphite: #52525b;  /* 보조 텍스트용 중간 회색 */
+  --color-rule: #d4d4d8;      /* 테두리·구분선용 연한 회색 */
+  --color-focus: #1d4ed8;    /* 키보드 포커스 링 색 (대비 확보용 파랑) */
 }
 
+/* 부드러운 스크롤 (맨 위로 버튼, 해결 방법 이동 등에 적용됨) */
 html { scroll-behavior: smooth; }
+/* 애니메이션 최소화 설정을 쓰는 사용자에게는 부드러운 스크롤 비활성화 (접근성) */
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* 기본 배경/글자색/폰트 적용 */
 body { @apply bg-paper text-ink font-sans; }
+/* 키보드로 탐색할 때만 뚜렷한 포커스 링 표시 (마우스 클릭에는 나타나지 않음) */
 :focus-visible { outline: 3px solid var(--color-focus); outline-offset: 2px; }
