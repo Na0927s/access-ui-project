@@ -9,12 +9,11 @@ import SessionNotice from '../components/SessionNotice'
 import { useT } from '../i18n/useT'
 import { removeServerResult, useResultStore } from '../stores/resultStore'
 import { useAuthStore } from '../stores/authStore'
-
-// 분석 모드별 표시 라벨
-const MODE_LABEL = { user: '사용자 모드', 'developer-image': '개발자 · 이미지', 'developer-code': '개발자 · 코드' }
+import { useUiStore } from '../stores/uiStore'
 
 export default function ResultHistoryPage() {
   const t = useT()
+  const lang = useUiStore((s) => s.lang)
   const { results, loading, remove, loadFromServer } = useResultStore()
   const token = useAuthStore((s) => s.token)
   // 기록의 날짜(YYYY-MM-DD) 목록 — 중복 제거해 날짜 필터 옵션으로 사용
@@ -30,6 +29,13 @@ export default function ResultHistoryPage() {
   // 선택 날짜로 필터링된 목록과, 펼쳐진 기록의 원본 객체
   const list = results.filter((r) => !date || r.createdAt.startsWith(date))
   const open = results.find((r) => r.id === openId)
+
+  // 분석 모드별 표시 라벨 (언어에 맞춰 반환)
+  const modeLabel = (mode: 'user' | 'developer-image' | 'developer-code') =>
+    mode === 'user' ? t('modeUserLabel') : mode === 'developer-image' ? t('modeDevImageLabel') : t('modeDevCodeLabel')
+
+  // 날짜 포맷도 현재 언어에 맞춰 표시
+  const locale = lang === 'ko' ? 'ko-KR' : 'en-US'
 
   // 삭제: 메모리에서 제거 + DB 결과면 백엔드에서도 삭제
   const handleRemove = async (id: string) => {
@@ -47,19 +53,19 @@ export default function ResultHistoryPage() {
       <SessionNotice />
 
       {loading ? (
-        <p className="text-graphite">불러오는 중…</p>
+        <p className="text-graphite">{t('historyLoading')}</p>
       ) : results.length === 0 ? (
         // 기록 없음: 안내 문구 표시
-        <div className="min-h-48 rounded-lg border border-dashed border-graphite" aria-label="결과 없음">
-          <p className="p-6 text-graphite">아직 분석한 결과가 없습니다. 사용자 모드나 개발자 모드에서 검사를 해보세요.</p>
+        <div className="min-h-48 rounded-lg border border-dashed border-graphite" aria-label={t('emptyResults')}>
+          <p className="p-6 text-graphite">{t('emptyResultsMsg')}</p>
         </div>
       ) : (
         <>
           {/* 날짜 선택 드롭다운 (전체 + 기록이 있는 날짜만 옵션으로) */}
           <label className="flex items-center gap-2 text-sm font-semibold">
-            날짜 선택
+            {t('dateSelect')}
             <select value={date} onChange={(e) => setDate(e.target.value)} className="rounded border border-graphite bg-white px-2 py-1 font-normal">
-              <option value="">전체</option>
+              <option value="">{t('all')}</option>
               {dates.map((d) => <option key={d} value={d}>{d.replace(/-/g, '.')}</option>)}
             </select>
           </label>
@@ -72,10 +78,10 @@ export default function ResultHistoryPage() {
                   <span className="block font-semibold">{r.fileName}</span>
                   {/* 부제: 일시 · 모드 · 색약 유형 · 점수 */}
                   <span className="text-sm text-graphite">
-                    {new Date(r.createdAt).toLocaleString('ko-KR')} · {MODE_LABEL[r.mode]} · {t(r.cvdType)} · 점수 {r.score}
+                    {new Date(r.createdAt).toLocaleString(locale)} · {modeLabel(r.mode)} · {t(r.cvdType)} · {t('scoreShort')} {r.score}
                   </span>
                 </button>
-                <button type="button" onClick={() => handleRemove(r.id)} className="rounded border border-ink px-3 py-1 text-sm">삭제</button>
+                <button type="button" onClick={() => handleRemove(r.id)} className="rounded border border-ink px-3 py-1 text-sm">{t('deleteItem')}</button>
               </li>
             ))}
           </ul>

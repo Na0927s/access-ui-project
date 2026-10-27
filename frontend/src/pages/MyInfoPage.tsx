@@ -4,9 +4,11 @@
 import { useState } from 'react'
 import Modal from '../components/Modal'
 import SessionNotice from '../components/SessionNotice'
+import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 
 export default function MyInfoPage() {
+  const t = useT()
   const user = useAuthStore((s) => s.currentUser)!
   const updateProfile = useAuthStore((s) => s.updateProfile)
   const changePassword = useAuthStore((s) => s.changePassword)
@@ -37,29 +39,29 @@ export default function MyInfoPage() {
       setEditing(false)
       setSaved(true)
     } else {
-      setProfileError(useAuthStore.getState().error ?? '수정에 실패했습니다.')
+      setProfileError(useAuthStore.getState().error ?? t('errUpdate'))
     }
   }
 
   // 비밀번호 변경 제출
   const submitPassword = async () => {
     setPwError(null)
-    if (pwForm.next.length < 8) { setPwError('새 비밀번호는 8자 이상 입력해주세요.'); return }
-    if (pwForm.next !== pwForm.confirm) { setPwError('새 비밀번호가 일치하지 않습니다.'); return }
+    if (pwForm.next.length < 8) { setPwError(t('errNewPwLength')); return }
+    if (pwForm.next !== pwForm.confirm) { setPwError(t('errNewPwMismatch')); return }
     const ok = await changePassword(pwForm.current, pwForm.next)
     if (ok) {
       setPwDone(true)
       setPwForm({ current: '', next: '', confirm: '' })
       setTimeout(() => { setPwOpen(false); setPwDone(false) }, 1500)
     } else {
-      setPwError(useAuthStore.getState().error ?? '비밀번호 변경에 실패했습니다.')
+      setPwError(useAuthStore.getState().error ?? t('errPwChange'))
     }
   }
 
   // 회원 탈퇴 확인
   const confirmQuit = async () => {
     const ok = await deleteAccount()
-    if (!ok) setProfileError(useAuthStore.getState().error ?? '탈퇴에 실패했습니다.')
+    if (!ok) setProfileError(useAuthStore.getState().error ?? t('errDelete'))
     // 성공 시 deleteAccount가 currentUser를 null로 만들어 RequireLogin이 /login으로 보냄.
   }
 
@@ -75,57 +77,57 @@ export default function MyInfoPage() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
-      <h1 className="text-2xl font-bold">내 정보</h1>
+      <h1 className="text-2xl font-bold">{t('myInfo')}</h1>
       {/* 프로필 아바타 대신 이름 이니셜 원형 표시 */}
       <div aria-hidden className="mx-auto grid size-28 place-items-center rounded-full border-2 border-ink text-4xl">
         {user.name.slice(0, 1)}
       </div>
-      {row('이름', name, setName)}      {/* 수정 가능 */}
-      {row('이메일', email, setEmail)}   {/* 수정 가능 */}
-      {row('아이디', user.loginId)}      {/* 수정 불가 (읽기 전용) */}
+      {row(t('nameLabel'), name, setName)}      {/* 수정 가능 */}
+      {row(t('emailLabel'), email, setEmail)}   {/* 수정 가능 */}
+      {row(t('idLabel'), user.loginId)}      {/* 수정 불가 (읽기 전용) */}
       {/* 수정(모드 진입) / 확인(저장) 버튼 */}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => { setEditing(true); setSaved(false); setProfileError(null) }} className="rounded border border-ink px-4 py-2 text-sm" disabled={loading}>수정</button>
-        <button type="button" onClick={confirm} className="rounded bg-ink px-4 py-2 text-sm text-white" disabled={loading}>{loading ? '저장 중…' : '확인'}</button>
+        <button type="button" onClick={() => { setEditing(true); setSaved(false); setProfileError(null) }} className="rounded border border-ink px-4 py-2 text-sm" disabled={loading}>{t('edit')}</button>
+        <button type="button" onClick={confirm} className="rounded bg-ink px-4 py-2 text-sm text-white" disabled={loading}>{loading ? t('saving') : t('confirmBtn')}</button>
       </div>
       {profileError && <p role="alert" className="font-medium text-red-800">✕ {profileError}</p>}
-      {saved && <p role="status" className="text-sm">✓ 반영되었습니다.</p>}
+      {saved && <p role="status" className="text-sm">{t('profileSaved')}</p>}
 
       {/* 비밀번호 변경 / 회원 탈퇴 */}
       <div className="flex flex-col gap-3 border-t border-rule pt-4">
-        <button type="button" onClick={() => setPwOpen(true)} className="rounded border border-ink px-4 py-2 text-sm">비밀번호 변경</button>
-        <button type="button" onClick={() => setQuitOpen(true)} className="rounded border border-red-700 px-4 py-2 text-sm text-red-800">회원 탈퇴</button>
+        <button type="button" onClick={() => setPwOpen(true)} className="rounded border border-ink px-4 py-2 text-sm">{t('changePw')}</button>
+        <button type="button" onClick={() => setQuitOpen(true)} className="rounded border border-red-700 px-4 py-2 text-sm text-red-800">{t('deleteAccount')}</button>
       </div>
 
       <SessionNotice />
 
       {/* 비밀번호 변경 모달 */}
       {pwOpen && (
-        <Modal title="비밀번호 변경" onClose={() => setPwOpen(false)}>
+        <Modal title={t('changePwTitle')} onClose={() => setPwOpen(false)}>
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm font-semibold">
-              현재 비밀번호
+              {t('currentPw')}
               <input type="password" value={pwForm.current} autoComplete="current-password"
                 onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} required
                 className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
-              새 비밀번호
+              {t('newPw')}
               <input type="password" value={pwForm.next} autoComplete="new-password"
                 onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })} required
                 className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
-              새 비밀번호 확인
+              {t('newPwConfirm')}
               <input type="password" value={pwForm.confirm} autoComplete="new-password"
                 onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} required
                 className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
             </label>
             {pwError && <p role="alert" className="font-medium text-red-800">✕ {pwError}</p>}
-            {pwDone && <p role="status" className="text-sm">✓ 비밀번호가 변경되었습니다.</p>}
+            {pwDone && <p role="status" className="text-sm">{t('pwChanged')}</p>}
             <button type="button" onClick={submitPassword} disabled={loading}
               className="mt-2 rounded bg-ink px-4 py-2 text-sm text-white disabled:opacity-60">
-              {loading ? '변경 중…' : '변경'}
+              {loading ? t('changing') : t('changeBtn')}
             </button>
           </div>
         </Modal>
@@ -133,14 +135,14 @@ export default function MyInfoPage() {
 
       {/* 회원 탈퇴 확인 모달 */}
       {quitOpen && (
-        <Modal title="회원 탈퇴" onClose={() => setQuitOpen(false)}>
+        <Modal title={t('deleteAccountTitle')} onClose={() => setQuitOpen(false)}>
           <div className="flex flex-col gap-3">
-            <p>정말 탈퇴하시겠습니까? 계정과 모든 분석 결과가 삭제되며 복구할 수 없습니다.</p>
+            <p>{t('deleteAccountMsg')}</p>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setQuitOpen(false)} className="rounded border border-ink px-4 py-2 text-sm">취소</button>
+              <button type="button" onClick={() => setQuitOpen(false)} className="rounded border border-ink px-4 py-2 text-sm">{t('cancel')}</button>
               <button type="button" onClick={confirmQuit} disabled={loading}
                 className="rounded bg-red-700 px-4 py-2 text-sm text-white disabled:opacity-60">
-                {loading ? '탈퇴 중…' : '탈퇴'}
+                {loading ? t('deleting') : t('deleteBtn')}
               </button>
             </div>
           </div>

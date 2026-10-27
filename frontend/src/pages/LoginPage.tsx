@@ -4,9 +4,11 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import SessionNotice from '../components/SessionNotice'
+import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 
 export default function LoginPage() {
+  const t = useT()
   const login = useAuthStore((s) => s.login)
   const loading = useAuthStore((s) => s.loading)
   const navigate = useNavigate()
@@ -19,12 +21,12 @@ export default function LoginPage() {
     setError(null)
     const ok = await login(loginId, password)  // 백엔드에서 비밀번호(bcrypt) 검증
     if (ok) navigate('/')                       // 로그인 성공 → 홈으로
-    else setError(useAuthStore.getState().error ?? 'ID 또는 비밀번호가 올바르지 않습니다.')
+    else setError(useAuthStore.getState().error ?? t('loginError'))
   }
 
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-6">
-      <h1 className="text-2xl font-bold">로그인</h1>
+      <h1 className="text-2xl font-bold">{t('login')}</h1>
       <SessionNotice />
       <form onSubmit={submit} className="flex flex-col gap-4">
         {/* autoComplete 속성으로 비밀번호 관리자 지원 */}
@@ -34,18 +36,18 @@ export default function LoginPage() {
             className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
         </label>
         <label className="flex flex-col gap-1 text-sm font-semibold">
-          비밀번호
+          {t('pwLabel')}
           <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password"
             className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
         </label>
         {error && <p role="alert" className="font-medium text-red-800">✕ {error}</p>}
         <button type="submit" disabled={loading}
           className="rounded bg-ink py-2.5 font-semibold text-white disabled:opacity-60">
-          {loading ? '로그인 중…' : '로그인'}
+          {loading ? t('loginLoading') : t('login')}
         </button>
       </form>
       {/* 계정이 없는 사용자를 회원가입으로 안내 */}
-      <p className="text-center text-sm">계정이 없나요? <Link to="/signup" className="underline underline-offset-4">회원가입</Link></p>
+      <p className="text-center text-sm">{t('noAccount')} <Link to="/signup" className="underline underline-offset-4">{t('signup')}</Link></p>
     </div>
   )
 }
