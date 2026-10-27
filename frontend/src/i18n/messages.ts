@@ -4,7 +4,7 @@
 // MessageKey 타입이 이 파일에서 자동 추론되므로, 키를 추가하면 타입 검사가 자동으로 따라옴.
 export const messages = {
   ko: {
-    title: 'Access UI',
+    title: 'ColorLens',
     tagline: '내 화면이 모든 사용자에게 똑같이 보일까?',
     lead: '웹 화면의 색이 색각이상 사용자에게도 구분되는지 확인하고, 고칠 색까지 찾아드립니다.',
     login: '로그인', signup: '회원가입', logout: '로그아웃',
@@ -50,7 +50,7 @@ export const messages = {
     altOriginal: '원본 화면', altSimulated: '{cvd} 계열 색각이상 시뮬레이션 화면',
   },
   en: {
-    title: 'Access UI',
+    title: 'ColorLens',
     tagline: 'Does everyone see your screen the way you do?',
     lead: 'Check whether your UI colors stay distinguishable for people with color vision deficiency, and get colors to fix them.',
     login: 'Log in', signup: 'Sign up', logout: 'Log out',

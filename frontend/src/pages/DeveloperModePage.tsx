@@ -74,7 +74,8 @@ export default function DeveloperModePage() {
       if (method === 'image') {
         // --- 방식1: 이미지 분석 (개발자 모드로 요청 → 추천 색상 포함 응답) ---
         if (!file) throw new Error(t('errNoImage'))
-        const data = await analyzeImage(file, cvd, 'developer', lang)
+        // 로그인 상태면 user_id 전달 → 백엔드가 결과를 DB에 저장 (규칙 1)
+        const data = await analyzeImage(file, cvd, 'developer', lang, user?.id)
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
         if (user) addResult({ fileName: file.name, mode: 'developer-image', cvdType: cvd, score: data.score, data })
@@ -83,7 +84,8 @@ export default function DeveloperModePage() {
         if (!html.trim()) throw new Error(t('errNoHtml'))
         const elements = await extractElements(html, css) // sandbox iframe에서 요소·색상 추출
         if (elements.length === 0) throw new Error(t('errNoElements'))
-        const data = await analyzeElements(elements, cvd, lang)
+        // 로그인 상태면 user_id 전달 → 백엔드가 결과를 DB에 저장
+        const data = await analyzeElements(elements, cvd, lang, user?.id)
         setCodeResult(data)
         setImageResult(null)
         if (user) addResult({ fileName: 'HTML/CSS 코드', mode: 'developer-code', cvdType: cvd, score: data.summary.score, data })

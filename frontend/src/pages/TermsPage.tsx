@@ -4,10 +4,10 @@ export default function TermsPage() {
     <article className="mx-auto flex max-w-2xl flex-col gap-4 leading-relaxed">
       <h1 className="text-2xl font-bold">사이트 설명 · 약관</h1>
       {/* 서비스 성격 소개 */}
-      <p>Access UI는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.</p>
+      <p>ColorLens는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.</p>
       <h2 className="text-lg font-bold">분석 방식</h2>
       {/* 사용 알고리즘 요약 + 자체 지표 고지 */}
-      <p>색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 OKLab을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 접근성 점수는 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.</p>
+      <p>색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 CIE76(CIELAB ΔE)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 접근성 점수는 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.</p>
       <h2 className="text-lg font-bold">개인정보</h2>
       {/* 데이터 비저장 원칙 안내 */}
       <p>계정 정보와 분석 결과는 서버나 데이터베이스에 저장되지 않고 브라우저 메모리에만 임시로 보관됩니다. 새로고침하거나 로그아웃하면 사라집니다. 업로드한 이미지는 분석 직후 서버에서 폐기됩니다.</p>

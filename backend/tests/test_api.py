@@ -93,10 +93,14 @@ def test_too_large():
     assert r.status_code == 413
 
 
-def test_no_user_routes():
-    # 규칙 2번: 회원 관리(login/auth/user) API가 존재하지 않는지 확인
+def test_auth_routes_exist():
+    # 규칙 2번(변경): 회원 관리(auth) API가 존재하는지 확인
     paths = set(app.openapi()["paths"])
-    assert not any("user" in p or "login" in p or "auth" in p for p in paths)
+    auth_paths = [p for p in paths if "/api/auth" in p]
+    assert auth_paths, f"auth 라우터가 등록되어야 합니다. found: {auth_paths}"
+    # 핵심 엔드포인트가 모두 있는지
+    expected = {"/api/auth/signup", "/api/auth/login", "/api/auth/me/{user_id}", "/api/auth/history/{user_id}"}
+    assert expected.issubset(paths), f"누락된 auth 엔드포인트: {expected - paths}"
 
 
 def test_ai_fallback_without_key():

@@ -1,23 +1,26 @@
 // (한국어 요약) 회원가입 페이지 — 이름/이메일/ID/비밀번호 입력과 약관 동의를 받는 폼.
-// 실제 저장은 authStore의 메모리뿐 (서버 전송 없음 — 규칙 1, 2번)
+// 백엔드 DB에 계정을 생성하고 비밀번호는 bcrypt로 해시해 저장 (규칙 2).
+// ID 중복 확인은 /api/auth/check-id, 가입은 /api/auth/signup 호출.
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
 import SessionNotice from '../components/SessionNotice'
+import { checkLoginId } from '../api/client'
 import { useAuthStore } from '../stores/authStore'
 
 // 화면에 표시할 약관 항목 정의 (모두 필수 동의)
 const TERMS = [
   { id: 'service', title: '이용약관 (필수)', body: '본 서비스는 학교 팀 프로젝트로 제작된 웹 접근성 분석 서비스입니다. 분석 결과는 참고용이며 공식 인증을 대신하지 않습니다.' },
-  { id: 'privacy', title: '개인정보 수집·이용 (필수)', body: '입력한 이름·이메일·ID는 서버나 데이터베이스에 저장되지 않으며, 브라우저 메모리에만 임시로 보관되어 새로고침 시 삭제됩니다.' },
+  { id: 'privacy', title: '개인정보 수집·이용 (필수)', body: '입력한 이름·이메일·ID, 그리고 로그인 시 분석 결과는 서버 DB에 저장됩니다. 비밀번호는 bcrypt 해시로만 저장됩니다. 업로드한 이미지는 분석 후 서버에 저장하지 않습니다.' },
 ]
 
 export default function SignupPage() {
   const navigate = useNavigate()
-  const { signup, isIdTaken } = useAuthStore()
+  const { signup, loading } = useAuthStore()
   // 폼 입력값을 하나의 객체 상태로 관리
   const [form, setForm] = useState({ name: '', email: '', loginId: '', password: '', passwordConfirm: '' })
   const [idChecked, setIdChecked] = useState<null | boolean>(null) // ID 중복 확인 결과 (null=미확인)
+  const [checkingId, setCheckingId] = useState(false)               // ID 중복 확인 진행 중
   const [agreed, setAgreed] = useState<Record<string, boolean>>({}) // 약관별 동의 상태
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false) // 가입 완료 → 완료 모달 표시
@@ -26,6 +29,25 @@ export default function SignupPage() {
   const set = (k: keyof typeof form) => (e: ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [k]: e.target.value })
     if (k === 'loginId') setIdChecked(null)
+  }
+
+  // ID 중복 확인: 백엔드 /api/auth/check-id 호출
+  const checkId = async () => {
+    if (!/^[a-zA-Z0-9_]{4,20}$/.test(form.loginId)) {
+      setError('ID는 영문·숫자·_ 4~20자로 입력해주세요.')
+      return
+    }
+    setError(null)
+    setCheckingId(true)
+    try {
+      const available = await checkLoginId(form.loginId)
+      setIdChecked(available)
+    } catch {
+      setError('ID 중복 확인 중 오류가 발생했습니다.')
+      setIdChecked(null)
+    } finally {
+      setCheckingId(false)
+    }
   }
 
   // 제출 전 폼 검증: 문제가 있으면 에러 문구, 모두 통과하면 null 반환
@@ -40,14 +62,15 @@ export default function SignupPage() {
     return null
   }
 
-  // 폼 제출: 검증 통과 시 회원가입 실행 후 완료 모달 표시
+  // 폼 제출: 검증 통과 시 백엔드에 회원가입 요청 → 성공 시 자동 로그인 후 완료 모달
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     const err = validate()
     setError(err)
     if (err) return
-    await signup(form)
-    setDone(true)
+    const ok = await signup(form)
+    if (ok) setDone(true)
+    else setError(useAuthStore.getState().error ?? '회원가입에 실패했습니다.')
   }
 
   // 입력 필드를 생성하는 재사용 가능한 헬퍼 (라벨 + input 한 세트)
@@ -62,7 +85,7 @@ export default function SignupPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <h1 className="text-2xl font-bold">회원가입</h1>
-      {/* 데이터가 저장되지 않는다는 안내 배너 */}
+      {/* 데이터가 서버에 저장된다는 안내 배너 */}
       <SessionNotice />
       {/* noValidate: 브라우저 기본 검증 대신 위의 validate()를 사용하겠다는 뜻 */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
@@ -71,10 +94,10 @@ export default function SignupPage() {
         {/* ID 입력 + 중복 확인 버튼을 한 줄에 배치 */}
         <div className="flex items-end gap-2">
           <div className="flex-1">{field('loginId', 'ID')}</div>
-          {/* 중복 확인: 가입 가능하면 true, 이미 사용 중이면 false 저장 */}
+          {/* 중복 확인: 백엔드에 물어봐 사용 가능 여부 표시 */}
           <button type="button" className="rounded border border-ink px-3 py-2 text-sm"
-            onClick={() => setIdChecked(form.loginId.length > 0 && !isIdTaken(form.loginId))}>
-            ID 확인
+            onClick={checkId} disabled={checkingId}>
+            {checkingId ? '확인 중…' : 'ID 확인'}
           </button>
         </div>
         {/* 확인 결과 안내 (role="status": 결과 통보용 알림) */}
@@ -98,13 +121,16 @@ export default function SignupPage() {
         ))}
 
         {error && <p role="alert" className="font-medium text-red-800">✕ {error}</p>}
-        <button type="submit" className="self-center rounded bg-ink px-6 py-2.5 font-semibold text-white">회원가입</button>
+        <button type="submit" disabled={loading}
+          className="self-center rounded bg-ink px-6 py-2.5 font-semibold text-white disabled:opacity-60">
+          {loading ? '가입 중…' : '회원가입'}
+        </button>
       </form>
 
       {/* 가입 완료 모달: 닫으면 로그인 페이지로 이동 */}
       {done && (
-        <Modal title="회원가입 완료" onClose={() => navigate('/login')}>
-          <p>{form.name}님, 가입이 완료되었습니다. 로그인해주세요.</p>
+        <Modal title="회원가입 완료" onClose={() => navigate('/')}>
+          <p>{form.name}님, 가입이 완료되어 로그인되었습니다.</p>
         </Modal>
       )}
     </div>

@@ -6,6 +6,29 @@ export type Lang = 'ko' | 'en'                        // 지원 언어
 export type Verdict = 'PASS' | 'WARNING' | 'FAIL'    // 판정 3단계
 export type Grade = 'STRONG' | 'RECOMMENDED' | 'CONDITIONAL' // 추천 색상 등급
 
+// --- 회원 관리 (auth) 타입 ---
+
+// 백엔드가 반환하는 사용자 정보 (비밀번호 제외)
+export interface User {
+  id: number
+  name: string
+  email: string
+  login_id: string
+}
+
+// 분석 결과 히스토리 한 건 (백엔드 AnalysisResult → API 응답)
+export interface HistoryItem {
+  id: number
+  user_id: number
+  mode: string                 // "user" | "developer"
+  cvd_type: CvdType
+  input_meta: string | null    // 파일명 또는 "HTML/CSS 코드"
+  score: number | null
+  verdict: Verdict
+  created_at: string           // ISO 문자열
+  data: Record<string, unknown> // 분석 결과 전체 (시뮬레이션 이미지는 제거됨)
+}
+
 // 팔레트에서 추출된 주요 색상 하나 (hex 코드 + 화면 차지 비율)
 export interface PaletteColor { hex: string; ratio: number }
 

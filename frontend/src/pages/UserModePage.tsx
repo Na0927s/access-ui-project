@@ -43,9 +43,10 @@ export default function UserModePage() {
     setError(null)
     setLoading(true)
     try {
-      const data = await analyzeImage(file, cvd, 'user', lang) // 사용자 모드로 요청
+      // 로그인 상태면 user_id를 보내 백엔드가 결과를 DB에 저장하도록 함 (규칙 1)
+      const data = await analyzeImage(file, cvd, 'user', lang, user?.id) // 사용자 모드로 요청
       setResult(data)
-      // 로그인 상태일 때만 결과 내역에 기록 (비로그인은 메모리 보관 불필요)
+      // 로그인 상태일 때만 결과 내역에 기록 (백엔드에도 저장됨, 메모리는 즉시 표시용)
       if (user) addResult({ fileName: file.name, mode: 'user', cvdType: cvd, score: data.score, data })
     } catch (e) {
       setError((e as Error).message)

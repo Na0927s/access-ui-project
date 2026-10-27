@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""                            # AI 설명용 키 (없어도 핵심 분석 동작)
     anthropic_model: str = "claude-sonnet-4-20250514"      # 사용할 Claude 모델
     allowed_origins: str = "http://localhost:5176"         # CORS 허용 출처 (쉼표로 여러 개 가능)
+    # SQLite 파일 경로. 로컬은 ./colorlens.db, 배포(Render 등)는 영구 디스크 마운트 경로로 override.
+    # Render 예: DATABASE_URL=sqlite:////var/data/colorlens.db (영구 디스크 /var/data)
+    database_url: str = "sqlite:///./colorlens.db"
+    # 정적 파일(빌드된 프론트엔드) 서빙 디렉터리. 배포 시 백엔드가 프론트를 함께 서빙하도록 설정.
+    # 빈 문자열이면 정적 서빙하지 않음 (개발 모드: 프론트는 별도 vite 서버).
+    static_dir: str = ""
 
     @property
     def origins(self) -> list[str]:
