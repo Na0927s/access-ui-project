@@ -72,4 +72,8 @@ async def analyze_image_endpoint(
     except Exception as e:  # never leak internals
         raise api_error("ANALYSIS_FAILED") from e      # 내부 오류는 사용자에게 상세 노출하지 않음
     finally:
-        del data, img  # 분석 종료 후 메모리에서 즉시 해제 (이미지 비저장 규칙)
+        # Release the in-memory image bytes immediately (규칙 3 — 이미지 비저장).
+        # `img` may be unbound if load_image() raised above; guard with locals() check.
+        if "img" in locals():
+            del img
+        del data

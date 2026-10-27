@@ -29,8 +29,13 @@ interface ResultState {
 }
 
 // 백엔드 HistoryItem → 화면용 AnalysisRecord 변환
+// 백엔드 mode 값: 'user'(사용자 이미지) / 'developer'(개발자 이미지) / 'developer-code'(개발자 코드)
 function toRecord(item: HistoryItem): AnalysisRecord {
-  const isImageMode = item.mode === 'user' || item.mode === 'developer'
+  const mode: AnalysisRecord['mode'] =
+    item.mode === 'developer-code' ? 'developer-code'
+    : item.mode === 'developer' ? 'developer-image'
+    : 'user'
+  const isImageMode = mode === 'user' || mode === 'developer-image'
   const data = item.data as unknown as ImageAnalysis | DeveloperAnalysis
   const score = isImageMode && 'score' in data ? (data as ImageAnalysis).score
     : !isImageMode && 'summary' in data ? (data as DeveloperAnalysis).summary.score
@@ -39,8 +44,8 @@ function toRecord(item: HistoryItem): AnalysisRecord {
     id: `db:${item.id}`,
     dbId: item.id,
     createdAt: item.created_at,
-    fileName: item.input_meta ?? (item.mode === 'developer' ? 'HTML/CSS 코드' : '이미지 분석'),
-    mode: item.mode === 'developer' ? 'developer-code' : item.mode === 'developer-image' ? 'developer-image' : 'user',
+    fileName: item.input_meta ?? (mode === 'developer-code' ? 'HTML/CSS 코드' : '이미지 분석'),
+    mode,
     cvdType: item.cvd_type,
     score: score,
     data,

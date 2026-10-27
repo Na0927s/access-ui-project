@@ -113,7 +113,12 @@ export default function DeveloperModePage() {
             role="tab"
             type="button"
             aria-selected={method === m}
-            onClick={() => setMethod(m)}
+            onClick={() => {
+              setMethod(m)
+              // 탭 전환 시 이전 탭의 분석 결과를 지워 잔존 렌더링 방지
+              setImageResult(null)
+              setCodeResult(null)
+            }}
             className={`rounded border px-4 py-2 text-sm ${method === m ? 'border-2 border-ink font-semibold' : 'border-rule'}`}
           >
             {method === m ? '✓ ' : ''}{m === 'image' ? t('method1') : t('method2')}
