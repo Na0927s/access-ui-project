@@ -49,7 +49,8 @@ class AnalysisResult(Base):
     user_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    mode: Mapped[str] = mapped_column(String(16), nullable=False)        # "user" | "developer"
+    # 분석 모드: "user"(사용자 이미지) / "developer"(개발자 이미지) / "developer-code"(개발자 코드)
+    mode: Mapped[str] = mapped_column(String(16), nullable=False)
     cvd_type: Mapped[str] = mapped_column(String(16), nullable=False)    # "protan" | "deutan" | "tritan"
     # 이미지 메타(파일명·크기·해상도)만 저장, 바이트는 절대 저장하지 않는다 (규칙 3)
     input_meta: Mapped[str | None] = mapped_column(Text, nullable=True)

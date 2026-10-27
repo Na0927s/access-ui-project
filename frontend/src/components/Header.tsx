@@ -34,7 +34,7 @@ export default function Header() {
               <button
                 type="button"
                 className="rounded border border-ink px-2 py-1 text-sm"
-                onClick={() => { logout(); navigate('/') }}
+                onClick={() => { logout(); navigate('/') }}  // logout은 async지만 화면 이동이 먼저여도 무방
               >
                 {t('logout')}
               </button>

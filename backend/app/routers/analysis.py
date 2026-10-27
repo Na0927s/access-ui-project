@@ -5,7 +5,7 @@
 - 로그인 사용자(user_id 전달 시)의 분석 결과는 DB에 저장 (규칙 1번 — 비로그인은 저장 안 함)
 - 같은 이미지(해시)+색약 유형이면 캐시로 재분석 생략 (속도 향상)
 """
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Header, UploadFile
 from PIL import Image, UnidentifiedImageError
 from sqlalchemy.orm import Session
 
@@ -14,6 +14,7 @@ from ..database import get_db
 from ..errors import api_error
 from ..services.analyzer import analyze_image, load_image
 from ..services.persistence import get_cached, image_hash, save_result, set_cached
+from ..routers.auth import current_user_id
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 
@@ -24,7 +25,7 @@ async def analyze_image_endpoint(
     cvd_type: str = Form(...),             # 색약 유형: protan / deutan / tritan
     mode: str = Form("user"),              # 사용자 모드("user") 또는 개발자 모드("developer")
     lang: str = Form("ko"),                # 응답 언어: ko / en
-    user_id: int | None = Form(None),      # 로그인 사용자 ID (비로그인이면 None — 결과 저장 안 함)
+    authorization: str | None = Header(default=None),  # 로그인 토큰 (없으면 비로그인)
     db: Session = Depends(get_db),
 ):
     # --- 입력값 검증: 허용된 값이 아닌 요청은 즉시 에러 응답 ---
@@ -36,6 +37,10 @@ async def analyze_image_endpoint(
         raise api_error("INVALID_LANG")
     if file.content_type not in config.ALLOWED_CONTENT_TYPES:
         raise api_error("UNSUPPORTED_FORMAT")
+
+    # 토큰이 있으면 로그인 사용자 식별 (결과 저장용). 없으면 비로그인(저장 안 함).
+    # 토큰이 유효하지 않은 경우엔 비로그인으로 처리하지 않고 401을 내야 사용자가 인지할 수 있다.
+    user_id = current_user_id(authorization) if authorization else None
 
     # Read into memory only; the image is never written to disk.
     # (한국어) 이미지를 메모리로만 읽기 — 10MB+1바이트까지만 읽어 크기 초과 여부를 확인

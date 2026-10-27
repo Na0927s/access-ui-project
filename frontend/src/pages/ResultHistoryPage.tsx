@@ -16,7 +16,7 @@ const MODE_LABEL = { user: '사용자 모드', 'developer-image': '개발자 · 
 export default function ResultHistoryPage() {
   const t = useT()
   const { results, loading, remove, loadFromServer } = useResultStore()
-  const user = useAuthStore((s) => s.currentUser)
+  const token = useAuthStore((s) => s.token)
   // 기록의 날짜(YYYY-MM-DD) 목록 — 중복 제거해 날짜 필터 옵션으로 사용
   const dates = useMemo(() => Array.from(new Set(results.map((r) => r.createdAt.slice(0, 10)))), [results])
   const [date, setDate] = useState<string>('')          // 선택된 필터 날짜 (빈 값 = 전체)
@@ -24,8 +24,8 @@ export default function ResultHistoryPage() {
 
   // 로그인 사용자면 백엔드에서 히스토리 로드
   useEffect(() => {
-    if (user) loadFromServer(user.id)
-  }, [user, loadFromServer])
+    if (token) loadFromServer(token)
+  }, [token, loadFromServer])
 
   // 선택 날짜로 필터링된 목록과, 펼쳐진 기록의 원본 객체
   const list = results.filter((r) => !date || r.createdAt.startsWith(date))
@@ -35,8 +35,8 @@ export default function ResultHistoryPage() {
   const handleRemove = async (id: string) => {
     const rec = results.find((r) => r.id === id)
     await remove(id)
-    if (rec?.dbId !== undefined && user) {
-      try { await removeServerResult(user.id, rec.dbId) }
+    if (rec?.dbId !== undefined && token) {
+      try { await removeServerResult(token, rec.dbId) }
       catch { /* optimistic UI: 이미 화면에서 제거됨. 에러는 무시 */ }
     }
   }

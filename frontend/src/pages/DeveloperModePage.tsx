@@ -52,6 +52,7 @@ export default function DeveloperModePage() {
   const [imageResult, setImageResult] = useState<ImageAnalysis | null>(null)   // 이미지 분석 결과
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
   const solutionsRef = useRef<HTMLElement>(null)  // "문제 해결 방법 보기" 버튼의 스크롤 이동 대상
+  const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.currentUser)
   const addResult = useResultStore((s) => s.add)
 
@@ -74,8 +75,8 @@ export default function DeveloperModePage() {
       if (method === 'image') {
         // --- 방식1: 이미지 분석 (개발자 모드로 요청 → 추천 색상 포함 응답) ---
         if (!file) throw new Error(t('errNoImage'))
-        // 로그인 상태면 user_id 전달 → 백엔드가 결과를 DB에 저장 (규칙 1)
-        const data = await analyzeImage(file, cvd, 'developer', lang, user?.id)
+        // 로그인 상태면 토큰 전달 → 백엔드가 결과를 DB에 저장 (규칙 1)
+        const data = await analyzeImage(file, cvd, 'developer', lang, token)
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
         if (user) addResult({ fileName: file.name, mode: 'developer-image', cvdType: cvd, score: data.score, data })
@@ -84,8 +85,8 @@ export default function DeveloperModePage() {
         if (!html.trim()) throw new Error(t('errNoHtml'))
         const elements = await extractElements(html, css) // sandbox iframe에서 요소·색상 추출
         if (elements.length === 0) throw new Error(t('errNoElements'))
-        // 로그인 상태면 user_id 전달 → 백엔드가 결과를 DB에 저장
-        const data = await analyzeElements(elements, cvd, lang, user?.id)
+        // 로그인 상태면 토큰 전달 → 백엔드가 결과를 DB에 저장
+        const data = await analyzeElements(elements, cvd, lang, token)
         setCodeResult(data)
         setImageResult(null)
         if (user) addResult({ fileName: 'HTML/CSS 코드', mode: 'developer-code', cvdType: cvd, score: data.summary.score, data })

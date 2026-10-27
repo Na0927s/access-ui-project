@@ -23,9 +23,9 @@ interface ResultState {
   results: AnalysisRecord[]                                   // 최신 순 결과 목록
   loading: boolean                                            // 서버 로드 중 여부
   add: (r: Omit<AnalysisRecord, 'id' | 'createdAt'>) => void  // 새 결과를 맨 앞에 추가
-  remove: (id: string) => Promise<void>                       // 특정 결과 삭제 (DB 결과면 백엔드도 삭제)
+  remove: (id: string) => Promise<void>                       // 특정 결과 삭제 (메모리만, DB 삭제는 별도)
   clear: () => void                                            // 전체 삭제 (로그아웃 시 호출)
-  loadFromServer: (userId: number) => Promise<void>           // 백엔드에서 히스토리 로드
+  loadFromServer: (token: string) => Promise<void>           // 백엔드에서 히스토리 로드
 }
 
 // 백엔드 HistoryItem → 화면용 AnalysisRecord 변환
@@ -52,7 +52,7 @@ function toRecord(item: HistoryItem): AnalysisRecord {
   }
 }
 
-export const useResultStore = create<ResultState>((set, get) => ({
+export const useResultStore = create<ResultState>((set) => ({
   results: [],
   loading: false,
   // 새 기록에 id와 생성 시각을 자동으로 부여해 목록 맨 앞(unshift)에 추가
@@ -62,21 +62,14 @@ export const useResultStore = create<ResultState>((set, get) => ({
       results: [{ ...r, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...s.results],
     })),
   remove: async (id) => {
-    const rec = get().results.find((r) => r.id === id)
-    // DB 결과면 백엔드에서도 삭제
-    if (rec?.dbId !== undefined && rec.dbId !== null) {
-      // userId는 백엔드가 결과의 user_id로 식별하므로, dbId만 넘겨도 됨.
-      // 단 API가 /api/auth/history/{userId}/{resultId} 형태라 userId 필요 → dbId로 재구성 불가.
-      // 그래서 삭제는 ResultHistoryPage에서 userId를 받아 호출하거나, 여기서 보관.
-      // (여기서는 optimistic UI만 하고 실제 삭제는 별도 함수로 처리)
-    }
+    // 메모리에서만 제거. DB 결과의 서버 삭제는 ResultHistoryPage에서 removeServerResult로 처리.
     set((s) => ({ results: s.results.filter((r) => r.id !== id) }))
   },
   clear: () => set({ results: [] }),
-  loadFromServer: async (userId) => {
+  loadFromServer: async (token) => {
     set({ loading: true })
     try {
-      const items = await getHistory(userId)
+      const items = await getHistory(token)
       // 최신순 정렬은 백엔드가 이미 수행
       set({ results: items.map(toRecord), loading: false })
     } catch {
@@ -86,7 +79,7 @@ export const useResultStore = create<ResultState>((set, get) => ({
   },
 }))
 
-// DB에서 특정 결과 삭제 (userId 필요 — 백엔드 API 경로상). 별도 export.
-export async function removeServerResult(userId: number, dbId: number): Promise<void> {
-  await deleteHistoryItem(userId, dbId)
+// DB에서 특정 결과 삭제 (토큰 필요 — 본인 결과만 삭제 가능). 별도 export.
+export async function removeServerResult(token: string, dbId: number): Promise<void> {
+  await deleteHistoryItem(token, dbId)
 }

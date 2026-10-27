@@ -19,6 +19,10 @@ from sqlalchemy.orm import Session
 
 from ..models import AnalysisCache, AnalysisResult
 
+# 허용된 분석 모드 — save_result/get_cached/set_cached 인자로 받는 mode는 이 값 중 하나여야 함.
+# AnalysisResult(히스토리)는 3종 모두 저장, AnalysisCache(캐시)는 이미지 분석 2종만 사용.
+VALID_MODES = {"user", "developer", "developer-code"}
+
 
 def image_hash(image_bytes: bytes) -> str:
     """업로드 이미지의 SHA-256 해시를 계산. 캐시 키로만 사용 (이미지 바이트는 저장 안 함)."""
@@ -52,6 +56,8 @@ def save_result(
     """
     if user_id is None:
         return False
+    if mode not in VALID_MODES:
+        raise ValueError(f"Invalid mode: {mode!r}. Expected one of {VALID_MODES}")
     record = AnalysisResult(
         user_id=user_id,
         mode=mode,

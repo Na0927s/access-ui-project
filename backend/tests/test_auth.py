@@ -2,11 +2,11 @@
 - 회원가입/로그인/내정보/히스토리 전체 흐름 검증
 - 비밀번호가 bcrypt 해시로 저장되는지(평문 아님) 확인 (규칙 2)
 - 중복 ID/이메일 거부, 잘못된 비밀번호 거부 확인
-- 각 테스트는 테이블을 초기화해 서로 영향을 주지 않음
+- 세션 토큰 기반 인가 검증: 타 사용자 데이터 접근 차단, 토큰 없으면 401
+- 각 테스트는 테이블과 세션을 초기화해 서로 영향을 주지 않음
 """
 import os
 import tempfile
-from datetime import datetime
 
 import pytest
 from fastapi.testclient import TestClient
@@ -20,6 +20,7 @@ os.environ["DATABASE_URL"] = f"sqlite:///{_tmp.name}"
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
 from app.models import User  # noqa: E402
+from app.services import session as session_store  # noqa: E402
 
 # 테스트 전용 엔진·세션 (격리용)
 _test_engine = create_engine(
@@ -46,13 +47,15 @@ client = TestClient(app)
 
 
 @pytest.fixture(autouse=True)
-def _clean_users():
-    """각 테스트 실행 전 users 테이블을 비워 테스트 간 격리를 보장한다."""
+def _clean_state():
+    """각 테스트 실행 전 users 테이블과 세션 저장소를 비워 격리를 보장한다."""
     db = _TestSession()
     db.query(User).delete()
     db.commit()
     db.close()
+    session_store.clear_all_sessions()
     yield
+    session_store.clear_all_sessions()
 
 
 def _signup(payload=None):
@@ -63,6 +66,19 @@ def _signup(payload=None):
     if payload:
         p.update(payload)
     return client.post("/api/auth/signup", json=p)
+
+
+def _login(login_id="tester", password="password123"):
+    """회원가입 후 로그인해 (user, token)을 반환하는 헬퍼."""
+    _signup()
+    r = client.post("/api/auth/login", json={"login_id": login_id, "password": password})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    return body["user"], body["token"]
+
+
+def _auth(token):
+    return {"Authorization": f"Bearer {token}"}
 
 
 def test_signup_success():
@@ -102,11 +118,13 @@ def test_signup_duplicate_email_rejected():
     assert r.json()["code"] == "DUPLICATE_EMAIL"
 
 
-def test_login_success():
+def test_login_success_returns_token():
     _signup()
     r = client.post("/api/auth/login", json={"login_id": "tester", "password": "password123"})
     assert r.status_code == 200, r.text
-    assert r.json()["login_id"] == "tester"
+    body = r.json()
+    assert body["user"]["login_id"] == "tester"
+    assert isinstance(body["token"], str) and len(body["token"]) > 0  # 토큰 발급 확인
 
 
 def test_login_wrong_password_rejected():
@@ -123,22 +141,45 @@ def test_login_unknown_user_rejected():
     assert r.json()["code"] == "INVALID_CREDENTIALS"
 
 
-def test_get_me_success():
-    uid = _signup().json()["id"]
-    r = client.get(f"/api/auth/me/{uid}")
+def test_get_me_with_token():
+    user, token = _login()
+    r = client.get("/api/auth/me", headers=_auth(token))
     assert r.status_code == 200
-    assert r.json()["id"] == uid
+    assert r.json()["id"] == user["id"]
 
 
-def test_get_me_not_found():
-    r = client.get("/api/auth/me/99999")
-    assert r.status_code == 404
-    assert r.json()["code"] == "USER_NOT_FOUND"
+def test_get_me_without_token_unauthorized():
+    """토큰 없이 보호 엔드포인트 호출 시 401 — 인가 강제."""
+    r = client.get("/api/auth/me")
+    assert r.status_code == 401
+    assert r.json()["code"] == "UNAUTHORIZED"
+
+
+def test_get_me_with_invalid_token_unauthorized():
+    """잘못된 토큰으로 호출 시 401."""
+    r = client.get("/api/auth/me", headers=_auth("not-a-real-token"))
+    assert r.status_code == 401
+
+
+def test_logout_invalidates_token():
+    """로그아웃 후 같은 토큰으로 호출하면 401 — 세션 폐기 확인."""
+    user, token = _login()
+    r = client.post("/api/auth/logout", headers=_auth(token))
+    assert r.status_code == 200
+    # 같은 토큰으로 더 이상 접근 불가
+    r2 = client.get("/api/auth/me", headers=_auth(token))
+    assert r2.status_code == 401
+
+
+def test_history_requires_token():
+    """히스토리 조회에 토큰이 없으면 401."""
+    r = client.get("/api/auth/history")
+    assert r.status_code == 401
 
 
 def test_history_empty_for_new_user():
-    uid = _signup().json()["id"]
-    r = client.get(f"/api/auth/history/{uid}")
+    _, token = _login()
+    r = client.get("/api/auth/history", headers=_auth(token))
     assert r.status_code == 200
     assert r.json() == []
 

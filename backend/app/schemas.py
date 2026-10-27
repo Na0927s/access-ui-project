@@ -31,11 +31,11 @@ class Element(BaseModel):
 
 
 class DeveloperRequest(BaseModel):
-    """POST /api/developer/analyze 요청 바디: 색약 유형 + 언어 + 분석할 요소 목록 + (선택)사용자 ID."""
+    """POST /api/developer/analyze 요청 바디: 색약 유형 + 언어 + 분석할 요소 목록.
+    user_id는 폼에 포함하지 않고 Authorization 헤더(세션 토큰)에서 추출한다."""
     cvd_type: CvdType
     lang: Literal["ko", "en"] = "ko"
     elements: list[Element] = Field(min_length=1, max_length=500)  # 최소 1개, 최대 500개
-    user_id: int | None = None  # 로그인 사용자 ID (비로그인이면 None — 결과 저장 안 함, 규칙 1)
 
 
 class ExplainRequest(BaseModel):

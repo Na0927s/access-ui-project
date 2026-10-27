@@ -85,7 +85,7 @@ cd frontend && npm run build
 ## Project Rules (반드시 지킬 것)
 
 1. **저장 정책 (로그인 여부 차등)**: 비로그인 사용자의 분석 결과는 메모리에서만 유지하고 저장하지 않는다(새로고침·로그아웃 시 소멸). 로그인 사용자의 분석 결과는 SQLite DB에 영속화한다(히스토리·캐시·통계). 인증 토큰·세션은 메모리에서만 다루고 브라우저 저장소(localStorage/sessionStorage/쿠키)에는 쓰지 않는다. Zustand `persist` 미들웨어는 쓰지 않는다.
-2. **회원 관리**: 백엔드에 회원가입·로그인·사용자 API를 FastAPI + SQLAlchemy로 구현한다. 비밀번호는 bcrypt로 해시해 저장하고 평문으로 보관하지 않는다.
+2. **회원 관리**: 백엔드에 회원가입·로그인·사용자 API를 FastAPI + SQLAlchemy로 구현한다. 비밀번호는 bcrypt로 해시해 저장하고 평문으로 보관하지 않는다. 인가는 서버 메모리 세션 토큰(in-memory opaque token) 기반 — user_id를 URL 경로로 받지 않고 `Authorization: Bearer` 헤더에서 추출해 본인만 접근 가능. 토큰은 서버 메모리에만 저장(서버 재시작 시 소멸, 영속 세션 금지).
 3. **이미지 비저장**: 업로드 이미지 바이트는 `BytesIO`로만 처리하고 DB·디스크에 쓰지 않는다(로그인 여부 무관). 캐시 키로만 이미지 해시(SHA-256)를 저장한다. 로그에도 이미지 내용을 남기지 않는다.
 4. **AI 역할 분리**: AI는 수치를 계산하지 않고 알고리즘 결과를 설명·번역만 한다. AI가 없어도(키 미설정·호출 실패) 핵심 분석은 동작해야 한다. AI가 제시한 색은 다시 검증 후 표시한다.
 5. **알고리즘 기준**: 시뮬레이션은 Machado(2009) 행렬을 선형 RGB에 적용, 색상 거리는 CIELAB ΔE(CIE76), WCAG AA(일반 4.5:1, 큰 텍스트 3:1, UI 3:1). ΔE 판정 임계값은 설계 문서에 따라 아직 TBD다.
@@ -112,7 +112,7 @@ cd frontend && npm run build
 
 - Direct push to main/develop branch
 - Hardcoded secrets/API keys (ANTHROPIC_API_KEY는 backend/.env에만)
-- 비밀번호 평문 저장 (반드시 bcrypt 해시, rounds=12). 인증 토큰/JWT/세션 쿠키 사용 금지
+- 비밀번호 평문 저장 (반드시 bcrypt 해시, rounds=12). user_id를 URL 경로로 받는 인가 방식 금지 (토큰에서 추출). JWT·영속 세션·세션 쿠키 사용 금지 (in-memory 세션 토큰만 허용)
 - 업로드 이미지 바이트를 DB·디스크·로그에 저장 (SHA-256 해시만 캐시 키로 허용)
 - 비로그인 사용자의 분석 결과를 DB에 저장 (저장은 로그인 사용자만)
 - localStorage / sessionStorage / Zustand persist 사용 (인증·결과는 메모리 또는 백엔드 DB만)
