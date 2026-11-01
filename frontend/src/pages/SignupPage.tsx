@@ -17,9 +17,15 @@ export default function SignupPage() {
   const navigate = useNavigate()
   const { signup, loading } = useAuthStore()
   // 폼 입력값을 하나의 객체 상태로 관리
-  const [form, setForm] = useState({ name: '', email: '', loginId: '', password: '', passwordConfirm: '' })
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    loginId: '',
+    password: '',
+    passwordConfirm: '',
+  })
   const [idChecked, setIdChecked] = useState<null | boolean>(null) // ID 중복 확인 결과 (null=미확인)
-  const [checkingId, setCheckingId] = useState(false)               // ID 중복 확인 진행 중
+  const [checkingId, setCheckingId] = useState(false) // ID 중복 확인 진행 중
   const [agreed, setAgreed] = useState<Record<string, boolean>>({}) // 약관별 동의 상태
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false) // 가입 완료 → 완료 모달 표시
@@ -54,10 +60,10 @@ export default function SignupPage() {
     if (!form.name || !form.email || !form.loginId || !form.password) return t('errAllFields')
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(form.email)) return t('errEmailFormat')
     if (!/^[a-zA-Z0-9_]{4,20}$/.test(form.loginId)) return t('errIdFormat')
-    if (idChecked !== true) return t('errIdCheck')       // 중복 확인 필수
+    if (idChecked !== true) return t('errIdCheck') // 중복 확인 필수
     if (form.password.length < 8) return t('errPwLength')
     if (form.password !== form.passwordConfirm) return t('errPwMismatch')
-    if (!TERM_IDS.every((id) => agreed[id])) return t('errAgree')  // 약관 전부 동의 필수
+    if (!TERM_IDS.every((id) => agreed[id])) return t('errAgree') // 약관 전부 동의 필수
     return null
   }
 
@@ -76,8 +82,13 @@ export default function SignupPage() {
   const field = (k: keyof typeof form, label: string, type = 'text') => (
     <label className="flex flex-col gap-1 text-sm font-semibold">
       {label}
-      <input type={type} value={form[k]} onChange={set(k)} required
-        className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+      <input
+        type={type}
+        value={form[k]}
+        onChange={set(k)}
+        required
+        className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+      />
     </label>
   )
 
@@ -94,14 +105,20 @@ export default function SignupPage() {
         <div className="flex items-end gap-2">
           <div className="flex-1">{field('loginId', 'ID')}</div>
           {/* 중복 확인: 백엔드에 물어봐 사용 가능 여부 표시 */}
-          <button type="button" className="rounded border border-ink px-3 py-2 text-sm"
-            onClick={checkId} disabled={checkingId}>
+          <button
+            type="button"
+            className="rounded border border-ink px-3 py-2 text-sm"
+            onClick={checkId}
+            disabled={checkingId}
+          >
             {checkingId ? t('checking') : t('checkId')}
           </button>
         </div>
         {/* 확인 결과 안내 (role="status": 결과 통보용 알림) */}
         {idChecked !== null && (
-          <p role="status" className="text-sm">{idChecked ? t('idAvailable') : t('idTaken')}</p>
+          <p role="status" className="text-sm">
+            {idChecked ? t('idAvailable') : t('idTaken')}
+          </p>
         )}
         {field('password', t('pwLabel'), 'password')}
         {field('passwordConfirm', t('pwConfirmLabel'), 'password')}
@@ -109,19 +126,33 @@ export default function SignupPage() {
         {/* 약관 항목: 스크롤 가능한 본문 + 동의 체크박스 */}
         {TERM_IDS.map((id) => (
           <div key={id} className="rounded border border-rule bg-white p-3">
-            <p className="font-semibold">{id === 'service' ? t('termServiceTitle') : t('termPrivacyTitle')}</p>
-            <p className="my-2 max-h-24 overflow-y-auto text-sm text-graphite">{id === 'service' ? t('termServiceBody') : t('termPrivacyBody')}</p>
+            <p className="font-semibold">
+              {id === 'service' ? t('termServiceTitle') : t('termPrivacyTitle')}
+            </p>
+            <p className="my-2 max-h-24 overflow-y-auto text-sm text-graphite">
+              {id === 'service' ? t('termServiceBody') : t('termPrivacyBody')}
+            </p>
             <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={!!agreed[id]}
-                onChange={(e) => setAgreed({ ...agreed, [id]: e.target.checked })} />
+              <input
+                type="checkbox"
+                checked={!!agreed[id]}
+                onChange={(e) => setAgreed({ ...agreed, [id]: e.target.checked })}
+              />
               {t('agree')}
             </label>
           </div>
         ))}
 
-        {error && <p role="alert" className="font-medium text-red-800">✕ {error}</p>}
-        <button type="submit" disabled={loading}
-          className="self-center rounded bg-ink px-6 py-2.5 font-semibold text-white disabled:opacity-60">
+        {error && (
+          <p role="alert" className="font-medium text-red-800">
+            ✕ {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="self-center rounded bg-ink px-6 py-2.5 font-semibold text-white disabled:opacity-60"
+        >
           {loading ? t('signupLoading') : t('signup')}
         </button>
       </form>

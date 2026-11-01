@@ -26,7 +26,9 @@ export default function MainPage() {
             to={c.to}
             className="group flex min-h-64 flex-col justify-between rounded-lg border border-ink bg-white p-8 hover:bg-ink hover:text-white"
           >
-            <span aria-hidden className="font-mono text-2xl">{c.icon}</span>
+            <span aria-hidden className="font-mono text-2xl">
+              {c.icon}
+            </span>
             <span>
               <span className="block text-2xl font-bold">{c.title}</span>
               <span className="mt-2 block text-graphite group-hover:text-white/80">{c.desc}</span>

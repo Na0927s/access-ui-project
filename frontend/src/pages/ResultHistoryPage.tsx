@@ -17,8 +17,11 @@ export default function ResultHistoryPage() {
   const { results, loading, remove, loadFromServer } = useResultStore()
   const token = useAuthStore((s) => s.token)
   // 기록의 날짜(YYYY-MM-DD) 목록 — 중복 제거해 날짜 필터 옵션으로 사용
-  const dates = useMemo(() => Array.from(new Set(results.map((r) => r.createdAt.slice(0, 10)))), [results])
-  const [date, setDate] = useState<string>('')          // 선택된 필터 날짜 (빈 값 = 전체)
+  const dates = useMemo(
+    () => Array.from(new Set(results.map((r) => r.createdAt.slice(0, 10)))),
+    [results],
+  )
+  const [date, setDate] = useState<string>('') // 선택된 필터 날짜 (빈 값 = 전체)
   const [openId, setOpenId] = useState<string | null>(null) // 현재 펼쳐 본 기록의 ID
 
   // 로그인 사용자면 백엔드에서 히스토리 로드
@@ -32,7 +35,11 @@ export default function ResultHistoryPage() {
 
   // 분석 모드별 표시 라벨 (언어에 맞춰 반환)
   const modeLabel = (mode: 'user' | 'developer-image' | 'developer-code') =>
-    mode === 'user' ? t('modeUserLabel') : mode === 'developer-image' ? t('modeDevImageLabel') : t('modeDevCodeLabel')
+    mode === 'user'
+      ? t('modeUserLabel')
+      : mode === 'developer-image'
+        ? t('modeDevImageLabel')
+        : t('modeDevCodeLabel')
 
   // 날짜 포맷도 현재 언어에 맞춰 표시
   const locale = lang === 'ko' ? 'ko-KR' : 'en-US'
@@ -42,8 +49,11 @@ export default function ResultHistoryPage() {
     const rec = results.find((r) => r.id === id)
     await remove(id)
     if (rec?.dbId !== undefined && token) {
-      try { await removeServerResult(token, rec.dbId) }
-      catch { /* optimistic UI: 이미 화면에서 제거됨. 에러는 무시 */ }
+      try {
+        await removeServerResult(token, rec.dbId)
+      } catch {
+        /* optimistic UI: 이미 화면에서 제거됨. 에러는 무시 */
+      }
     }
   }
 
@@ -56,7 +66,10 @@ export default function ResultHistoryPage() {
         <p className="text-graphite">{t('historyLoading')}</p>
       ) : results.length === 0 ? (
         // 기록 없음: 안내 문구 표시
-        <div className="min-h-48 rounded-lg border border-dashed border-graphite" aria-label={t('emptyResults')}>
+        <div
+          className="min-h-48 rounded-lg border border-dashed border-graphite"
+          aria-label={t('emptyResults')}
+        >
           <p className="p-6 text-graphite">{t('emptyResultsMsg')}</p>
         </div>
       ) : (
@@ -64,9 +77,17 @@ export default function ResultHistoryPage() {
           {/* 날짜 선택 드롭다운 (전체 + 기록이 있는 날짜만 옵션으로) */}
           <label className="flex items-center gap-2 text-sm font-semibold">
             {t('dateSelect')}
-            <select value={date} onChange={(e) => setDate(e.target.value)} className="rounded border border-graphite bg-white px-2 py-1 font-normal">
+            <select
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="rounded border border-graphite bg-white px-2 py-1 font-normal"
+            >
               <option value="">{t('all')}</option>
-              {dates.map((d) => <option key={d} value={d}>{d.replace(/-/g, '.')}</option>)}
+              {dates.map((d) => (
+                <option key={d} value={d}>
+                  {d.replace(/-/g, '.')}
+                </option>
+              ))}
             </select>
           </label>
           {/* 기록 목록: 항목 클릭 시 상세 토글, 삭제 버튼은 별도 */}
@@ -74,27 +95,43 @@ export default function ResultHistoryPage() {
             {list.map((r) => (
               <li key={r.id} className="flex flex-wrap items-center justify-between gap-3 p-4">
                 {/* 제목 행을 버튼으로 만들어 클릭/키보드로 상세 열기 가능 */}
-                <button type="button" onClick={() => setOpenId(r.id === openId ? null : r.id)} className="text-left">
+                <button
+                  type="button"
+                  onClick={() => setOpenId(r.id === openId ? null : r.id)}
+                  className="text-left"
+                >
                   <span className="block font-semibold">{r.fileName}</span>
                   {/* 부제: 일시 · 모드 · 색약 유형 · 점수 */}
                   <span className="text-sm text-graphite">
-                    {new Date(r.createdAt).toLocaleString(locale)} · {modeLabel(r.mode)} · {t(r.cvdType)} · {t('scoreShort')} {r.score}
+                    {new Date(r.createdAt).toLocaleString(locale)} · {modeLabel(r.mode)} ·{' '}
+                    {t(r.cvdType)} · {t('scoreShort')} {r.score}
                   </span>
                 </button>
-                <button type="button" onClick={() => handleRemove(r.id)} className="rounded border border-ink px-3 py-1 text-sm">{t('deleteItem')}</button>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(r.id)}
+                  className="rounded border border-ink px-3 py-1 text-sm"
+                >
+                  {t('deleteItem')}
+                </button>
               </li>
             ))}
           </ul>
           {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 점수만 표시 */}
-          {open && (
-            'simulated_image' in open.data ? (
-              <ResultSummary data={open.data as ImageAnalysis} mode={open.mode === 'user' ? 'user' : 'developer'} />
+          {open &&
+            ('simulated_image' in open.data ? (
+              <ResultSummary
+                data={open.data as ImageAnalysis}
+                mode={open.mode === 'user' ? 'user' : 'developer'}
+              />
             ) : (
               <div className="rounded-lg border border-rule bg-white p-5">
-                <ScoreBlock score={(open.data as DeveloperAnalysis).summary.score} notice={(open.data as DeveloperAnalysis).score_notice} />
+                <ScoreBlock
+                  score={(open.data as DeveloperAnalysis).summary.score}
+                  notice={(open.data as DeveloperAnalysis).score_notice}
+                />
               </div>
-            )
-          )}
+            ))}
         </>
       )}
     </div>

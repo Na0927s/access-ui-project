@@ -3,8 +3,14 @@
 import type { CvdType } from '../api/types'
 import { useT } from '../i18n/useT'
 
-export default function ResultCompare({ original, simulated, cvdType }: {
-  original: string; simulated: string; cvdType: CvdType
+export default function ResultCompare({
+  original,
+  simulated,
+  cvdType,
+}: {
+  original: string
+  simulated: string
+  cvdType: CvdType
 }) {
   const t = useT()
   return (
@@ -17,9 +23,15 @@ export default function ResultCompare({ original, simulated, cvdType }: {
       </figure>
       {/* 오른쪽: 색약 시뮬레이션 결과 이미지 (제목에 색약 유형 표시) */}
       <figure className="rounded-lg border border-rule bg-white p-3">
-        <figcaption className="mb-2 text-sm font-semibold">{t('result')} · {t(cvdType)}</figcaption>
+        <figcaption className="mb-2 text-sm font-semibold">
+          {t('result')} · {t(cvdType)}
+        </figcaption>
         {/* 대체 텍스트에도 어떤 유형인지 포함 (접근성) */}
-        <img src={simulated} alt={t('altSimulated').replace('{cvd}', t(cvdType))} className="w-full object-contain" />
+        <img
+          src={simulated}
+          alt={t('altSimulated').replace('{cvd}', t(cvdType))}
+          className="w-full object-contain"
+        />
       </figure>
     </div>
   )

@@ -17,18 +17,23 @@ import { useUiStore } from '../stores/uiStore'
 export default function UserModePage() {
   const t = useT()
   const lang = useUiStore((s) => s.lang)
-  const [file, setFile] = useState<File | null>(null)          // 업로드된 파일
-  const [preview, setPreview] = useState<string | null>(null)  // 미리보기용 object URL
-  const [cvd, setCvd] = useState<CvdType | null>(null)         // 선택한 색약 유형
-  const [loading, setLoading] = useState(false)                // 분석 진행 여부
-  const [error, setError] = useState<string | null>(null)       // 에러 메시지
+  const [file, setFile] = useState<File | null>(null) // 업로드된 파일
+  const [preview, setPreview] = useState<string | null>(null) // 미리보기용 object URL
+  const [cvd, setCvd] = useState<CvdType | null>(null) // 선택한 색약 유형
+  const [loading, setLoading] = useState(false) // 분석 진행 여부
+  const [error, setError] = useState<string | null>(null) // 에러 메시지
   const [result, setResult] = useState<ImageAnalysis | null>(null) // 분석 결과
-  const token = useAuthStore((s) => s.token)                   // 로그인 토큰 (결과 저장용)
+  const token = useAuthStore((s) => s.token) // 로그인 토큰 (결과 저장용)
   const user = useAuthStore((s) => s.currentUser)
   const addResult = useResultStore((s) => s.add)
 
   // 컴포넌트가 사라질 때(새 이미지로 교체 시 포함) 미리보기 URL의 메모리 해제
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
+  useEffect(
+    () => () => {
+      if (preview) URL.revokeObjectURL(preview)
+    },
+    [preview],
+  )
 
   // 새 파일이 선택되면: 파일/미리보기 갱신, 이전 분석 결과는 초기화
   const onFile = (f: File) => {
@@ -39,8 +44,8 @@ export default function UserModePage() {
 
   // "검사" 버튼: 사전 검증 → 백엔드 이미지 분석 요청 → 결과 표시
   const inspect = async () => {
-    if (!file) return setError(t('errNoImage'))     // 이미지 필수
-    if (!cvd) return setError(t('errNoCvd'))        // 색약 유형 필수
+    if (!file) return setError(t('errNoImage')) // 이미지 필수
+    if (!cvd) return setError(t('errNoCvd')) // 색약 유형 필수
     setError(null)
     setLoading(true)
     try {
@@ -48,7 +53,8 @@ export default function UserModePage() {
       const data = await analyzeImage(file, cvd, 'user', lang, token) // 사용자 모드로 요청
       setResult(data)
       // 로그인 상태일 때만 결과 내역에 기록 (백엔드에도 저장됨, 메모리는 즉시 표시용)
-      if (user) addResult({ fileName: file.name, mode: 'user', cvdType: cvd, score: data.score, data })
+      if (user)
+        addResult({ fileName: file.name, mode: 'user', cvdType: cvd, score: data.score, data })
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -77,12 +83,20 @@ export default function UserModePage() {
         </div>
       </div>
       {/* 에러 메시지 (스크린리더 즉시 알림) */}
-      {error && <p role="alert" className="font-medium text-red-800">✕ {error}</p>}
+      {error && (
+        <p role="alert" className="font-medium text-red-800">
+          ✕ {error}
+        </p>
+      )}
 
       {/* 분석 완료: 원본/시뮬레이션 비교 + 결과 요약 (사용자 모드는 추천 색상 없음) */}
       {result && preview && (
         <div className="flex flex-col gap-6">
-          <ResultCompare original={preview} simulated={result.simulated_image} cvdType={result.cvd_type} />
+          <ResultCompare
+            original={preview}
+            simulated={result.simulated_image}
+            cvdType={result.cvd_type}
+          />
           <ResultSummary data={result} mode="user" />
         </div>
       )}

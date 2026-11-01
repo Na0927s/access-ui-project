@@ -4,15 +4,16 @@
 //    브라우저의 계산된 스타일(getComputedStyle)로 각 요소의 글자색/배경색/폰트 정보를 추출
 import type { ElementInput } from '../api/types'
 
-const MAX_INPUT = 500 * 1024     // 입력 크기 상한 (500KB) — 과도한 입력 방지
-const MAX_ELEMENTS = 500         // 추출할 요소 수 상한 (백엔드 스키마와 동일)
+const MAX_INPUT = 500 * 1024 // 입력 크기 상한 (500KB) — 과도한 입력 방지
+const MAX_ELEMENTS = 500 // 추출할 요소 수 상한 (백엔드 스키마와 동일)
 const DANGEROUS = 'script, iframe, object, embed, link, meta, base, form' // 통째로 제거할 태그
 
 /** Remove scripts, event handlers and external resources. The HTML is never executed.
  *  (한국어) HTML/CSS 정화(sanitize) — 스크립트·이벤트 속성·외부 리소스를 모두 제거한
  *  안전한 완전한 HTML 문서 문자열을 반환 */
 export function sanitize(html: string, css: string): string {
-  if (html.length + css.length > MAX_INPUT) throw new Error('코드가 너무 깁니다. 500KB 이하로 입력해주세요.')
+  if (html.length + css.length > MAX_INPUT)
+    throw new Error('코드가 너무 깁니다. 500KB 이하로 입력해주세요.')
   const doc = new DOMParser().parseFromString(html, 'text/html')
   // 위험 태그(script 등)는 요소 자체를 삭제
   doc.querySelectorAll(DANGEROUS).forEach((n) => n.remove())
@@ -21,8 +22,9 @@ export function sanitize(html: string, css: string): string {
     for (const attr of Array.from(el.attributes)) {
       const name = attr.name.toLowerCase()
       const value = attr.value.trim().toLowerCase()
-      if (name.startsWith('on')) el.removeAttribute(attr.name)   // onclick 등 이벤트 핸들러 제거
-      if (['src', 'href', 'srcset', 'action', 'xlink:href'].includes(name)) el.removeAttribute(attr.name) // 외부 리소스 참조 제거
+      if (name.startsWith('on')) el.removeAttribute(attr.name) // onclick 등 이벤트 핸들러 제거
+      if (['src', 'href', 'srcset', 'action', 'xlink:href'].includes(name))
+        el.removeAttribute(attr.name) // 외부 리소스 참조 제거
       if (value.startsWith('javascript:')) el.removeAttribute(attr.name) // javascript: URL 제거
     }
   })
@@ -38,9 +40,16 @@ function toHex(color: string): string | null {
   const m = color.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+%?))?\s*\)/)
   if (!m) return null
   // alpha 값 정규화 (% 표기면 100으로 나누고, 투명(0)이면 배경색으로 간주해 null)
-  const alpha = m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : parseFloat(m[4])
+  const alpha =
+    m[4] === undefined ? 1 : m[4].endsWith('%') ? parseFloat(m[4]) / 100 : parseFloat(m[4])
   if (alpha === 0) return null
-  return '#' + [m[1], m[2], m[3]].map((v) => Number(v).toString(16).padStart(2, '0')).join('').toUpperCase()
+  return (
+    '#' +
+    [m[1], m[2], m[3]]
+      .map((v) => Number(v).toString(16).padStart(2, '0'))
+      .join('')
+      .toUpperCase()
+  )
 }
 
 // 요소의 "실제 보이는 배경색" 찾기: 자신이 투명하면 부모를 따라 올라가며 불투명 색을 찾음
@@ -56,8 +65,8 @@ function effectiveBackground(el: Element, win: Window): string {
 
 // 요소를 사람이 알아볼 수 있는 CSS 선택자로 표현 (#id > tag.class1.class2 > ...)
 function selectorOf(el: Element): string {
-  if (el.id) return `#${el.id}`                                  // 1순위: id
-  const cls = Array.from(el.classList).slice(0, 2)               // 2순위: 태그 + 클래스 최대 2개
+  if (el.id) return `#${el.id}` // 1순위: id
+  const cls = Array.from(el.classList).slice(0, 2) // 2순위: 태그 + 클래스 최대 2개
   if (cls.length) return `${el.tagName.toLowerCase()}.${cls.join('.')}`
   const parent = el.parentElement
   if (!parent) return el.tagName.toLowerCase()
@@ -95,10 +104,10 @@ export function extractElements(html: string, css: string): Promise<ElementInput
           if (!color) continue
           out.push({
             selector: selectorOf(el),
-            text: ownText.slice(0, 80),            // 텍스트는 최대 80자만 전송
+            text: ownText.slice(0, 80), // 텍스트는 최대 80자만 전송
             color,
             background: effectiveBackground(el, win),
-            font_size_px: parseFloat(style.fontSize) || null,   // 큰 텍스트 판정용
+            font_size_px: parseFloat(style.fontSize) || null, // 큰 텍스트 판정용
             font_weight: parseInt(style.fontWeight, 10) || null,
           })
           if (out.length >= MAX_ELEMENTS) break

@@ -22,16 +22,21 @@ export type CurrentUser = {
 }
 
 interface AuthState {
-  currentUser: CurrentUser | null                          // 현재 로그인한 사용자 (null이면 비로그인)
-  token: string | null                                     // 세션 토큰 (메모리만, 보호 API 호출용)
-  loading: boolean                                          // API 호출 중 여부 (화면 스피너용)
-  error: string | null                                      // 최근 에러 메시지 (화면 표시용)
-  signup: (input: { name: string; email: string; loginId: string; password: string }) => Promise<boolean>
-  login: (loginId: string, password: string) => Promise<boolean>  // 성공 true / 실패 false
+  currentUser: CurrentUser | null // 현재 로그인한 사용자 (null이면 비로그인)
+  token: string | null // 세션 토큰 (메모리만, 보호 API 호출용)
+  loading: boolean // API 호출 중 여부 (화면 스피너용)
+  error: string | null // 최근 에러 메시지 (화면 표시용)
+  signup: (input: {
+    name: string
+    email: string
+    loginId: string
+    password: string
+  }) => Promise<boolean>
+  login: (loginId: string, password: string) => Promise<boolean> // 성공 true / 실패 false
   logout: () => Promise<void>
   updateProfile: (patch: { name?: string; email?: string }) => Promise<boolean>
   changePassword: (currentPassword: string, newPassword: string) => Promise<boolean>
-  deleteAccount: () => Promise<boolean>                    // 회원 탈퇴 후 로그아웃
+  deleteAccount: () => Promise<boolean> // 회원 탈퇴 후 로그아웃
   clearError: () => void
 }
 
@@ -74,7 +79,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   logout: async () => {
     const token = get().token
     if (token) {
-      try { await api.logout(token) } catch { /* 이미 만료된 토큰이면 무시 */ }
+      try {
+        await api.logout(token)
+      } catch {
+        /* 이미 만료된 토큰이면 무시 */
+      }
     }
     set({ currentUser: null, token: null, error: null })
     useResultStore.getState().clear()

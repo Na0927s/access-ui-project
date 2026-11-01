@@ -50,11 +50,13 @@ export async function analyzeImage(
   form.append('cvd_type', cvdType)
   form.append('mode', mode)
   form.append('lang', lang)
-  return handle(await fetch('/api/analysis/image', {
-    method: 'POST',
-    headers: authHeaders(token),  // FormData는 Content-Type을 자동 설정하므로 넣지 않음
-    body: form,
-  }))
+  return handle(
+    await fetch('/api/analysis/image', {
+      method: 'POST',
+      headers: authHeaders(token), // FormData는 Content-Type을 자동 설정하므로 넣지 않음
+      body: form,
+    }),
+  )
 }
 
 // 코드 분석 요청: 추출된 요소 목록을 JSON으로 전송 (POST /api/developer/analyze)
@@ -65,11 +67,13 @@ export async function analyzeElements(
   lang: Lang,
   token: string | null = null,
 ): Promise<DeveloperAnalysis> {
-  return handle(await fetch('/api/developer/analyze', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify({ cvd_type: cvdType, elements, lang }),
-  }))
+  return handle(
+    await fetch('/api/developer/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify({ cvd_type: cvdType, elements, lang }),
+    }),
+  )
 }
 
 // AI 설명 응답의 형태: source가 'fallback'이면 AI 없이 템플릿 문구로 응답된 것
@@ -109,35 +113,46 @@ export interface LoginResult {
 
 // 회원가입 (POST /api/auth/signup)
 export async function signup(input: {
-  name: string; email: string; loginId: string; password: string
+  name: string
+  email: string
+  loginId: string
+  password: string
 }): Promise<User> {
-  return handle<User>(await fetch('/api/auth/signup', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      name: input.name, email: input.email,
-      login_id: input.loginId, password: input.password,
+  return handle<User>(
+    await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: input.name,
+        email: input.email,
+        login_id: input.loginId,
+        password: input.password,
+      }),
     }),
-  }))
+  )
 }
 
 // ID 중복 확인 (POST /api/auth/check-id) — 회원가입 폼에서 실시간 확인용
 export async function checkLoginId(loginId: string): Promise<boolean> {
-  const res = await handle<{ available: boolean }>(await fetch('/api/auth/check-id', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login_id: loginId }),
-  }))
+  const res = await handle<{ available: boolean }>(
+    await fetch('/api/auth/check-id', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login_id: loginId }),
+    }),
+  )
   return res.available
 }
 
 // 로그인 (POST /api/auth/login) — 사용자 정보와 세션 토큰을 반환
 export async function login(loginId: string, password: string): Promise<LoginResult> {
-  return handle<LoginResult>(await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ login_id: loginId, password }),
-  }))
+  return handle<LoginResult>(
+    await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login_id: loginId, password }),
+    }),
+  )
 }
 
 // 로그아웃 (POST /api/auth/logout) — 서버 메모리에서 세션 토큰 제거
@@ -160,11 +175,13 @@ export async function updateProfile(
   token: string,
   patch: { name?: string; email?: string },
 ): Promise<User> {
-  return handle<User>(await fetch('/api/auth/me', {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
-    body: JSON.stringify(patch),
-  }))
+  return handle<User>(
+    await fetch('/api/auth/me', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+      body: JSON.stringify(patch),
+    }),
+  )
 }
 
 // 비밀번호 변경 (PUT /api/auth/me/password)

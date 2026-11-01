@@ -15,10 +15,10 @@ export default function MyInfoPage() {
   const deleteAccount = useAuthStore((s) => s.deleteAccount)
   const loading = useAuthStore((s) => s.loading)
 
-  const [editing, setEditing] = useState(false)   // 프로필 수정 모드 여부
-  const [name, setName] = useState(user.name)      // 편집 중인 이름
-  const [email, setEmail] = useState(user.email)   // 편집 중인 이메일
-  const [saved, setSaved] = useState(false)        // 저장 완료 표시
+  const [editing, setEditing] = useState(false) // 프로필 수정 모드 여부
+  const [name, setName] = useState(user.name) // 편집 중인 이름
+  const [email, setEmail] = useState(user.email) // 편집 중인 이메일
+  const [saved, setSaved] = useState(false) // 저장 완료 표시
   const [profileError, setProfileError] = useState<string | null>(null)
 
   // 비밀번호 변경 모달 상태
@@ -46,13 +46,22 @@ export default function MyInfoPage() {
   // 비밀번호 변경 제출
   const submitPassword = async () => {
     setPwError(null)
-    if (pwForm.next.length < 8) { setPwError(t('errNewPwLength')); return }
-    if (pwForm.next !== pwForm.confirm) { setPwError(t('errNewPwMismatch')); return }
+    if (pwForm.next.length < 8) {
+      setPwError(t('errNewPwLength'))
+      return
+    }
+    if (pwForm.next !== pwForm.confirm) {
+      setPwError(t('errNewPwMismatch'))
+      return
+    }
     const ok = await changePassword(pwForm.current, pwForm.next)
     if (ok) {
       setPwDone(true)
       setPwForm({ current: '', next: '', confirm: '' })
-      setTimeout(() => { setPwOpen(false); setPwDone(false) }, 1500)
+      setTimeout(() => {
+        setPwOpen(false)
+        setPwDone(false)
+      }, 1500)
     } else {
       setPwError(useAuthStore.getState().error ?? t('errPwChange'))
     }
@@ -70,8 +79,12 @@ export default function MyInfoPage() {
   const row = (label: string, value: string, onChange?: (v: string) => void) => (
     <label className="flex flex-col gap-1 text-sm font-semibold">
       {label}
-      <input value={value} readOnly={!onChange || !editing} onChange={(e) => onChange?.(e.target.value)}
-        className={`rounded border px-3 py-2 font-normal ${editing && onChange ? 'border-ink bg-white' : 'border-rule bg-paper'}`} />
+      <input
+        value={value}
+        readOnly={!onChange || !editing}
+        onChange={(e) => onChange?.(e.target.value)}
+        className={`rounded border px-3 py-2 font-normal ${editing && onChange ? 'border-ink bg-white' : 'border-rule bg-paper'}`}
+      />
     </label>
   )
 
@@ -79,69 +92,143 @@ export default function MyInfoPage() {
     <div className="mx-auto flex max-w-md flex-col gap-6">
       <h1 className="text-2xl font-bold">{t('myInfo')}</h1>
       {/* 프로필 아바타 대신 이름 이니셜 원형 표시 */}
-      <div aria-hidden className="mx-auto grid size-28 place-items-center rounded-full border-2 border-ink text-4xl">
+      <div
+        aria-hidden
+        className="mx-auto grid size-28 place-items-center rounded-full border-2 border-ink text-4xl"
+      >
         {user.name.slice(0, 1)}
       </div>
-      {row(t('nameLabel'), name, setName)}      {/* 수정 가능 */}
-      {row(t('emailLabel'), email, setEmail)}   {/* 수정 가능 */}
-      {row(t('idLabel'), user.loginId)}      {/* 수정 불가 (읽기 전용) */}
+      {row(t('nameLabel'), name, setName)} {/* 수정 가능 */}
+      {row(t('emailLabel'), email, setEmail)} {/* 수정 가능 */}
+      {row(t('idLabel'), user.loginId)} {/* 수정 불가 (읽기 전용) */}
       {/* 수정(모드 진입) / 확인(저장) 버튼 */}
       <div className="flex justify-end gap-2">
-        <button type="button" onClick={() => { setEditing(true); setSaved(false); setProfileError(null) }} className="rounded border border-ink px-4 py-2 text-sm" disabled={loading}>{t('edit')}</button>
-        <button type="button" onClick={confirm} className="rounded bg-ink px-4 py-2 text-sm text-white" disabled={loading}>{loading ? t('saving') : t('confirmBtn')}</button>
+        <button
+          type="button"
+          onClick={() => {
+            setEditing(true)
+            setSaved(false)
+            setProfileError(null)
+          }}
+          className="rounded border border-ink px-4 py-2 text-sm"
+          disabled={loading}
+        >
+          {t('edit')}
+        </button>
+        <button
+          type="button"
+          onClick={confirm}
+          className="rounded bg-ink px-4 py-2 text-sm text-white"
+          disabled={loading}
+        >
+          {loading ? t('saving') : t('confirmBtn')}
+        </button>
       </div>
-      {profileError && <p role="alert" className="font-medium text-red-800">✕ {profileError}</p>}
-      {saved && <p role="status" className="text-sm">{t('profileSaved')}</p>}
-
+      {profileError && (
+        <p role="alert" className="font-medium text-red-800">
+          ✕ {profileError}
+        </p>
+      )}
+      {saved && (
+        <p role="status" className="text-sm">
+          {t('profileSaved')}
+        </p>
+      )}
       {/* 비밀번호 변경 / 회원 탈퇴 */}
       <div className="flex flex-col gap-3 border-t border-rule pt-4">
-        <button type="button" onClick={() => setPwOpen(true)} className="rounded border border-ink px-4 py-2 text-sm">{t('changePw')}</button>
-        <button type="button" onClick={() => setQuitOpen(true)} className="rounded border border-red-700 px-4 py-2 text-sm text-red-800">{t('deleteAccount')}</button>
+        <button
+          type="button"
+          onClick={() => setPwOpen(true)}
+          className="rounded border border-ink px-4 py-2 text-sm"
+        >
+          {t('changePw')}
+        </button>
+        <button
+          type="button"
+          onClick={() => setQuitOpen(true)}
+          className="rounded border border-red-700 px-4 py-2 text-sm text-red-800"
+        >
+          {t('deleteAccount')}
+        </button>
       </div>
-
       <SessionNotice />
-
       {/* 비밀번호 변경 모달 */}
       {pwOpen && (
         <Modal title={t('changePwTitle')} onClose={() => setPwOpen(false)}>
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm font-semibold">
               {t('currentPw')}
-              <input type="password" value={pwForm.current} autoComplete="current-password"
-                onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })} required
-                className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+              <input
+                type="password"
+                value={pwForm.current}
+                autoComplete="current-password"
+                onChange={(e) => setPwForm({ ...pwForm, current: e.target.value })}
+                required
+                className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+              />
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
               {t('newPw')}
-              <input type="password" value={pwForm.next} autoComplete="new-password"
-                onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })} required
-                className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+              <input
+                type="password"
+                value={pwForm.next}
+                autoComplete="new-password"
+                onChange={(e) => setPwForm({ ...pwForm, next: e.target.value })}
+                required
+                className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+              />
             </label>
             <label className="flex flex-col gap-1 text-sm font-semibold">
               {t('newPwConfirm')}
-              <input type="password" value={pwForm.confirm} autoComplete="new-password"
-                onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })} required
-                className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+              <input
+                type="password"
+                value={pwForm.confirm}
+                autoComplete="new-password"
+                onChange={(e) => setPwForm({ ...pwForm, confirm: e.target.value })}
+                required
+                className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+              />
             </label>
-            {pwError && <p role="alert" className="font-medium text-red-800">✕ {pwError}</p>}
-            {pwDone && <p role="status" className="text-sm">{t('pwChanged')}</p>}
-            <button type="button" onClick={submitPassword} disabled={loading}
-              className="mt-2 rounded bg-ink px-4 py-2 text-sm text-white disabled:opacity-60">
+            {pwError && (
+              <p role="alert" className="font-medium text-red-800">
+                ✕ {pwError}
+              </p>
+            )}
+            {pwDone && (
+              <p role="status" className="text-sm">
+                {t('pwChanged')}
+              </p>
+            )}
+            <button
+              type="button"
+              onClick={submitPassword}
+              disabled={loading}
+              className="mt-2 rounded bg-ink px-4 py-2 text-sm text-white disabled:opacity-60"
+            >
               {loading ? t('changing') : t('changeBtn')}
             </button>
           </div>
         </Modal>
       )}
-
       {/* 회원 탈퇴 확인 모달 */}
       {quitOpen && (
         <Modal title={t('deleteAccountTitle')} onClose={() => setQuitOpen(false)}>
           <div className="flex flex-col gap-3">
             <p>{t('deleteAccountMsg')}</p>
             <div className="flex justify-end gap-2">
-              <button type="button" onClick={() => setQuitOpen(false)} className="rounded border border-ink px-4 py-2 text-sm">{t('cancel')}</button>
-              <button type="button" onClick={confirmQuit} disabled={loading}
-                className="rounded bg-red-700 px-4 py-2 text-sm text-white disabled:opacity-60">
+              <button
+                type="button"
+                onClick={() => setQuitOpen(false)}
+                className="rounded border border-ink px-4 py-2 text-sm"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmQuit}
+                disabled={loading}
+                className="rounded bg-red-700 px-4 py-2 text-sm text-white disabled:opacity-60"
+              >
                 {loading ? t('deleting') : t('deleteBtn')}
               </button>
             </div>

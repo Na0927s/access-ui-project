@@ -35,8 +35,22 @@ export default function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           {/* 마이페이지 두 개는 RequireLogin으로 감싸 로그인 필수로 만듦 */}
-          <Route path="/mypage/info" element={<RequireLogin><MyInfoPage /></RequireLogin>} />
-          <Route path="/mypage/results" element={<RequireLogin><ResultHistoryPage /></RequireLogin>} />
+          <Route
+            path="/mypage/info"
+            element={
+              <RequireLogin>
+                <MyInfoPage />
+              </RequireLogin>
+            }
+          />
+          <Route
+            path="/mypage/results"
+            element={
+              <RequireLogin>
+                <ResultHistoryPage />
+              </RequireLogin>
+            }
+          />
           <Route path="/terms" element={<TermsPage />} />
           {/* 정의되지 않은 모든 경로는 홈으로 리다이렉트 */}
           <Route path="*" element={<Navigate to="/" replace />} />

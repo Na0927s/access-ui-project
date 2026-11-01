@@ -1,5 +1,5 @@
 // (한국어 요약) 애플리케이션 진입점 — React 앱을 HTML의 #root 요소에 마운트
-import React from 'react' 
+import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App'

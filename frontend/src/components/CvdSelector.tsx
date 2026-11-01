@@ -5,7 +5,13 @@ import { useT } from '../i18n/useT'
 
 const TYPES: CvdType[] = ['protan', 'deutan', 'tritan']
 
-export default function CvdSelector({ value, onChange }: { value: CvdType | null; onChange: (v: CvdType) => void }) {
+export default function CvdSelector({
+  value,
+  onChange,
+}: {
+  value: CvdType | null
+  onChange: (v: CvdType) => void
+}) {
   const t = useT()
   return (
     // fieldset+legend: 라디오 그룹에 "색약 유형"이라는 이름을 붙여 스크린리더가 그룹으로 인식
@@ -30,7 +36,9 @@ export default function CvdSelector({ value, onChange }: { value: CvdType | null
               onChange={() => onChange(type)}
               className="sr-only"
             />
-            <span aria-hidden className="w-4">{selected ? '✓' : ''}</span>
+            <span aria-hidden className="w-4">
+              {selected ? '✓' : ''}
+            </span>
             {t(type)}
           </label>
         )

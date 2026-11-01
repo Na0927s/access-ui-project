@@ -19,8 +19,9 @@ export default function LoginPage() {
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setError(null)
-    const ok = await login(loginId, password)  // 백엔드에서 비밀번호(bcrypt) 검증
-    if (ok) navigate('/')                       // 로그인 성공 → 홈으로
+    const ok = await login(loginId, password) // 백엔드에서 비밀번호(bcrypt) 검증
+    if (ok)
+      navigate('/') // 로그인 성공 → 홈으로
     else setError(useAuthStore.getState().error ?? t('loginError'))
   }
 
@@ -32,22 +33,45 @@ export default function LoginPage() {
         {/* autoComplete 속성으로 비밀번호 관리자 지원 */}
         <label className="flex flex-col gap-1 text-sm font-semibold">
           ID
-          <input value={loginId} onChange={(e) => setLoginId(e.target.value)} required autoComplete="username"
-            className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+          <input
+            value={loginId}
+            onChange={(e) => setLoginId(e.target.value)}
+            required
+            autoComplete="username"
+            className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+          />
         </label>
         <label className="flex flex-col gap-1 text-sm font-semibold">
           {t('pwLabel')}
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password"
-            className="rounded border border-graphite bg-white px-3 py-2 font-normal" />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            className="rounded border border-graphite bg-white px-3 py-2 font-normal"
+          />
         </label>
-        {error && <p role="alert" className="font-medium text-red-800">✕ {error}</p>}
-        <button type="submit" disabled={loading}
-          className="rounded bg-ink py-2.5 font-semibold text-white disabled:opacity-60">
+        {error && (
+          <p role="alert" className="font-medium text-red-800">
+            ✕ {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          disabled={loading}
+          className="rounded bg-ink py-2.5 font-semibold text-white disabled:opacity-60"
+        >
           {loading ? t('loginLoading') : t('login')}
         </button>
       </form>
       {/* 계정이 없는 사용자를 회원가입으로 안내 */}
-      <p className="text-center text-sm">{t('noAccount')} <Link to="/signup" className="underline underline-offset-4">{t('signup')}</Link></p>
+      <p className="text-center text-sm">
+        {t('noAccount')}{' '}
+        <Link to="/signup" className="underline underline-offset-4">
+          {t('signup')}
+        </Link>
+      </p>
     </div>
   )
 }

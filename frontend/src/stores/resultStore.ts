@@ -8,38 +8,43 @@ import type { CvdType, DeveloperAnalysis, HistoryItem, ImageAnalysis } from '../
 
 // 화면에서 쓰는 분석 기록 하나 (백엔드 HistoryItem과 유사하지만 화면용으로 정규화)
 export interface AnalysisRecord {
-  id: string                                  // 고유 ID (백엔드 결과면 "db:<number>", 메모리면 uuid)
-  createdAt: string                           // 분석 시각 (ISO 문자열)
-  fileName: string                            // 업로드한 파일명 (코드 모드는 'HTML/CSS 코드')
+  id: string // 고유 ID (백엔드 결과면 "db:<number>", 메모리면 uuid)
+  createdAt: string // 분석 시각 (ISO 문자열)
+  fileName: string // 업로드한 파일명 (코드 모드는 'HTML/CSS 코드')
   mode: 'user' | 'developer-image' | 'developer-code'
   cvdType: CvdType
   score: number
-  originalUrl?: string                        // 원본 이미지 미리보기 URL (선택)
-  data: ImageAnalysis | DeveloperAnalysis      // 백엔드가 준 분석 결과 전체
-  dbId?: number                               // 백엔드 결과 ID (있으면 DB 삭제 API 호출)
+  originalUrl?: string // 원본 이미지 미리보기 URL (선택)
+  data: ImageAnalysis | DeveloperAnalysis // 백엔드가 준 분석 결과 전체
+  dbId?: number // 백엔드 결과 ID (있으면 DB 삭제 API 호출)
 }
 
 interface ResultState {
-  results: AnalysisRecord[]                                   // 최신 순 결과 목록
-  loading: boolean                                            // 서버 로드 중 여부
-  add: (r: Omit<AnalysisRecord, 'id' | 'createdAt'>) => void  // 새 결과를 맨 앞에 추가
-  remove: (id: string) => Promise<void>                       // 특정 결과 삭제 (메모리만, DB 삭제는 별도)
-  clear: () => void                                            // 전체 삭제 (로그아웃 시 호출)
-  loadFromServer: (token: string) => Promise<void>           // 백엔드에서 히스토리 로드
+  results: AnalysisRecord[] // 최신 순 결과 목록
+  loading: boolean // 서버 로드 중 여부
+  add: (r: Omit<AnalysisRecord, 'id' | 'createdAt'>) => void // 새 결과를 맨 앞에 추가
+  remove: (id: string) => Promise<void> // 특정 결과 삭제 (메모리만, DB 삭제는 별도)
+  clear: () => void // 전체 삭제 (로그아웃 시 호출)
+  loadFromServer: (token: string) => Promise<void> // 백엔드에서 히스토리 로드
 }
 
 // 백엔드 HistoryItem → 화면용 AnalysisRecord 변환
 // 백엔드 mode 값: 'user'(사용자 이미지) / 'developer'(개발자 이미지) / 'developer-code'(개발자 코드)
 function toRecord(item: HistoryItem): AnalysisRecord {
   const mode: AnalysisRecord['mode'] =
-    item.mode === 'developer-code' ? 'developer-code'
-    : item.mode === 'developer' ? 'developer-image'
-    : 'user'
+    item.mode === 'developer-code'
+      ? 'developer-code'
+      : item.mode === 'developer'
+        ? 'developer-image'
+        : 'user'
   const isImageMode = mode === 'user' || mode === 'developer-image'
   const data = item.data as unknown as ImageAnalysis | DeveloperAnalysis
-  const score = isImageMode && 'score' in data ? (data as ImageAnalysis).score
-    : !isImageMode && 'summary' in data ? (data as DeveloperAnalysis).summary.score
-    : (item.score ?? 0)
+  const score =
+    isImageMode && 'score' in data
+      ? (data as ImageAnalysis).score
+      : !isImageMode && 'summary' in data
+        ? (data as DeveloperAnalysis).summary.score
+        : (item.score ?? 0)
   return {
     id: `db:${item.id}`,
     dbId: item.id,
@@ -59,7 +64,10 @@ export const useResultStore = create<ResultState>((set) => ({
   // (로그인 사용자의 경우 백엔드에 이미 저장되어 있으므로, add는 비로그인 메모리 결과용)
   add: (r) =>
     set((s) => ({
-      results: [{ ...r, id: crypto.randomUUID(), createdAt: new Date().toISOString() }, ...s.results],
+      results: [
+        { ...r, id: crypto.randomUUID(), createdAt: new Date().toISOString() },
+        ...s.results,
+      ],
     })),
   remove: async (id) => {
     // 메모리에서만 제거. DB 결과의 서버 삭제는 ResultHistoryPage에서 removeServerResult로 처리.

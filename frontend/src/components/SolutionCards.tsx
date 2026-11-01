@@ -20,11 +20,16 @@ export default function SolutionCards({ boxes }: { boxes: SolutionBox[] }) {
   return (
     <ul className="grid gap-4 md:grid-cols-2">
       {boxes.map((b, i) => (
-        <li key={`${b.selector}-${i}`} className="flex flex-col gap-2 rounded-lg border border-rule bg-white p-4">
+        <li
+          key={`${b.selector}-${i}`}
+          className="flex flex-col gap-2 rounded-lg border border-rule bg-white p-4"
+        >
           {/* 카드 머리: 요소 선택자 + 검사 유형 라벨 */}
           <div className="flex items-center justify-between gap-2">
             <code className="text-sm font-semibold">{b.selector}</code>
-            <span className="rounded border border-ink px-2 py-0.5 text-xs">{CHECK_LABEL[b.check_type]}</span>
+            <span className="rounded border border-ink px-2 py-0.5 text-xs">
+              {CHECK_LABEL[b.check_type]}
+            </span>
           </div>
           {/* 문제 설명 */}
           <p className="text-sm">{b.problem}</p>
