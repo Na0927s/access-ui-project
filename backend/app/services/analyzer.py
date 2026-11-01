@@ -21,6 +21,12 @@ from .scoring import calculate_score
 from . import texts
 from .wcag import contrast_ratio, is_large_text, judge
 
+# Configure Pillow's decompression-bomb guard once at module load (not per call).
+# Setting it inside load_image() mutated global state on every request.
+# (한국어) 압축폭탄 방지 상한을 모듈 로드 시 한 번만 설정 — load_image에서 매 호출마다
+# 전역을 덮어쓰던 부작용을 제거하기 위해 이곳으로 옮김.
+Image.MAX_IMAGE_PIXELS = config.MAX_IMAGE_PIXELS // 2
+
 
 def confusion_verdict(d_orig: float, d_sim: float) -> str | None:
     """(한국어) 색상 혼동 판정.
@@ -224,9 +230,8 @@ def load_image(data: bytes) -> Image.Image:
     (한국어) 업로드된 이미지 로더 — 프로젝트 규칙 3번(이미지 비저장).
     BytesIO로만 다루고 디스크에 절대 쓰지 않으며, 형식 검증도 수행.
     """
-    # Pillow raises DecompressionBombError above 2x this value.
-    # (한국어) 초대형 이미지로 서버를 공격(압축폭탄)하는 것을 방지하는 픽셀 수 상한
-    Image.MAX_IMAGE_PIXELS = config.MAX_IMAGE_PIXELS // 2
+    # Pillow's MAX_IMAGE_PIXELS guard is configured once at module load (see top of file).
+    # (한국어) 압축폭탄 방지 상한은 모듈 로드 시 이미 설정됨 (파일 상단 참고)
     probe = Image.open(BytesIO(data))  # 바이트 데이터에서 이미지 열기 (파일 경로 불필요)
     fmt = probe.format
     probe.verify()                     # 이미지 구조 무결성 검사 (깨진 파일 감지)

@@ -80,12 +80,19 @@ export interface Explanation {
 }
 
 // AI 설명 요청: 분석 결과를 보내 사람이 읽는 요약 문구를 받음 (POST /api/ai/explain)
-export async function explain(analysis: object, lang: Lang, mode: 'user' | 'developer') {
+// signal: 호출 측에서 AbortController로 진행 중인 요청을 취소할 수 있음 (경쟁 방지)
+export async function explain(
+  analysis: object,
+  lang: Lang,
+  mode: 'user' | 'developer',
+  signal?: AbortSignal,
+) {
   return handle<Explanation>(
     await fetch('/api/ai/explain', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ lang, mode, analysis }),
+      signal,
     }),
   )
 }

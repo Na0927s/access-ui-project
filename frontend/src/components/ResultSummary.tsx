@@ -14,11 +14,17 @@ export default function ResultSummary({ data, mode }: { data: ImageAnalysis; mod
   const lang = useUiStore((s) => s.lang)
   const [ai, setAi] = useState<Explanation | null>(null) // AI/요약 설명 응답
 
-  // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄
+  // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
+  // AbortController로 진행 중인 이전 요청을 취소해 경쟁(race)과 불필요한 네트워크 호출을 방지.
   useEffect(() => {
-    let alive = true // 컴포넌트가 언마운트된 뒤 상태 업데이트 방지 (메모리 누수/경고 방지)
-    explain(data, lang, mode).then((r) => alive && setAi(r)).catch(() => alive && setAi(null))
-    return () => { alive = false } // 정리(cleanup): 언마운트되면 플래그 끄기
+    const ctrl = new AbortController()
+    explain(data, lang, mode, ctrl.signal)
+      .then((r) => setAi(r))
+      .catch((e: unknown) => {
+        // abort로 취소된 요청은 무시. 그 외 실제 실패만 fallback으로 처리.
+        if (!(e instanceof DOMException && e.name === 'AbortError')) setAi(null)
+      })
+    return () => { ctrl.abort() } // 정리(cleanup): 언마운트 또는 의존성 변경 시 이전 요청 취소
   }, [data, lang, mode])
 
   // 추천 색상 등급 라벨 변환 (STRONG → "✓ 강력 추천" 등)
