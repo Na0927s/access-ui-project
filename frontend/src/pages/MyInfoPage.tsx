@@ -3,7 +3,6 @@
 // (RequireLogin으로 보호되어 currentUser가 항상 존재함 — ! 단언 사용)
 import { useState } from 'react'
 import Modal from '../components/Modal'
-import SessionNotice from '../components/SessionNotice'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 
@@ -151,10 +150,9 @@ export default function MyInfoPage() {
           {t('deleteAccount')}
         </button>
       </div>
-      <SessionNotice />
       {/* 비밀번호 변경 모달 */}
       {pwOpen && (
-        <Modal title={t('changePwTitle')} onClose={() => setPwOpen(false)}>
+        <Modal title={t('changePwTitle')} onClose={() => setPwOpen(false)} hideFooter>
           <div className="flex flex-col gap-3">
             <label className="flex flex-col gap-1 text-sm font-semibold">
               {t('currentPw')}
@@ -178,6 +176,7 @@ export default function MyInfoPage() {
                 className="rounded border border-graphite bg-white px-3 py-2 font-normal"
               />
             </label>
+            <p className="-mt-2 text-xs text-graphite">{t('pwHint')}</p>
             <label className="flex flex-col gap-1 text-sm font-semibold">
               {t('newPwConfirm')}
               <input
@@ -212,7 +211,7 @@ export default function MyInfoPage() {
       )}
       {/* 회원 탈퇴 확인 모달 */}
       {quitOpen && (
-        <Modal title={t('deleteAccountTitle')} onClose={() => setQuitOpen(false)}>
+        <Modal title={t('deleteAccountTitle')} onClose={() => setQuitOpen(false)} hideFooter>
           <div className="flex flex-col gap-3">
             <p>{t('deleteAccountMsg')}</p>
             <div className="flex justify-end gap-2">

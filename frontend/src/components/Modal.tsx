@@ -7,10 +7,13 @@ export default function Modal({
   title,
   children,
   onClose,
+  hideFooter = false,
 }: {
   title: string
   children: ReactNode
   onClose: () => void
+  // children이 직접 버튼(취소/탈퇴 등)을 제공할 때 기본 "확인" 버튼을 끔 (버튼 중복 방지)
+  hideFooter?: boolean
 }) {
   const t = useT()
   const ref = useRef<HTMLDialogElement>(null)
@@ -30,15 +33,17 @@ export default function Modal({
         {title}
       </h2>
       {children}
-      <div className="mt-5 flex justify-end">
-        <button
-          type="button"
-          onClick={() => ref.current?.close()}
-          className="rounded bg-ink px-4 py-2 text-white"
-        >
-          {t('modalOk')}
-        </button>
-      </div>
+      {!hideFooter && (
+        <div className="mt-5 flex justify-end">
+          <button
+            type="button"
+            onClick={() => ref.current?.close()}
+            className="rounded bg-ink px-4 py-2 text-white"
+          >
+            {t('modalOk')}
+          </button>
+        </div>
+      )}
     </dialog>
   )
 }

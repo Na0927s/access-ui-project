@@ -11,9 +11,9 @@ export default function TermsPage() {
       <h2 className="text-lg font-bold">{t('termsAnalysisTitle')}</h2>
       {/* 사용 알고리즘 요약 + 자체 지표 고지 */}
       <p>{t('termsAnalysisBody')}</p>
-      <h2 className="text-lg font-bold">{t('termsPrivacyTitle')}</h2>
-      {/* 데이터 비저장 원칙 안내 */}
-      <p>{t('termsPrivacyBody')}</p>
+      <h2 className="text-lg font-bold">{t('termsPagePrivacyTitle')}</h2>
+      {/* 저장 정책(로그인/비로그인 차등) 안내 */}
+      <p>{t('termsPagePrivacyBody')}</p>
       <h2 className="text-lg font-bold">{t('termsLimitTitle')}</h2>
       {/* 서비스 한계 고지 (정직한 안내) */}
       <p>{t('termsLimitBody')}</p>

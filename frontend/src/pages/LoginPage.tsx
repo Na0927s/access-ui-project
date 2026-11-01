@@ -3,7 +3,6 @@
 // 토큰/쿠키는 쓰지 않고 메모리(currentUser)에만 로그인 상태 유지 (규칙 1).
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import SessionNotice from '../components/SessionNotice'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
 
@@ -28,7 +27,6 @@ export default function LoginPage() {
   return (
     <div className="mx-auto flex max-w-sm flex-col gap-6">
       <h1 className="text-2xl font-bold">{t('login')}</h1>
-      <SessionNotice />
       <form onSubmit={submit} className="flex flex-col gap-4">
         {/* autoComplete 속성으로 비밀번호 관리자 지원 */}
         <label className="flex flex-col gap-1 text-sm font-semibold">

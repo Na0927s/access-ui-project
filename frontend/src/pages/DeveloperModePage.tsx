@@ -105,7 +105,7 @@ export default function DeveloperModePage() {
         setImageResult(null)
         if (user)
           addResult({
-            fileName: 'HTML/CSS 코드',
+            fileName: t('codeFileName'),
             mode: 'developer-code',
             cvdType: cvd,
             score: data.summary.score,
@@ -207,7 +207,7 @@ export default function DeveloperModePage() {
             onClick={inspect}
             disabled={loading}
             aria-busy={loading}
-            className="grid size-20 place-items-center self-end rounded-full bg-ink font-bold text-white"
+            className="self-end rounded-lg bg-ink px-6 py-3 font-bold text-white disabled:opacity-60"
           >
             {loading ? t('inspecting') : t('inspect')}
           </button>

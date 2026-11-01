@@ -4,7 +4,6 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../components/Modal'
-import SessionNotice from '../components/SessionNotice'
 import { checkLoginId } from '../api/client'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
@@ -95,8 +94,6 @@ export default function SignupPage() {
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6">
       <h1 className="text-2xl font-bold">{t('signup')}</h1>
-      {/* 데이터가 서버에 저장된다는 안내 배너 */}
-      <SessionNotice />
       {/* noValidate: 브라우저 기본 검증 대신 위의 validate()를 사용하겠다는 뜻 */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-4">
         {field('name', t('nameLabel'))}
@@ -121,6 +118,7 @@ export default function SignupPage() {
           </p>
         )}
         {field('password', t('pwLabel'), 'password')}
+        <p className="-mt-2 text-xs text-graphite">{t('pwHint')}</p>
         {field('passwordConfirm', t('pwConfirmLabel'), 'password')}
 
         {/* 약관 항목: 스크롤 가능한 본문 + 동의 체크박스 */}

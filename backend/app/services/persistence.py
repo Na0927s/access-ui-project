@@ -73,14 +73,15 @@ def save_result(
     return True
 
 
-def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str) -> dict | None:
-    """캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드의 결과가 있으면 반환, 없으면 None.
+def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str, lang: str) -> dict | None:
+    """캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드 + 언어의 결과가 있으면 반환, 없으면 None.
 
-    mode를 키에 포함하는 이유: user/developer 모드는 결과 구조(recommendations 포함 여부)가
-    달라서, 한쪽 결과로 다른 쪽을 덮어쓰면 안 됨.
+    mode·lang을 키에 포함하는 이유: 모드마다 결과 구조(recommendations 포함 여부)가 다르고,
+    언어마다 결과 문구(result_message, issues 메시지 등)가 다르므로, 한쪽 결과로 다른 쪽을
+    덮어쓰거나 반환하면 안 됨 (예: ko 캐시를 en 요청에 반환하면 한글이 노출됨).
     """
     row = db.query(AnalysisCache).filter_by(
-        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode
+        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang
     ).first()
     if not row:
         return None
@@ -90,17 +91,20 @@ def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str) -> 
         return None
 
 
-def set_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str, result: dict) -> None:
+def set_cached(
+    db: Session, image_hash_value: str, cvd_type: str, mode: str, lang: str, result: dict
+) -> None:
     """캐시 저장: 같은 조합이 있으면 갱신, 없으면 새로 삽입 (upsert)."""
     row = db.query(AnalysisCache).filter_by(
-        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode
+        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang
     ).first()
     payload = json.dumps(result, ensure_ascii=False)
     if row:
         row.result_json = payload
     else:
         db.add(AnalysisCache(
-            image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, result_json=payload
+            image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang,
+            result_json=payload,
         ))
     db.commit()
 

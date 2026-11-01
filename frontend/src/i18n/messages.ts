@@ -22,9 +22,9 @@ export const messages = {
     inspect: '검사',
     inspecting: '분석 중…',
     cvdLabel: '색약 유형',
-    protan: '적색',
-    deutan: '녹색',
-    tritan: '청색',
+    protan: '적색맹',
+    deutan: '녹색맹',
+    tritan: '청색맹',
     original: '원본',
     result: '결과',
     resultContent: '결과 내용',
@@ -37,6 +37,7 @@ export const messages = {
     palette: '주요 색상',
     method1: '방식1 · 화면 이미지',
     method2: '방식2 · HTML/CSS 코드',
+    codeFileName: 'HTML/CSS 코드',
     solutions: '문제 해결 방법',
     summary: '요약',
     goSolutions: '문제 해결 방법 보기',
@@ -45,7 +46,6 @@ export const messages = {
     siteInfo: '사이트 설명 · 약관',
     toTop: '맨 위로',
     footer: '대표 OO 외 2명 · 주소 학교 · 전화 학교',
-    sessionNotice: '계정과 결과는 저장되지 않습니다. 새로고침하거나 로그아웃하면 사라집니다.',
     errNoImage: '이미지를 먼저 업로드해주세요.',
     errNoCvd: '색각이상 유형을 선택해주세요.',
     errNoHtml: 'HTML 코드를 입력하거나 파일을 올려주세요.',
@@ -83,6 +83,7 @@ export const messages = {
     altSimulated: '{cvd} 계열 색각이상 시뮬레이션 화면',
     // ---- 로그인 페이지 ----
     pwLabel: '비밀번호',
+    pwHint: '최소 8자 이상',
     loginError: 'ID 또는 비밀번호가 올바르지 않습니다.',
     loginLoading: '로그인 중…',
     noAccount: '계정이 없나요?',
@@ -155,9 +156,9 @@ export const messages = {
     termsAnalysisTitle: '분석 방식',
     termsAnalysisBody:
       '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 CIE76(CIELAB ΔE)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 접근성 점수는 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.',
-    termsPrivacyTitle: '개인정보',
-    termsPrivacyBody:
-      '계정 정보와 분석 결과는 서버나 데이터베이스에 저장되지 않고 브라우저 메모리에만 임시로 보관됩니다. 새로고침하거나 로그아웃하면 사라집니다. 업로드한 이미지는 분석 직후 서버에서 폐기됩니다.',
+    termsPagePrivacyTitle: '개인정보',
+    termsPagePrivacyBody:
+      '로그인 사용자의 분석 결과는 서버 DB에 저장되어 히스토리로 활용됩니다. 비밀번호는 bcrypt 해시로만 저장됩니다. 비로그인 사용자의 분석 결과는 메모리에서만 처리되어 새로고침 시 사라집니다. 업로드한 이미지는 로그인 여부와 무관하게 분석 직후 서버에서 폐기됩니다. 인증 토큰은 서버 메모리에만 저장되어 서버 재시작 시 소멸합니다.',
     termsLimitTitle: '한계',
     termsLimitBody:
       '이미지 분석은 압축과 안티앨리어싱의 영향을 받으며, 실제 CSS 값이 아닌 화면에 보이는 색을 기준으로 합니다. 동적으로 생성되는 UI는 정확히 분석하지 못할 수 있습니다.',
@@ -183,9 +184,9 @@ export const messages = {
     inspect: 'Inspect',
     inspecting: 'Analyzing…',
     cvdLabel: 'Deficiency type',
-    protan: 'Red',
-    deutan: 'Green',
-    tritan: 'Blue',
+    protan: 'Protanopia',
+    deutan: 'Deuteranopia',
+    tritan: 'Tritanopia',
     original: 'Original',
     result: 'Result',
     resultContent: 'Findings',
@@ -198,6 +199,7 @@ export const messages = {
     palette: 'Main colors',
     method1: 'Method 1 · Screenshot',
     method2: 'Method 2 · HTML/CSS code',
+    codeFileName: 'HTML/CSS code',
     solutions: 'How to fix',
     summary: 'Summary',
     goSolutions: 'See how to fix',
@@ -206,7 +208,6 @@ export const messages = {
     siteInfo: 'About · Terms',
     toTop: 'Back to top',
     footer: 'OO and 2 others · School address · School phone',
-    sessionNotice: 'Accounts and results are not saved. They disappear on refresh or logout.',
     errNoImage: 'Upload an image first.',
     errNoCvd: 'Select a deficiency type first.',
     errNoHtml: 'Enter HTML code or upload a file first.',
@@ -244,6 +245,7 @@ export const messages = {
     altSimulated: 'Simulated screen for {cvd} color vision deficiency',
     // ---- Login page ----
     pwLabel: 'Password',
+    pwHint: 'At least 8 characters',
     loginError: 'The ID or password is incorrect.',
     loginLoading: 'Logging in…',
     noAccount: 'No account?',
@@ -317,9 +319,9 @@ export const messages = {
     termsAnalysisTitle: 'Analysis method',
     termsAnalysisBody:
       'Color vision deficiency simulation uses the Machado (2009) model, color distance uses CIE76 (CIELAB ΔE), and contrast verdicts follow the WCAG 2 AA criteria. The accessibility score is an in-house metric, not an official WCAG certification score.',
-    termsPrivacyTitle: 'Privacy',
-    termsPrivacyBody:
-      'Account information and analysis results are not stored on the server or database; they are kept only temporarily in browser memory. They disappear on refresh or logout. Uploaded images are discarded from the server right after analysis.',
+    termsPagePrivacyTitle: 'Privacy',
+    termsPagePrivacyBody:
+      'Analysis results of logged-in users are stored in the server database as history. Passwords are stored only as a bcrypt hash. Analysis results of non-logged-in users are processed in memory only and disappear on refresh. Uploaded images are discarded from the server right after analysis, regardless of login. Authentication tokens are kept in server memory only and vanish on server restart.',
     termsLimitTitle: 'Limitations',
     termsLimitBody:
       'Image analysis is affected by compression and anti-aliasing, and is based on colors as they appear on screen rather than actual CSS values. Dynamically generated UI may not be analyzed accurately.',

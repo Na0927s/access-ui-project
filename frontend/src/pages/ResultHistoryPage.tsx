@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import ResultSummary from '../components/ResultSummary'
 import ScoreBlock from '../components/ScoreBlock'
-import SessionNotice from '../components/SessionNotice'
 import { useT } from '../i18n/useT'
 import { removeServerResult, useResultStore } from '../stores/resultStore'
 import { useAuthStore } from '../stores/authStore'
@@ -60,7 +59,6 @@ export default function ResultHistoryPage() {
   return (
     <div className="flex flex-col gap-6">
       <h1 className="text-2xl font-bold">{t('myResults')}</h1>
-      <SessionNotice />
 
       {loading ? (
         <p className="text-graphite">{t('historyLoading')}</p>

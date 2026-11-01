@@ -48,10 +48,11 @@ async def analyze_image_endpoint(
     if len(data) > config.MAX_UPLOAD_BYTES:
         raise api_error("FILE_TOO_LARGE")
 
-    # 캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드가 있으면 재분석 없이 반환
-    # (한국어) 캐시는 로그인 여부와 무관하게 속도 향상 목적으로 적용
+    # 캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드 + 언어가 있으면 재분석 없이 반환
+    # (한국어) 캐시는 로그인 여부와 무관하게 속도 향상 목적으로 적용.
+    # lang을 키에 포함해 언어별 문구가 섞이지 않게 함 (ko 캐시를 en 요청에 반환 방지).
     img_hash = image_hash(data)
-    cached = get_cached(db, img_hash, cvd_type, mode)
+    cached = get_cached(db, img_hash, cvd_type, mode, lang)
     if cached is not None:
         # 캐시 적중 시에도, 로그인 사용자면 히스토리에 기록 (사용자가 같은 이미지를
         # 여러 번 검사한 이력을 보존하기 위함)
@@ -69,7 +70,7 @@ async def analyze_image_endpoint(
     try:
         result = analyze_image(img, cvd_type, mode, lang)  # 분석 파이프라인 실행
         # 캐시 저장 (비로그인 포함 — 다음 분석 속도 향상)
-        set_cached(db, img_hash, cvd_type, mode, result)
+        set_cached(db, img_hash, cvd_type, mode, lang, result)
         # 로그인 사용자면 히스토리에도 저장 (규칙 1: 비로그인은 저장 안 함)
         if user_id is not None:
             save_result(db, user_id, mode, cvd_type, result, input_meta=file.filename)
