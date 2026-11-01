@@ -22,9 +22,13 @@ RESULT_MESSAGES = {
         "ko": "색상 구별에 큰 문제가 발견되지 않았습니다.",
         "en": "No major problems with color distinguishability were found.",
     },
+    "WARNING": {
+        "ko": "일부 색상이 색각이상 환경에서 구분되기 어려울 수 있습니다.",
+        "en": "Some colors may be hard to distinguish under color vision deficiency.",
+    },
     "FAIL": {
-        "ko": "선택한 색각 이상 유형에서 일부 색상을 구별하기 어려울 수 있습니다.",
-        "en": "Some colors may be hard to distinguish for the selected deficiency type.",
+        "ko": "선택한 색각 이상 유형에서 여러 색상을 구별하기 어려울 수 있습니다.",
+        "en": "Multiple colors may be hard to distinguish for the selected deficiency type.",
     },
 }
 
@@ -47,6 +51,10 @@ DEV_RESULT = {
     "PASS": {
         "ko": "모든 요소가 명암 대비 기준을 통과했습니다.",
         "en": "All elements passed the contrast criteria.",
+    },
+    "WARNING": {
+        "ko": "{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요.",
+        "en": "{failed} elements fell below the criteria. See the fixes below.",
     },
     "FAIL": {
         "ko": "{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요.",

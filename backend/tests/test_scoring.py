@@ -9,7 +9,7 @@
 규칙 10(핵심 알고리즘은 테스트 없이 수정 금지) — 점수 공식은 현재 draft(TBD)이지만,
 현재 동작을 고정해 두어야 팀이 튜닝할 때 의도한 변경인지 회귀인지 구분할 수 있다.
 """
-from app.services.scoring import calculate_score
+from app.services.scoring import calculate_score, score_to_verdict
 
 
 def test_no_issues_is_perfect_score():
@@ -73,3 +73,40 @@ def test_score_always_in_range():
 def test_many_failures_clamped_to_zero():
     # 대비율 FAIL만 7개면 -105 → 0점
     assert calculate_score(["FAIL"] * 7, []) == 0
+
+
+# --- score_to_verdict: 점수 구간 → 전체 판정 ---
+# (한국어) 점수 구간 판정 검증 — 90↑ PASS, 70~89 WARNING, 70 미만 FAIL.
+
+def test_verdict_perfect_score_is_pass():
+    assert score_to_verdict(100) == "PASS"
+    assert score_to_verdict(90) == "PASS"  # 경계값 포함
+
+
+def test_verdict_high_score_is_warning():
+    assert score_to_verdict(89) == "WARNING"
+    assert score_to_verdict(70) == "WARNING"  # 경계값 포함
+
+
+def test_verdict_low_score_is_fail():
+    assert score_to_verdict(69) == "FAIL"
+    assert score_to_verdict(0) == "FAIL"
+
+
+def test_verdict_zero_is_fail():
+    assert score_to_verdict(0) == "FAIL"
+
+
+def test_verdict_boundaries():
+    # 89/90 경계와 69/70 경계가 정확히 나뉘는지
+    assert score_to_verdict(90) == "PASS"
+    assert score_to_verdict(89) == "WARNING"
+    assert score_to_verdict(70) == "WARNING"
+    assert score_to_verdict(69) == "FAIL"
+
+
+def test_score_and_verdict_consistent():
+    # calculate_score 결과를 바로 넣어도 판정이 점수와 일치해야 함
+    score = calculate_score(["FAIL"], [])  # 85 → WARNING
+    assert score == 85
+    assert score_to_verdict(score) == "WARNING"

@@ -57,6 +57,13 @@ WCAG_LARGE = 3.0      # 큰 텍스트 최소 대비율
 WCAG_UI = 3.0         # UI 컴포넌트(테두리·아이콘 등) 최소 대비율
 WCAG_AAA_NORMAL = 7.0 # AAA(강화) 기준 — 추천 색상 등급 판정에 사용
 
+# --- 전체 판정 점수 구간 (scoring.score_to_verdict) ---
+# 점수와 판정이 일치하도록 점수 구간 기반으로 전체 판정을 산출.
+# (한국어) 전체 판정 점수 구간 — 90↑ PASS, 70~89 WARNING, 70 미만 FAIL.
+# 이전 "이슈 1개라도 있으면 FAIL" 이분법의 모순(95점 FAIL)을 해소.
+VERDICT_PASS_SCORE = 90     # 이 점수 이상이면 PASS
+VERDICT_WARN_SCORE = 70     # 이 점수 이상(PASS 미만)이면 WARNING, 미만이면 FAIL
+
 # Color confusion thresholds in Delta E (CIE76). TBD per the design doc — the values
 # below are temporary placeholders based on common Delta E guidance
 # (~2.3 JND, <5 hard to distinguish, 5-10 marginal, >10 clearly distinct).
@@ -67,3 +74,17 @@ WCAG_AAA_NORMAL = 7.0 # AAA(강화) 기준 — 추천 색상 등급 판정에 �
 DISTINCT_MIN = 10.0   # 원본에서도 이 값 미만이면 애초에 비슷한 색 → CVD 문제로 보지 않음
 CONFUSION_FAIL = 5.0  # 시뮬레이션 후 ΔE가 이 값 미만이면 FAIL (구분 거의 불가)
 CONFUSION_WARN = 8.0  # 시뮬레이션 후 ΔE가 이 값 미만이면 WARNING (구분 애매)
+
+# Ratio-based confusion detection (complements the absolute thresholds above).
+# CIE76 ΔE overestimates the residual distance after CVD hue collapse, so a
+# saturated red/green pair (which deutan simulation should collapse) still shows
+# a large d_sim and slips through as PASS. A pair is confusing when the
+# simulation collapses MOST of the original distance AND the residual is small.
+# (한국어) 비율 기반 혼동 판정 — 위 절대 임계값을 보완.
+# CIE76 ΔE는 색조 붕괴 후 잔여 거리를 과대평가해, deutan이 붕괴시켜야 할
+# 빨강/녹색 쌍도 d_sim이 크게 나와 PASS로 빠지는 문제가 있음.
+# 시뮬레이션이 원본 거리의 대부분을 붕괴시키고 잔여도 작으면 혼동으로 본다.
+CONFUSION_FAIL_RATIO = 0.25    # 거리가 원본의 25% 이하로 붕괴 + 잔여 작으면 FAIL
+CONFUSION_WARN_RATIO = 0.50    # 거리가 원본의 50% 이하로 붕괴 + 잔여 작으면 WARNING
+CONFUSION_FAIL_ABS_MAX = 20.0  # FAIL 판정을 위한 잔여 ΔE 상한 (비율 조건과 AND)
+CONFUSION_WARN_ABS_MAX = 30.0  # WARNING 판정을 위한 잔여 ΔE 상한 (비율 조건과 AND)

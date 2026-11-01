@@ -6,7 +6,7 @@ import pytest
 from PIL import Image, ImageDraw
 
 from app.services import texts
-from app.services.analyzer import analyze_elements, analyze_image
+from app.services.analyzer import analyze_elements, analyze_image, confusion_verdict
 from app.services.recommend import recommend, verify
 from app.services.wcag import contrast_ratio
 
@@ -37,13 +37,11 @@ def test_red_on_white_gets_aa_dark_red():
     assert r > g and r > b  # still a red hue
 
 
-# Depends on the absolute Delta E confusion thresholds (CONFUSION_FAIL / CONFUSION_WARN),
-# which are TBD per the design doc. The placeholder values in config.py do not flag the
-# saturated red/green pair under deutan (Delta E ~12.8). Restore this test once the team
-# fixes the thresholds.
-# (한국어) ΔE 혼동 임계값이 임시값(TBD)이라 당연히 실패하는 테스트 — 팀이 임계값을
-# 확정하면 xfail 표시를 제거하고 복원할 것.
-@pytest.mark.xfail(reason="ΔE 판정 임계값 TBD — 팀 기준 확정 후 복원", strict=True)
+# Previously xfailed: absolute ΔE thresholds alone let saturated red/green slip
+# through as PASS under deutan (CIE76 overestimates residual distance after hue
+# collapse). The ratio-based check added to confusion_verdict now catches it.
+# (한국어) 과거 xfail: 절대 ΔE 임계값만으로는 빨강/초록이 deutan에서 PASS로 빠졌음.
+# confusion_verdict에 추가된 비율 기반 검사가 이제 이를 잡아냄.
 def test_analyze_image_red_green_status():
     # 빨강/초록 사각형이 그려진 이미지를 분석하면 색상 혼동 이슈가 잡혀야 함
     img = Image.new("RGB", (200, 100), "white")
@@ -83,7 +81,8 @@ def test_analyze_image_english_output():
     d = ImageDraw.Draw(img)
     d.rectangle([10, 10, 50, 50], fill="#FF0000")  # 4.0:1 on white -> LOW_CONTRAST issue
     out = analyze_image(img, "deutan", "user", "en")
-    assert out["result_message"] == texts.RESULT_MESSAGES["FAIL"]["en"]
+    # 전체 판정은 점수 구간 기반이라 verdict가 뭐든 result_message와 일치하면 됨
+    assert out["result_message"] == texts.RESULT_MESSAGES[out["verdict"]]["en"]
     assert out["score_notice"] == texts.SCORE_NOTICE["en"]
     assert out["issues"]
     for issue in out["issues"]:
@@ -96,7 +95,12 @@ def test_analyze_elements_english_output():
         "selector": ".button-danger", "text": "delete",
         "color": "#FFFFFF", "background": "#FF0000", "font_size_px": 16, "font_weight": 400,
     }], "protan", "en")
-    assert out["result_message"] == texts.DEV_RESULT["FAIL"]["en"].format(failed=1)
+    # 전체 판정은 점수 구간 기반. 미달 요소 1개(failed=1)와 verdict로 메시지 일관성 검증.
+    if out["verdict"] == "PASS":
+        expected = texts.DEV_RESULT["PASS"]["en"]
+    else:
+        expected = texts.DEV_RESULT[out["verdict"]]["en"].format(failed=1)
+    assert out["result_message"] == expected
     assert not _has_hangul(out["result_message"])
     for box in out["solution_boxes"]:
         assert not _has_hangul(box["problem"])
@@ -111,3 +115,57 @@ def test_recommend_english_output():
         assert not _has_hangul(c["reason"])
     for tip in rec["non_color_tips"]:
         assert not _has_hangul(tip)
+
+
+# --- confusion_verdict: 비율 기반 판정 단위 테스트 ---
+# (한국어) confusion_verdict 단위 테스트 — 절대·비율 임계값이 의도대로 동작하는지 검증.
+
+def test_confusion_already_similar_returns_none():
+    # 원본에서도 거리가 DISTINCT_MIN(10) 미만이면 CVD 문제가 아님 → None
+    assert confusion_verdict(5.0, 3.0) is None
+
+
+def test_confusion_absolute_fail():
+    # 시뮬레이션 후 잔여 ΔE가 CONFUSION_FAIL(5) 미만이면 FAIL (절대)
+    assert confusion_verdict(100.0, 3.0) == "FAIL"
+
+
+def test_confusion_absolute_warning():
+    # 잔여 ΔE가 CONFUSION_WARN(8) 미만이면 WARNING (절대)
+    assert confusion_verdict(100.0, 6.0) == "WARNING"
+
+
+def test_confusion_clearly_distinct_passes():
+    # 잔여가 크고 비율도 높으면(거의 안 줄음) PASS
+    assert confusion_verdict(100.0, 100.0) == "PASS"
+
+
+def test_confusion_ratio_catches_red_green():
+    # 빨강/초록 쌍: 원본 거리 크지만 시뮬레이션이 대부분 붕괴 → FAIL/WARNING.
+    # 절대 잔여(28)가 8보다 커서 절대 임계값은 PASS지만, 비율(0.16)이 잡아냄.
+    d_orig, d_sim = 170.0, 28.0
+    verdict = confusion_verdict(d_orig, d_sim)
+    assert verdict in ("FAIL", "WARNING")  # 적어도 WARNING은 나와야 함
+
+
+def test_confusion_ratio_strong_collapse_is_fail():
+    # 거리가 10% 미만으로 붕괴 + 잔여 15(FAIL_ABS_MAX 20 이하) → FAIL
+    assert confusion_verdict(150.0, 12.0) == "FAIL"
+
+
+def test_confusion_ratio_does_not_flag_same_hue_lightness():
+    # 같은 계열 명암(파랑/진파랑): 거리가 12%만 줄어듦 → 비율 0.88, PASS.
+    # 비율 조건이 없으면 절대값만으로 오류 없지만, 비율 조건이 false positive를 내지 않는지 확인.
+    assert confusion_verdict(27.0, 24.0) == "PASS"
+
+
+def test_confusion_ratio_warn_threshold():
+    # 거리가 약 40%로 붕괴(0.4 < WARN_RATIO 0.5) + 잔여 25(WARN_ABS_MAX 30 이하) → WARNING
+    # (FAIL_RATIO 0.25보다는 크므로 FAIL 아님)
+    assert confusion_verdict(60.0, 24.0) == "WARNING"
+
+
+def test_confusion_ratio_fail_excluded_when_residual_too_large():
+    # 비율은 FAIL 기준(0.25) 이하라도 잔여가 FAIL_ABS_MAX(20) 초과면 FAIL 아님.
+    # 대신 WARN_RATIO(0.5) 이하 + WARN_ABS_MAX(30) 이하면 WARNING.
+    assert confusion_verdict(200.0, 28.0) == "WARNING"  # ratio 0.14, 잔여 28

@@ -17,7 +17,7 @@ from .color import delta_e
 from .cvd import simulate_hex, simulate_image
 from .palette import extract_palette, flatten_on_white, resize_max_side
 from .recommend import recommend
-from .scoring import calculate_score
+from .scoring import calculate_score, score_to_verdict
 from . import texts
 from .wcag import contrast_ratio, is_large_text, judge
 
@@ -31,13 +31,24 @@ Image.MAX_IMAGE_PIXELS = config.MAX_IMAGE_PIXELS // 2
 def confusion_verdict(d_orig: float, d_sim: float) -> str | None:
     """(한국어) 색상 혼동 판정.
     - 원본에서 이미 비슷한 색이면 None (색약 때문이 아니라 원래 설계 문제 → 제외)
-    - 시뮬레이션 후 ΔE가 5 미만이면 FAIL, 8 미만이면 WARNING, 아니면 PASS
+    - 1차: 시뮬레이션 후 ΔE 절대값이 작으면 FAIL/WARNING (기존 임계값)
+    - 2차: 시뮬레이션이 원본 거리의 대부분을 붕괴시켰고 잔여도 작으면 FAIL/WARNING (비율 기반)
+      — CIE76이 색조 붕괴 후 잔여 거리를 과대평가하는 문제를 보완
     """
     if d_orig < config.DISTINCT_MIN:
         return None  # already similar in the original; not a CVD-specific issue
+    # 1차: 절대 잔여 거리가 작으면 명확히 혼동
     if d_sim < config.CONFUSION_FAIL:
         return "FAIL"
     if d_sim < config.CONFUSION_WARN:
+        return "WARNING"
+    # 2차: 거리 붕괴 비율로 판정. d_orig > 0 은 DISTINCT_MIN(>0) 필터로 보장.
+    # 빨강/녹색 쌍은 색조가 붕괴해 d_sim/d_orig 가 작아지지만, 절대 d_sim 은 크게 남아
+    # 절대 임계값만으로는 PASS로 빠지는 것을 잡아낸다.
+    ratio = d_sim / d_orig
+    if ratio < config.CONFUSION_FAIL_RATIO and d_sim < config.CONFUSION_FAIL_ABS_MAX:
+        return "FAIL"
+    if ratio < config.CONFUSION_WARN_RATIO and d_sim < config.CONFUSION_WARN_ABS_MAX:
         return "WARNING"
     return "PASS"
 
@@ -125,7 +136,9 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
         [p["verdict"] for p in contrast_pairs],
         [p["verdict"] for p in confusable_pairs],
     )
-    verdict = "FAIL" if issues else "PASS"  # 이슈가 하나라도 있으면 전체 FAIL
+    # 전체 판정은 점수 구간 기반 (80↑ PASS, 60~79 WARNING, <60 FAIL).
+    # 이전엔 "이슈 1개라도 있으면 FAIL" 이분법이라 점수 95점인데 FAIL이 되는 모순이 있었음.
+    verdict = score_to_verdict(score)
     response = {
         "cvd_type": cvd_type,
         "width": width, "height": height,
@@ -201,10 +214,12 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
                 "non_color_fix": texts.DEV_LIGHTNESS_TIP[lang],
             })
 
-    # 전체 판정: FAIL·WARNING이 하나라도 있으면 FAIL, 아니면 PASS
+    # 전체 판정: 점수 구간 기반 (80↑ PASS, 60~79 WARNING, <60 FAIL).
+    # 미달 요소 수(failed)는 메시지 표시용으로 별도 집계.
     verdicts = [r["verdict"] for r in results]
     failed = verdicts.count("FAIL") + verdicts.count("WARNING")
-    verdict = "FAIL" if failed else "PASS"
+    score = calculate_score(verdicts, [])
+    verdict = score_to_verdict(score)
     result_message = (
         texts.DEV_RESULT[verdict][lang]
         if verdict == "PASS"
