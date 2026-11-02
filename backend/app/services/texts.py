@@ -3,30 +3,42 @@
 Korean is the default language; English is returned when the frontend requests
 lang="en". This works without any AI API key — /api/ai/* remains an optional
 polish layer on top.
+
+(한국어 요약) 분석 결과에 들어가는 안내 문구 템플릿 모음 (한/영 두 언어).
+- AI 없이도 언어 전환이 되도록, AI는 여기 있는 문구를 다듬는 보조 역할만 함
+- {fg}, {bg}, {ratio} 등 중괄호 부분은 .format()으로 실제 값이 채워짐
 """
 
+# 색약 유형별 표시 이름
 CVD_LABELS = {
     "protan": {"ko": "적색 계열", "en": "red-type"},
     "deutan": {"ko": "녹색 계열", "en": "green-type"},
     "tritan": {"ko": "청색 계열", "en": "blue-type"},
 }
 
+# 이미지 분석의 전체(종합) 판정 안내 문구
 RESULT_MESSAGES = {
     "PASS": {
         "ko": "색상 구별에 큰 문제가 발견되지 않았습니다.",
         "en": "No major problems with color distinguishability were found.",
     },
+    "WARNING": {
+        "ko": "일부 색상이 색각이상 환경에서 구분되기 어려울 수 있습니다.",
+        "en": "Some colors may be hard to distinguish under color vision deficiency.",
+    },
     "FAIL": {
-        "ko": "선택한 색각 이상 유형에서 일부 색상을 구별하기 어려울 수 있습니다.",
-        "en": "Some colors may be hard to distinguish for the selected deficiency type.",
+        "ko": "선택한 색각 이상 유형에서 여러 색상을 구별하기 어려울 수 있습니다.",
+        "en": "Multiple colors may be hard to distinguish for the selected deficiency type.",
     },
 }
 
+# 저대비(대비율 미달) 이슈 문구 — {fg}=전경색, {bg}=배경색, {ratio}=대비율
 LOW_CONTRAST_ISSUE = {
     "ko": "{fg}와 {bg}의 대비율이 {ratio}:1로 일반 텍스트 기준(4.5:1)에 미달할 가능성이 있습니다.",
     "en": "The contrast between {fg} and {bg} is {ratio}:1, which may fall below the normal-text criterion (4.5:1).",
 }
 
+# 색상 혼동 이슈 문구 — {label}=색약 유형명, {a}/{b}=두 색상
 COLOR_CONFUSION_ISSUE = {
     "ko": "{label} 색각이상 환경에서 {a}와 {b}의 구분이 어려울 가능성이 있습니다. "
           "색상만으로 정보를 전달한다면 아이콘이나 텍스트를 함께 사용하세요.",
@@ -34,10 +46,15 @@ COLOR_CONFUSION_ISSUE = {
           "If color alone conveys the information, add icons or text as well.",
 }
 
+# 개발자 모드(코드 분석) 전체 판정 문구 — {failed}=미달 요소 수
 DEV_RESULT = {
     "PASS": {
         "ko": "모든 요소가 명암 대비 기준을 통과했습니다.",
         "en": "All elements passed the contrast criteria.",
+    },
+    "WARNING": {
+        "ko": "{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요.",
+        "en": "{failed} elements fell below the criteria. See the fixes below.",
     },
     "FAIL": {
         "ko": "{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요.",
@@ -45,28 +62,34 @@ DEV_RESULT = {
     },
 }
 
+# 개발자 모드 문제 카드: 대비율 미달 문제 문구 — {ratio}=대비율, {need}=적용 기준
 DEV_CONTRAST_PROBLEM = {
     "ko": "텍스트 대비율 {ratio}:1로 기준({need})에 미달합니다.",
     "en": "The text contrast ratio {ratio}:1 falls below the criterion ({need}).",
 }
 
+# 큰 텍스트 요소에게 안내할 적용 기준 문구
 NEED_LARGE = {"ko": "3:1(큰 텍스트)", "en": "3:1 large text"}
 
+# 개발자 모드 문제 카드: 색 변경 외 추가 개선 팁 (대비율 미달용)
 DEV_CONTRAST_TIP = {
     "ko": "색 변경만으로 어렵다면 배경색을 조정하거나 굵기·크기를 키우세요.",
     "en": "If a color change alone is not enough, adjust the background or increase the weight/size.",
 }
 
+# 개발자 모드 문제 카드: 명암(밝기) 문제 문구 — {label}=색약 유형명
 DEV_LIGHTNESS_PROBLEM = {
     "ko": "{label} 색각이상 환경에서 글자와 배경의 명암 차이가 작아집니다.",
     "en": "Under {label} color vision deficiency, the lightness difference between text and background becomes smaller.",
 }
 
+# 개발자 모드 문제 카드: 명암 문제 개선 팁
 DEV_LIGHTNESS_TIP = {
     "ko": "명도 차이를 더 크게 하거나 테두리·밑줄을 추가하세요.",
     "en": "Increase the lightness difference or add a border/underline.",
 }
 
+# 추천 색상 등급별 이유 설명
 GRADE_REASON = {
     "STRONG": {
         "ko": "AAA 기준(7:1) 이상으로 일반 텍스트에 충분한 대비를 제공합니다.",
@@ -82,6 +105,7 @@ GRADE_REASON = {
     },
 }
 
+# 색 이외의 개선 방법 팁 (색상 구분이 어려울 때 모양·텍스트로 보완)
 NON_COLOR_TIPS = [
     {
         "ko": "상태를 나타내는 아이콘(✓, !, ✕)을 함께 표시하세요.",
@@ -97,12 +121,14 @@ NON_COLOR_TIPS = [
     },
 ]
 
+# 접근성 점수 옆에 표시하는 고지 문구 (자체 지표임을 알림 — 규칙 7번)
 SCORE_NOTICE = {
     "ko": "접근성 점수는 본 서비스의 분석 항목을 기반으로 산출한 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.",
     "en": "The accessibility score is an in-house metric based on this service's analysis items; "
           "it is not an official WCAG certification score.",
 }
 
+# AI 설명 요청이 실패했을 때 쓰는 기본(fallback) 문구
 FALLBACK_EXPLAIN = {
     "issues": {
         "ko": "{count}개의 접근성 문제가 발견되었습니다. 아래 추천 색상과 비색상 개선 방법을 확인해보세요.",

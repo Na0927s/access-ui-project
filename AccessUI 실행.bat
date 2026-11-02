@@ -1,16 +1,6 @@
 @echo off
-
-rem Use the directory this .bat file lives in as the project root
-set "PROJECT=%~dp0"
-
-echo Access UI starting...
-
-start "Access UI Backend" cmd /k "cd /d "%PROJECT%\backend" && .venv\Scripts\python.exe -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002"
-
-start "Access UI Frontend" cmd /k "cd /d "%PROJECT%\frontend" && npm run dev -- --port 5176"
-
-timeout /t 5 /nobreak >nul
-
-start http://localhost:5176/
-
-echo Done!
+rem ColorLens 개발 서버 시작 (더블클릭용)
+rem 백엔드(8002) + 프론트엔드(5176) 실행 후 브라우저 자동 오픈.
+rem 포트 충돌/고아 프로세스는 scripts\dev.ps1 이 자동 정리.
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\dev.ps1" -Action start
+pause

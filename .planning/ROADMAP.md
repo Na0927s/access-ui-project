@@ -1,4 +1,4 @@
-# Access Ui - Roadmap
+# ColorLens - Roadmap
 
 ## Current Milestone: v0.1.0 - Foundation
 

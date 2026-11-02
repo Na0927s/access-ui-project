@@ -44,3 +44,11 @@ htmlcov/
 # Python venv
 .venv/
 venv/
+
+# SQLite database (runtime artifact, never commit)
+*.db
+*.db-shm
+*.db-wal
+
+# Smoke test artifacts
+backend/test_upload.png

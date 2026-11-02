@@ -1,15 +1,39 @@
-from fastapi import APIRouter
+"""(한국어 요약) 개발자 모드 코드 분석 API 라우터 — POST /api/developer/analyze.
+- 프론트엔드에서 색출한 HTML 요소 목록(selector, 글자색, 배경색, 폰트 정보)을 JSON으로 받아
+- analyzer.analyze_elements()로 요소별 대비 검사 + 문제 해결 카드를 생성해 반환
+- 로그인 사용자(토큰 전달 시)의 분석 결과는 DB에 저장 (규칙 1번)
+- 코드 분석은 이미지가 없으므로 캐시는 적용하지 않음 (이미지 해시 기반이 아니므로)
+"""
+from fastapi import APIRouter, Depends, Header
+from sqlalchemy.orm import Session
 
+from ..database import get_db
 from ..errors import api_error
+from ..routers.auth import current_user_id
 from ..schemas import DeveloperRequest
 from ..services.analyzer import analyze_elements
+from ..services.persistence import save_result
 
 router = APIRouter(prefix="/api/developer", tags=["developer"])
 
 
 @router.post("/analyze")
-def analyze_code(req: DeveloperRequest):
+def analyze_code(
+    req: DeveloperRequest,
+    authorization: str | None = Header(default=None),
+    db: Session = Depends(get_db),
+):
     try:
-        return analyze_elements([e.model_dump() for e in req.elements], req.cvd_type, req.lang)
+        # Pydantic 모델을 dict로 변환해 분석 파이프라인에 전달
+        result = analyze_elements([e.model_dump() for e in req.elements], req.cvd_type, req.lang)
+        # 로그인 사용자면 히스토리에 저장 (코드 모드는 input_meta를 고정 문구로)
+        # 토큰이 없거나 유효하지 않으면 비로그인(저장 안 함) — 토큰 있으면 검증해 user_id 추출
+        if authorization:
+            user_id = current_user_id(authorization)
+            save_result(
+                db, user_id, "developer-code", req.cvd_type, result,
+                input_meta="HTML/CSS 코드",
+            )
+        return result
     except Exception as e:
-        raise api_error("ANALYSIS_FAILED") from e
+        raise api_error("ANALYSIS_FAILED") from e  # 내부 오류 상세는 노출하지 않음

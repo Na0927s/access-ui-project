@@ -1,6 +1,6 @@
 # RISK MANAGEMENT
 
-**Project**: Access Ui
+**Project**: ColorLens
 **Type**: web (Single Page Application)
 **Date**: 2026-09-22
 
