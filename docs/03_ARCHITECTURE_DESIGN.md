@@ -28,7 +28,7 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 │  └─ ai.py        POST /api/ai/explain, /api/ai/translate │
 │ services/                                                │
 │  ├─ cvd.py        Machado 시뮬레이션 (NumPy)               │
-│  ├─ color.py      HEX↔RGB↔CIELAB, 거리                    │
+│  ├─ color.py      HEX↔RGB↔OKLab, 거리                      │
 │  ├─ wcag.py       상대 휘도, 대비율, 판정                   │
 │  ├─ palette.py    주요 색상 추출 (Pillow quantize)          │
 │  ├─ recommend.py  대체 색 후보 생성 + 재검증                │
@@ -48,7 +48,7 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 4. RGBA는 흰 배경과 합성, 분석용 사본은 긴 변 1200px 이하로 축소
 5. `cvd.simulate_image` → 시뮬레이션 PNG (base64)
 6. `palette.extract` → 주요 색상과 비율
-7. `analyzer`가 색상 쌍별로 대비율·원본/변환 CIE76 ΔE 계산 → 판정
+7. `analyzer`가 색상 쌍별로 대비율·원본/변환 OKLab ΔE 계산 → 판정
 8. `recommend`가 문제 색에 대해 후보 생성 → 재검증 통과분만
 9. `scoring`이 점수 산출
 10. JSON 응답. **이미지 바이트는 요청 처리 후 폐기**, 디스크 저장 없음

@@ -5,7 +5,7 @@
 import numpy as np
 from PIL import Image
 
-from app.services.color import cielab_to_hex, delta_e, hex_to_cielab
+from app.services.color import delta_e, hex_to_oklab, oklab_to_hex
 from app.services.cvd import simulate_hex, simulate_image
 
 TYPES = ("protan", "deutan", "tritan")
@@ -39,9 +39,11 @@ def test_red_green_become_confusable_for_protan_deutan():
 
 def test_tritan_keeps_red_green_distinct():
     # 청색약은 빨강-초록 축에 영향을 주지 않으므로 두 색이 여전히 명확히 구분되어야 함
+    original = delta_e(RED, GREEN)
     tritan = delta_e(simulate_hex(RED, "tritan"), simulate_hex(GREEN, "tritan"))
-    # Clearly distinct on the Delta E (CIE76) scale: well above the ~2.3 JND.
-    assert tritan > 30
+    # Tritan preserves the red-green axis: distance should barely drop.
+    # (한국어) 청색약은 빨강-초록 거리를 거의 유지해야 함 (OKLab 거리 비율로 검증)
+    assert tritan > original * 0.7
 
 
 def test_image_size_and_alpha_preserved():
@@ -54,11 +56,12 @@ def test_image_size_and_alpha_preserved():
         assert np.asarray(out)[0, 0, 3] == 128
 
 
-def test_cielab_roundtrip():
-    # HEX → CIELAB → HEX 변환을 왕복하면 원래 색으로 정확히 돌아와야 함 (역변환 검증)
+def test_oklab_roundtrip():
+    # HEX → OKLab → HEX 변환을 왕복하면 원래 색으로 정확히 돌아와야 함 (역변환 검증)
     for c in ("#FFFFFF", "#000000", "#EF4444", "#22C55E", "#4F46E5", "#767676"):
-        assert cielab_to_hex(hex_to_cielab(c)) == c
-    # L* of reference white is 100 and of black is 0 by definition.
-    # (한국어) CIELAB 정의상 흰색의 L*는 100, 검정의 L*는 0
-    assert abs(hex_to_cielab("#FFFFFF")[0] - 100.0) < 0.5
-    assert abs(hex_to_cielab("#000000")[0]) < 1e-6
+        assert oklab_to_hex(hex_to_oklab(c)) == c
+    # OKLab 정의상 흰색의 L은 1.0, 검정의 L은 0.
+    # (한국어) OKLab에서 흰색의 L=1.0, 검정의 L=0
+    assert abs(hex_to_oklab("#FFFFFF")[0] - 1.0) < 1e-6
+    assert abs(hex_to_oklab("#000000")[0]) < 1e-6
+

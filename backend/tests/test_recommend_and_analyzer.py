@@ -37,11 +37,12 @@ def test_red_on_white_gets_aa_dark_red():
     assert r > g and r > b  # still a red hue
 
 
-# Previously xfailed: absolute ΔE thresholds alone let saturated red/green slip
-# through as PASS under deutan (CIE76 overestimates residual distance after hue
-# collapse). The ratio-based check added to confusion_verdict now catches it.
-# (한국어) 과거 xfail: 절대 ΔE 임계값만으로는 빨강/초록이 deutan에서 PASS로 빠졌음.
-# confusion_verdict에 추가된 비율 기반 검사가 이제 이를 잡아냄.
+# Saturated red/green under deutan collapses to a small OKLab residual (~0.075),
+# which the absolute CONFUSION_WARN(0.08) threshold catches directly. OKLab's
+# perceptual uniformity means no ratio-based workaround is needed (the old CIE76
+# path overestimated the residual and let red/green slip through as PASS).
+# (한국어) 빨강/초록은 deutan에서 OKLab 잔여가 ~0.075로 작아져 절대 임계값이 바로 잡음.
+# OKLab이 지각 균일해 비율 꼼수 없이 절대 거리만으로 판정한다.
 def test_analyze_image_red_green_status():
     # 빨강/초록 사각형이 그려진 이미지를 분석하면 색상 혼동 이슈가 잡혀야 함
     img = Image.new("RGB", (200, 100), "white")
@@ -117,55 +118,49 @@ def test_recommend_english_output():
         assert not _has_hangul(tip)
 
 
-# --- confusion_verdict: 비율 기반 판정 단위 테스트 ---
-# (한국어) confusion_verdict 단위 테스트 — 절대·비율 임계값이 의도대로 동작하는지 검증.
+# --- confusion_verdict: OKLab 절대 거리 기반 판정 단위 테스트 ---
+# (한국어) confusion_verdict 단위 테스트 — OKLab ΔE 절대 임계값이 의도대로 동작하는지 검증.
+# OKLab이 지각 균일해 비율 기반 보조 판정 없이 절대 거리만으로 판정한다.
+# 스케일 참고: 0=동일, 1.0=검정↔흰. 빨강/초록 deutan 후 ≈ 0.075, 거의 같은 회색 ≈ 0.045.
 
 def test_confusion_already_similar_returns_none():
-    # 원본에서도 거리가 DISTINCT_MIN(10) 미만이면 CVD 문제가 아님 → None
-    assert confusion_verdict(5.0, 3.0) is None
+    # 원본에서도 거리가 DISTINCT_MIN(0.10) 미만이면 CVD 문제가 아님 → None
+    assert confusion_verdict(0.05, 0.03) is None
 
 
 def test_confusion_absolute_fail():
-    # 시뮬레이션 후 잔여 ΔE가 CONFUSION_FAIL(5) 미만이면 FAIL (절대)
-    assert confusion_verdict(100.0, 3.0) == "FAIL"
+    # 시뮬레이션 후 잔여 ΔE가 CONFUSION_FAIL(0.05) 미만이면 FAIL (사실상 동일색 붕괴)
+    assert confusion_verdict(0.50, 0.03) == "FAIL"
 
 
 def test_confusion_absolute_warning():
-    # 잔여 ΔE가 CONFUSION_WARN(8) 미만이면 WARNING (절대)
-    assert confusion_verdict(100.0, 6.0) == "WARNING"
+    # 잔여 ΔE가 CONFUSION_WARN(0.08) 미만이면 WARNING (구분 애매)
+    assert confusion_verdict(0.50, 0.06) == "WARNING"
 
 
 def test_confusion_clearly_distinct_passes():
-    # 잔여가 크고 비율도 높으면(거의 안 줄음) PASS
-    assert confusion_verdict(100.0, 100.0) == "PASS"
+    # 잔여가 크면(잘 구분됨) PASS
+    assert confusion_verdict(0.50, 0.50) == "PASS"
 
 
-def test_confusion_ratio_catches_red_green():
-    # 빨강/초록 쌍: 원본 거리 크지만 시뮬레이션이 대부분 붕괴 → FAIL/WARNING.
-    # 절대 잔여(28)가 8보다 커서 절대 임계값은 PASS지만, 비율(0.16)이 잡아냄.
-    d_orig, d_sim = 170.0, 28.0
-    verdict = confusion_verdict(d_orig, d_sim)
-    assert verdict in ("FAIL", "WARNING")  # 적어도 WARNING은 나와야 함
+def test_confusion_catches_red_green_collapse():
+    # 빨강/초록 deutan 실측값: 원본 0.3638 → 잔여 0.0748 → WARNING (상태색 혼동 잡힘)
+    # OKLab 절대 거리만으로 붕괴를 잡아냄 (비율 꼼수 불필요).
+    assert confusion_verdict(0.3638, 0.0748) == "WARNING"
 
 
-def test_confusion_ratio_strong_collapse_is_fail():
-    # 거리가 10% 미만으로 붕괴 + 잔여 15(FAIL_ABS_MAX 20 이하) → FAIL
-    assert confusion_verdict(150.0, 12.0) == "FAIL"
+def test_confusion_does_not_flag_same_hue_lightness():
+    # 같은 계열 명암(진파랑/파랑): 잔여가 0.08 이상이면 PASS.
+    # 실측값 기준 #1E3A8A vs #3B82F6 → 원본 0.25, 시뮬레이션 후 ~0.24.
+    assert confusion_verdict(0.25, 0.24) == "PASS"
 
 
-def test_confusion_ratio_does_not_flag_same_hue_lightness():
-    # 같은 계열 명암(파랑/진파랑): 거리가 12%만 줄어듦 → 비율 0.88, PASS.
-    # 비율 조건이 없으면 절대값만으로 오류 없지만, 비율 조건이 false positive를 내지 않는지 확인.
-    assert confusion_verdict(27.0, 24.0) == "PASS"
+def test_confusion_warn_threshold_boundary():
+    # 잔여가 CONFUSION_WARN(0.08) 경계 바로 아래면 WARNING
+    assert confusion_verdict(0.40, 0.075) == "WARNING"
 
 
-def test_confusion_ratio_warn_threshold():
-    # 거리가 약 40%로 붕괴(0.4 < WARN_RATIO 0.5) + 잔여 25(WARN_ABS_MAX 30 이하) → WARNING
-    # (FAIL_RATIO 0.25보다는 크므로 FAIL 아님)
-    assert confusion_verdict(60.0, 24.0) == "WARNING"
+def test_confusion_just_above_warn_passes():
+    # 잔여가 CONFUSION_WARN(0.08) 이상이면 PASS (경계 바로 위)
+    assert confusion_verdict(0.40, 0.085) == "PASS"
 
-
-def test_confusion_ratio_fail_excluded_when_residual_too_large():
-    # 비율은 FAIL 기준(0.25) 이하라도 잔여가 FAIL_ABS_MAX(20) 초과면 FAIL 아님.
-    # 대신 WARN_RATIO(0.5) 이하 + WARN_ABS_MAX(30) 이하면 WARNING.
-    assert confusion_verdict(200.0, 28.0) == "WARNING"  # ratio 0.14, 잔여 28

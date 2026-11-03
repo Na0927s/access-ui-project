@@ -48,7 +48,9 @@ SIMULATION_MAX_SIDE = 1200        # 시뮬레이션 결과 이미지의 최대 �
 PALETTE_MAX_SIDE = 400            # 팔레트 추출용 축소 크기 (400px이면 색 분포 파악에 충분)
 PALETTE_MAX_COLORS = 8           # 결과에 보여줄 주요 색상 개수 상한
 PALETTE_MIN_RATIO = 0.005         # 화면의 0.5% 미만으로 차지하는 색상은 무시
-PALETTE_MERGE_DISTANCE = 3.0  # temporary Delta E value (TBD per design doc) — 비슷한 색 병합 기준 ΔE
+# OKLab 거리 기준(검정=0~흰=1.0 스케일). 거의 같은 색(#808080 vs #828282 ≈ 0.007)은 병합,
+# 인접 색조(빨강 vs 주황 ≈ 0.10)는 분리하도록 0.03으로 설정.
+PALETTE_MERGE_DISTANCE = 0.03  # 비슷한 색 병합 기준 (OKLab ΔE). TBD per design doc
 CONTRAST_PAIR_MIN_RATIO = 0.01    # 대비 검사에 포함할 색상의 최소 비율 (1%)
 
 # --- WCAG AA 기준 (디자인 문서의 알고리즘 규칙) ---
@@ -64,27 +66,19 @@ WCAG_AAA_NORMAL = 7.0 # AAA(강화) 기준 — 추천 색상 등급 판정에 �
 VERDICT_PASS_SCORE = 90     # 이 점수 이상이면 PASS
 VERDICT_WARN_SCORE = 70     # 이 점수 이상(PASS 미만)이면 WARNING, 미만이면 FAIL
 
-# Color confusion thresholds in Delta E (CIE76). TBD per the design doc — the values
-# below are temporary placeholders based on common Delta E guidance
-# (~2.3 JND, <5 hard to distinguish, 5-10 marginal, >10 clearly distinct).
-# The team must tune them with sample UIs before treating them as final.
-# (한국어) 색상 혼동 판정 임계값 — 아래 값들은 임시치이며 팀이 샘플 UI로 튜닝해야 함.
-# ΔE 참고: 약 2.3 = JND(just noticeable difference, 겨우 구분됨) / 5 미만 = 구분 어려움
-#          5~10 = 애매함 / 10 초과 = 명확히 구분됨
-DISTINCT_MIN = 10.0   # 원본에서도 이 값 미만이면 애초에 비슷한 색 → CVD 문제로 보지 않음
-CONFUSION_FAIL = 5.0  # 시뮬레이션 후 ΔE가 이 값 미만이면 FAIL (구분 거의 불가)
-CONFUSION_WARN = 8.0  # 시뮬레이션 후 ΔE가 이 값 미만이면 WARNING (구분 애매)
-
-# Ratio-based confusion detection (complements the absolute thresholds above).
-# CIE76 ΔE overestimates the residual distance after CVD hue collapse, so a
-# saturated red/green pair (which deutan simulation should collapse) still shows
-# a large d_sim and slips through as PASS. A pair is confusing when the
-# simulation collapses MOST of the original distance AND the residual is small.
-# (한국어) 비율 기반 혼동 판정 — 위 절대 임계값을 보완.
-# CIE76 ΔE는 색조 붕괴 후 잔여 거리를 과대평가해, deutan이 붕괴시켜야 할
-# 빨강/녹색 쌍도 d_sim이 크게 나와 PASS로 빠지는 문제가 있음.
-# 시뮬레이션이 원본 거리의 대부분을 붕괴시키고 잔여도 작으면 혼동으로 본다.
-CONFUSION_FAIL_RATIO = 0.25    # 거리가 원본의 25% 이하로 붕괴 + 잔여 작으면 FAIL
-CONFUSION_WARN_RATIO = 0.50    # 거리가 원본의 50% 이하로 붕괴 + 잔여 작으면 WARNING
-CONFUSION_FAIL_ABS_MAX = 20.0  # FAIL 판정을 위한 잔여 ΔE 상한 (비율 조건과 AND)
-CONFUSION_WARN_ABS_MAX = 30.0  # WARNING 판정을 위한 잔여 ΔE 상한 (비율 조건과 AND)
+# Color confusion thresholds in OKLab ΔE. OKLab is perceptually uniform, so an
+# absolute residual distance alone reflects how distinguishable two colors remain
+# after CVD simulation — no ratio-based workaround is needed (unlike the old
+# CIE76 path, which overestimated the residual after hue collapse).
+# Scale: 0 = identical, 1.0 = black↔white (full range). JND-level differences
+# (≈1-2 RGB levels) measure around 0.003-0.01.
+# Measured reference points (see scripts/calibrate_oklab.py):
+#   빨강/녹색(deutan 후) = 0.075  → WARNING (상태색 혼동 잡힘)
+#   빨강/녹색(tritan 후) = 0.392  → PASS (청색약은 빨강/녹색 보존)
+#   거의 같은 회색       = 0.045  → 판정 제외 (원래 비슷한 색)
+# The team must tune these with sample UIs before treating them as final.
+# (한국어) 색상 혼동 판정 임계값 (OKLab ΔE) — 팀이 샘플 UI로 튜닝해야 함.
+# OKLab이 지각 균일해 절대 거리만으로 판정 가능 (비율 꼼수 불필요).
+DISTINCT_MIN = 0.10   # 원본에서도 이 값 미만이면 애초에 비슷한 색 → CVD 문제로 보지 않음
+CONFUSION_FAIL = 0.05  # 시뮬레이션 후 ΔE가 이 값 미만이면 FAIL (사실상 동일색으로 붕괴)
+CONFUSION_WARN = 0.08  # 시뮬레이션 후 ΔE가 이 값 미만이면 WARNING (구분 애매)

@@ -29,26 +29,18 @@ Image.MAX_IMAGE_PIXELS = config.MAX_IMAGE_PIXELS // 2
 
 
 def confusion_verdict(d_orig: float, d_sim: float) -> str | None:
-    """(한국어) 색상 혼동 판정.
+    """(한국어) 색상 혼동 판정. OKLab ΔE(지각 균일) 기준 절대 거리만으로 판정.
     - 원본에서 이미 비슷한 색이면 None (색약 때문이 아니라 원래 설계 문제 → 제외)
-    - 1차: 시뮬레이션 후 ΔE 절대값이 작으면 FAIL/WARNING (기존 임계값)
-    - 2차: 시뮬레이션이 원본 거리의 대부분을 붕괴시켰고 잔여도 작으면 FAIL/WARNING (비율 기반)
-      — CIE76이 색조 붕괴 후 잔여 거리를 과대평가하는 문제를 보완
+    - 시뮬레이션 후 잔여 ΔE가 작으면 FAIL/WARNING
+    OKLab이 지각 균일해 색조 붕괴 후 잔여 거리를 정확히 반영하므로, 과거 CIE76처럼
+    비율 기반 보조 판정이 필요 없다.
     """
     if d_orig < config.DISTINCT_MIN:
         return None  # already similar in the original; not a CVD-specific issue
-    # 1차: 절대 잔여 거리가 작으면 명확히 혼동
+    # 시뮬레이션 후 잔여 거리가 작으면 혼동
     if d_sim < config.CONFUSION_FAIL:
         return "FAIL"
     if d_sim < config.CONFUSION_WARN:
-        return "WARNING"
-    # 2차: 거리 붕괴 비율로 판정. d_orig > 0 은 DISTINCT_MIN(>0) 필터로 보장.
-    # 빨강/녹색 쌍은 색조가 붕괴해 d_sim/d_orig 가 작아지지만, 절대 d_sim 은 크게 남아
-    # 절대 임계값만으로는 PASS로 빠지는 것을 잡아낸다.
-    ratio = d_sim / d_orig
-    if ratio < config.CONFUSION_FAIL_RATIO and d_sim < config.CONFUSION_FAIL_ABS_MAX:
-        return "FAIL"
-    if ratio < config.CONFUSION_WARN_RATIO and d_sim < config.CONFUSION_WARN_ABS_MAX:
         return "WARNING"
     return "PASS"
 

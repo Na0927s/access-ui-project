@@ -155,7 +155,7 @@ export const messages = {
       'ColorLens는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.',
     termsAnalysisTitle: '분석 방식',
     termsAnalysisBody:
-      '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 CIE76(CIELAB ΔE)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 접근성 점수는 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.',
+      '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 OKLab ΔE(Ottosson 2020)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 접근성 점수는 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.',
     termsPagePrivacyTitle: '개인정보',
     termsPagePrivacyBody:
       '로그인 사용자의 분석 결과는 서버 DB에 저장되어 히스토리로 활용됩니다. 비밀번호는 bcrypt 해시로만 저장됩니다. 비로그인 사용자의 분석 결과는 메모리에서만 처리되어 새로고침 시 사라집니다. 업로드한 이미지는 로그인 여부와 무관하게 분석 직후 서버에서 폐기됩니다. 인증 토큰은 서버 메모리에만 저장되어 서버 재시작 시 소멸합니다.',
@@ -318,7 +318,7 @@ export const messages = {
       'ColorLens is a school team project that analyzes whether web screen colors stay distinguishable for users with color vision deficiency, and suggests improvements.',
     termsAnalysisTitle: 'Analysis method',
     termsAnalysisBody:
-      'Color vision deficiency simulation uses the Machado (2009) model, color distance uses CIE76 (CIELAB ΔE), and contrast verdicts follow the WCAG 2 AA criteria. The accessibility score is an in-house metric, not an official WCAG certification score.',
+      'Color vision deficiency simulation uses the Machado (2009) model, color distance uses OKLab ΔE (Ottosson 2020), and contrast verdicts follow the WCAG 2 AA criteria. The accessibility score is an in-house metric, not an official WCAG certification score.',
     termsPagePrivacyTitle: 'Privacy',
     termsPagePrivacyBody:
       'Analysis results of logged-in users are stored in the server database as history. Passwords are stored only as a bcrypt hash. Analysis results of non-logged-in users are processed in memory only and disappear on refresh. Uploaded images are discarded from the server right after analysis, regardless of login. Authentication tokens are kept in server memory only and vanish on server restart.',

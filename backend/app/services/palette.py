@@ -51,7 +51,7 @@ def extract_palette(img: Image.Image) -> list[dict]:
         rgb = pal[idx * 3: idx * 3 + 3]             # 팔레트표에서 인덱스로 RGB 조회
         hex_c = rgb_to_hex(rgb)
         ratio = count / total                        # 화면에서 차지하는 비율
-        # 이미 수집한 색 중 ΔE 3 미만(거의 같은 색)이 있으면 새 색상 추가 대신 비율만 합침
+        # 이미 수집한 색 중 OKLab ΔE 0.03 미만(거의 같은 색)이 있으면 새 색상 추가 대신 비율만 합침
         merged = False
         for c in colors:
             if delta_e(c["hex"], hex_c) < config.PALETTE_MERGE_DISTANCE:
