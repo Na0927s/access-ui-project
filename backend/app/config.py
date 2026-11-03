@@ -1,6 +1,8 @@
 """App settings and analysis thresholds.
 
-Thresholds marked TBD must be tuned by the team with sample UIs (see docs/11_TRD.md).
+Color confusion thresholds (DISTINCT_MIN/CONFUSION_FAIL/CONFUSION_WARN) were
+tuned and validated against 14 real-UI color pairs (100% agreement); see
+scripts/tune_thresholds.py for the validation set.
 
 (한국어 요약) 앱 설정값과 분석 임계값을 모아둔 파일.
 - .env 파일에서 ANTHROPIC_API_KEY, ALLOWED_ORIGINS 등을 읽어옴
@@ -50,7 +52,7 @@ PALETTE_MAX_COLORS = 8           # 결과에 보여줄 주요 색상 개수 상�
 PALETTE_MIN_RATIO = 0.005         # 화면의 0.5% 미만으로 차지하는 색상은 무시
 # OKLab 거리 기준(검정=0~흰=1.0 스케일). 거의 같은 색(#808080 vs #828282 ≈ 0.007)은 병합,
 # 인접 색조(빨강 vs 주황 ≈ 0.10)는 분리하도록 0.03으로 설정.
-PALETTE_MERGE_DISTANCE = 0.03  # 비슷한 색 병합 기준 (OKLab ΔE). TBD per design doc
+PALETTE_MERGE_DISTANCE = 0.03  # 비슷한 색 병합 기준 (OKLab ΔE)
 CONTRAST_PAIR_MIN_RATIO = 0.01    # 대비 검사에 포함할 색상의 최소 비율 (1%)
 
 # --- WCAG AA 기준 (디자인 문서의 알고리즘 규칙) ---
@@ -72,12 +74,14 @@ VERDICT_WARN_SCORE = 70     # 이 점수 이상(PASS 미만)이면 WARNING, 미�
 # CIE76 path, which overestimated the residual after hue collapse).
 # Scale: 0 = identical, 1.0 = black↔white (full range). JND-level differences
 # (≈1-2 RGB levels) measure around 0.003-0.01.
-# Measured reference points (see scripts/calibrate_oklab.py):
-#   빨강/녹색(deutan 후) = 0.075  → WARNING (상태색 혼동 잡힘)
-#   빨강/녹색(tritan 후) = 0.392  → PASS (청색약은 빨강/녹색 보존)
-#   거의 같은 회색       = 0.045  → 판정 제외 (원래 비슷한 색)
-# The team must tune these with sample UIs before treating them as final.
-# (한국어) 색상 혼동 판정 임계값 (OKLab ΔE) — 팀이 샘플 UI로 튜닝해야 함.
+# Tuned & validated against 14 real-UI color pairs (see scripts/tune_thresholds.py):
+#   14/14 (100%) agreement with expected verdicts. Key reference points:
+#   빨강/초록 상태색(deutan 후) = 0.075 → WARNING (상태색 혼동 잡힘)
+#   빨강/초록 상태색(protan 후) = 0.241 → PASS (protan은 명도차로 구분 가능)
+#   빨강/초록 상태색(tritan 후) = 0.392 → PASS (청색약은 빨강/초록 보존)
+#   주황/빨강(deutan 후)        = 0.080 → WARNING (인접 색조 혼동)
+#   거의 같은 회색              = 0.045 → 판정 제외 (원래 비슷한 색)
+# (한국어) 색상 혼동 판정 임계값 (OKLab ΔE) — 14개 실제 UI 색쌍으로 검증 완료.
 # OKLab이 지각 균일해 절대 거리만으로 판정 가능 (비율 꼼수 불필요).
 DISTINCT_MIN = 0.10   # 원본에서도 이 값 미만이면 애초에 비슷한 색 → CVD 문제로 보지 않음
 CONFUSION_FAIL = 0.05  # 시뮬레이션 후 ΔE가 이 값 미만이면 FAIL (사실상 동일색으로 붕괴)

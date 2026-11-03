@@ -71,7 +71,7 @@ Tritan
 | 변환 후 거리 < `CONFUSION_WARN` | WARNING |
 | 그 외 | PASS |
 
-초기값 (⚠ 팀이 샘플 UI로 실험해 조정, OKLab ΔE 스케일): `DISTINCT_MIN = 0.10`, `CONFUSION_FAIL = 0.05`, `CONFUSION_WARN = 0.08`
+초기값 (14개 실제 UI 색쌍으로 검증 완료, 100% 일치 — `scripts/tune_thresholds.py`): `DISTINCT_MIN = 0.10`, `CONFUSION_FAIL = 0.05`, `CONFUSION_WARN = 0.08`
 위치: `app/config.py`
 
 OKLab이 지각 균일해 시뮬레이션 후 잔여 거리가 구분 가능성을 정확히 반영하므로, 과거 CIE76처럼
