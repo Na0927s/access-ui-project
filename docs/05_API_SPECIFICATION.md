@@ -8,9 +8,9 @@
 
 ## Overview
 
-- Base URL: `http://localhost:8000`
+- Base URL: `http://localhost:8002`
 - 자동 문서: `/docs` (Swagger UI)
-- 인증 없음. **회원·로그인 API는 존재하지 않는다** (프론트엔드 메모리 처리)
+- 인증: in-memory 세션 토큰(opaque). `Authorization: Bearer` 헤더로 전달하며 user_id는 URL 경로로 받지 않음 (회원가입·로그인·사용자 API 존재)
 - 공통 오류 형식: `{ "code": "STRING", "message": "사용자용 메시지" }`
 - `cvd_type`: `protan`(적색 계열) | `deutan`(녹색 계열) | `tritan`(청색 계열)
 
@@ -139,7 +139,7 @@
 
 ## CORS
 
-- 개발: `http://localhost:5173` 허용
+- 개발: `http://localhost:5176` 허용
 - 운영 도메인은 환경 변수 `ALLOWED_ORIGINS`로 지정
 
 

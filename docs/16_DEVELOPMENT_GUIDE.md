@@ -24,13 +24,13 @@ cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --port 8002
 pytest
 
 # Frontend
 cd frontend
 npm install
-npm run dev        # http://localhost:5173 (/api는 8000으로 프록시)
+npm run dev        # http://localhost:5176 (/api는 8002로 프록시)
 ```
 
 ## 역할 분담
@@ -67,8 +67,9 @@ npm run dev        # http://localhost:5173 (/api는 8000으로 프록시)
 ## 코드 리뷰 체크리스트
 
 - [ ] localStorage·sessionStorage·쿠키·persist 사용 없음
-- [ ] DB·ORM·회원 API 추가 없음
-- [ ] 업로드 이미지 디스크 저장 없음
+- [ ] 업로드 이미지 바이트 DB·디스크 저장 없음 (SHA-256 해시만 캐시 키)
+- [ ] 비로그인 사용자 결과 DB 저장 없음 (로그인 사용자만 영속화)
+- [ ] 인가는 Bearer 토큰에서 user_id 추출 (URL 경로로 받지 않음)
 - [ ] 판정·선택 상태를 색만으로 표시하지 않음
 - [ ] 사용자 모드에 문제 해결 방법/요약 영역 없음
 - [ ] 핵심 계산에 테스트 있음

@@ -8,21 +8,22 @@
 
 ## Overview
 
-React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 없고**, 서버는 상태를 갖지 않는다(stateless).
+React SPA와 FastAPI 분석 서버의 2계층 구조. 백엔드는 SQLite(WAL)를 통해 로그인 사용자의 분석 결과를 영속화하고, in-memory 세션 토큰으로 인가한다. 업로드 이미지 바이트는 DB·디스크에 쓰지 않고 메모리(BytesIO)에서만 처리한다.
 
 ```
 ┌──────────────────────── Browser ────────────────────────┐
 │ React SPA (Vite, TS, Tailwind)                          │
 │  ├─ pages / components                                  │
 │  ├─ Zustand (메모리 전용, persist 없음)                    │
-│  │   ├─ authStore   : 가입 계정 목록, 현재 사용자            │
+│  │   ├─ authStore   : 세션 토큰, 현재 사용자 (메모리만)       │
 │  │   ├─ resultStore : 이번 세션의 분석 결과                 │
 │  │   └─ uiStore     : 언어(ko/en)                        │
 │  └─ api/client.ts ── fetch ──┐                           │
 └──────────────────────────────┼───────────────────────────┘
-                               ▼  HTTP (JSON / multipart)
-┌──────────────────── FastAPI (stateless) ────────────────┐
+                               ▼  HTTP (JSON / multipart, Bearer 토큰)
+┌──────────────────── FastAPI ────────────────────────────┐
 │ routers/                                                 │
+│  ├─ auth.py      /api/auth (signup, login, me, history)  │
 │  ├─ analysis.py  POST /api/analysis/image                │
 │  ├─ developer.py POST /api/developer/analyze             │
 │  └─ ai.py        POST /api/ai/explain, /api/ai/translate │
@@ -32,9 +33,16 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 │  ├─ wcag.py       상대 휘도, 대비율, 판정                   │
 │  ├─ palette.py    주요 색상 추출 (Pillow quantize)          │
 │  ├─ recommend.py  대체 색 후보 생성 + 재검증                │
-│  ├─ scoring.py    접근성 점수                              │
+│  ├─ scoring.py    접근성 점수 + 전체 판정                   │
 │  ├─ analyzer.py   전체 분석 파이프라인                      │
+│  ├─ persistence.py 분석 결과 영속화 (로그인 사용자만)         │
+│  ├─ security.py   bcrypt 해시                             │
+│  ├─ session.py    in-memory 세션 토큰                     │
 │  └─ ai_client.py  Claude API 호출 (선택)                   │
+│ ┌─────────────────────────────────────────────────────┐ │
+│ │ SQLite (WAL) — User / AnalysisResult / AnalysisCache │ │
+│ │ (이미지 바이트 X, SHA-256 해시만 캐시 키로 저장)        │ │
+│ └─────────────────────────────────────────────────────┘ │
 └──────────────────────────────┬───────────────────────────┘
                                ▼ (선택, 키가 있을 때만)
                         Anthropic Claude API
@@ -63,12 +71,14 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 5. 서버가 요소별 대비율·판정·시뮬레이션 거리 계산, 문제 해결 박스(`solution_boxes`)와 CSS 수정안 생성
 6. 프론트엔드가 상세 결과 표와 문제 해결 카드·요약 렌더링
 
-## 인증 설계 (저장 없음)
+## 인증·저장 설계 (로그인 여부 차등)
 
-- 백엔드에 회원 API가 없다.
-- `authStore`가 메모리에 계정 목록을 보관. 비밀번호는 Web Crypto SHA-256 해시로만 보관(데모용, 보안 인증 아님)
-- 새로고침하면 JS 메모리가 초기화되어 계정·로그인·결과가 모두 사라진다.
-- 로그아웃 시 `currentUser`와 `resultStore`를 비운다.
+- 백엔드에 회원 API(`/api/auth`)가 있다: 회원가입·로그인·내 정보·히스토리·회원탈퇴.
+- 비밀번호는 **bcrypt 해시**(rounds=12)로만 저장 (평문 금지).
+- 로그인 성공 시 **in-memory 세션 토큰(opaque)**을 발급. 보호 엔드포인트는 `Authorization: Bearer` 헤더에서 user_id를 추출 (user_id를 URL 경로로 받지 않아 타 사용자 접근 차단).
+- 토큰·세션은 서버 메모리에만 저장 (서버 재시작 시 소멸, 영속 세션 금지). 브라우저 저장소(localStorage/sessionStorage/쿠키)에는 쓰지 않고 프론트 메모리에만 보관.
+- **저장 정책 차등**: 비로그인 사용자의 분석 결과는 메모리에서만 처리(저장 X, 새로고침 시 소멸). 로그인 사용자의 결과는 SQLite DB에 영속화해 히스토리·캐시·통계로 활용.
+- **이미지 비저장**: 업로드 이미지 바이트는 로그인 여부 무관하게 DB·디스크에 쓰지 않고 BytesIO로만 처리. 캐시 키로만 SHA-256 해시를 저장.
 
 ## 설계 결정
 
@@ -76,7 +86,8 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 |---|---|
 | 서버 Pillow 처리 | 분석 로직을 Python 한 곳에 모아 팀원 2가 관리·테스트 |
 | NumPy 벡터 연산 | 픽셀 단위 Python 루프는 느림 |
-| stateless 서버 | DB 없음, 수평 확장·배포 단순 |
+| in-memory 세션 토큰 | 영속 세션·JWT·쿠키 금지 조건 + 서버 재시작 시 로그인 소멸(의도적) |
+| SQLite (WAL) | 로그인 사용자 결과 영속화, 서버 재시작에도 유지, 별도 DB 서버 불필요 |
 | SPA | 페이지 이동 시 메모리 상태 유지 |
 | 방식2를 브라우저에서 추출 | 브라우저가 CSS 캐스케이드를 정확히 계산, 서버는 색 판정만 |
 
@@ -85,9 +96,9 @@ React SPA와 FastAPI 분석 서버의 2계층 구조. **데이터베이스가 �
 
 ## Tech Stack Context
 
-- **Backend**: Python 3.12 / FastAPI / Pillow
+- **Backend**: Python 3.12 / FastAPI / Pillow / NumPy / httpx
 - **Frontend**: React + TypeScript / TailwindCSS / Zustand
-- **Database**: 없음
+- **Database**: SQLite (WAL) / SQLAlchemy 2.0 ORM / bcrypt
 - **Infrastructure**: 없음
 
 ---
