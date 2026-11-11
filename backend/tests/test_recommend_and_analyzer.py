@@ -53,8 +53,8 @@ def test_analyze_image_red_green_status():
     assert out["simulated_image"].startswith("data:image/png;base64,")  # base64 이미지 반환
     assert out["palette"][0]["hex"] == "#FFFFFF"     # 가장 많은 색 = 흰 배경
     assert any(p["verdict"] in ("FAIL", "WARNING") for p in out["confusable_pairs"])
-    assert 0 <= out["score"] <= 100
-    assert out["score_notice"] == texts.SCORE_NOTICE["ko"]
+    assert "score" not in out            # 점수는 응답에 노출하지 않음
+    assert "score_notice" not in out
 
 
 def test_developer_button_danger():
@@ -84,7 +84,7 @@ def test_analyze_image_english_output():
     out = analyze_image(img, "deutan", "user", "en")
     # 전체 판정은 점수 구간 기반이라 verdict가 뭐든 result_message와 일치하면 됨
     assert out["result_message"] == texts.RESULT_MESSAGES[out["verdict"]]["en"]
-    assert out["score_notice"] == texts.SCORE_NOTICE["en"]
+    assert "score" not in out and "score_notice" not in out
     assert out["issues"]
     for issue in out["issues"]:
         assert not _has_hangul(issue["message"])

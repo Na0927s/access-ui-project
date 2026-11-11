@@ -16,41 +16,59 @@ CVD_LABELS = {
     "tritan": {"ko": "청색 계열", "en": "blue-type"},
 }
 
-# 이미지 분석의 전체(종합) 판정 안내 문구
+# 이미지 분석의 전체(종합) 판정 안내 문구 — 일반인도 이해하기 쉬운 표현
 RESULT_MESSAGES = {
     "PASS": {
-        "ko": "색상 구별에 큰 문제가 발견되지 않았습니다.",
-        "en": "No major problems with color distinguishability were found.",
+        "ko": "선택한 색각이상 환경에서도 색들이 비교적 잘 구분됩니다. 큰 문제는 없어요.",
+        "en": "Colors stay relatively distinguishable under the selected color vision deficiency. No major issues.",
     },
     "WARNING": {
-        "ko": "일부 색상이 색각이상 환경에서 구분되기 어려울 수 있습니다.",
-        "en": "Some colors may be hard to distinguish under color vision deficiency.",
+        "ko": "일부 색이 색각이상 환경에서는 겹쳐 보일 수 있어요. 아래에서 어떤 색인지 확인해 보세요.",
+        "en": "Some colors may overlap under color vision deficiency. See below for which ones.",
     },
     "FAIL": {
-        "ko": "선택한 색각 이상 유형에서 여러 색상을 구별하기 어려울 수 있습니다.",
-        "en": "Multiple colors may be hard to distinguish for the selected deficiency type.",
+        "ko": "여러 색이 선택한 색각이상 환경에서 잘 구분되지 않을 수 있어요. 아래 안내를 따라 바꿔보는 걸 권해요.",
+        "en": "Multiple colors may be hard to tell apart for the selected deficiency type. Following the guidance below is recommended.",
     },
 }
 
-# 저대비(대비율 미달) 이슈 문구 — {fg}=전경색, {bg}=배경색, {ratio}=대비율
+# 저대비(대비율 미달) 이슈 문구 — 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 기술적으로.
+# 사용자 모드는 색 칩이 옆에 표시되므로 "이 두 색"으로 지칭. 행동을 구체적으로 안내.
 LOW_CONTRAST_ISSUE = {
-    "ko": "{fg}와 {bg}의 대비율이 {ratio}:1로 일반 텍스트 기준(4.5:1)에 미달할 가능성이 있습니다.",
-    "en": "The contrast between {fg} and {bg} is {ratio}:1, which may fall below the normal-text criterion (4.5:1).",
+    "user": {
+        "ko": "이 두 색의 밝고 어두움 차이가 충분하지 않아, 글자가 배경에 묻혀 잘 안 보일 수 있어요. "
+              "글자색을 더 진하게 하거나 배경을 바꿔보세요.",
+        "en": "These two colors don't differ enough in lightness, so the text may blend into the background. "
+              "Try making the text darker or changing the background.",
+    },
+    "developer": {
+        "ko": "{fg}와 {bg}의 대비율이 {ratio}:1로 일반 텍스트 기준(4.5:1)에 미달합니다.",
+        "en": "The contrast between {fg} and {bg} is {ratio}:1, below the normal-text criterion (4.5:1).",
+    },
 }
 
-# 색상 혼동 이슈 문구 — {label}=색약 유형명, {a}/{b}=두 색상
+# 색상 혼동 이슈 문구 — 모드별. {label}=색약 유형명, {a}/{b}=두 색상(개발자 모드만 사용)
+# 사용자 모드는 "이 두 색"으로 지칭하고 색으로만 정보 전달할 때의 위험을 쉽게 설명.
 COLOR_CONFUSION_ISSUE = {
-    "ko": "{label} 색각이상 환경에서 {a}와 {b}의 구분이 어려울 가능성이 있습니다. "
-          "색상만으로 정보를 전달한다면 아이콘이나 텍스트를 함께 사용하세요.",
-    "en": "Under {label} color vision deficiency, {a} and {b} may be hard to tell apart. "
-          "If color alone conveys the information, add icons or text as well.",
+    "user": {
+        "ko": "{label} 환경에서는 이 두 색이 비슷하게 보여 헷갈릴 수 있어요. "
+              "색으로만 정보를 알려준다면 아이콘이나 글자를 함께 표시하는 것이 좋아요.",
+        "en": "Under {label} vision, these two colors can look similar and be confusing. "
+              "If color alone carries the meaning, it helps to also add an icon or text label.",
+    },
+    "developer": {
+        "ko": "{label} 색각이상 환경에서 {a}와 {b}의 구분이 어려울 가능성이 있습니다. "
+              "색상만으로 정보를 전달한다면 아이콘이나 텍스트를 함께 사용하세요.",
+        "en": "Under {label} color vision deficiency, {a} and {b} may be hard to tell apart. "
+              "If color alone conveys the information, add icons or text as well.",
+    },
 }
 
 # 개발자 모드(코드 분석) 전체 판정 문구 — {failed}=미달 요소 수
 DEV_RESULT = {
     "PASS": {
-        "ko": "모든 요소가 명암 대비 기준을 통과했습니다.",
-        "en": "All elements passed the contrast criteria.",
+        "ko": "모든 요소가 색상 대비 기준을 통과했습니다.",
+        "en": "All elements passed the color-contrast criteria.",
     },
     "WARNING": {
         "ko": "{failed}개 요소가 기준에 미달했습니다. 아래 문제 해결 방법을 확인하세요.",
@@ -75,18 +93,6 @@ NEED_LARGE = {"ko": "3:1(큰 텍스트)", "en": "3:1 large text"}
 DEV_CONTRAST_TIP = {
     "ko": "색 변경만으로 어렵다면 배경색을 조정하거나 굵기·크기를 키우세요.",
     "en": "If a color change alone is not enough, adjust the background or increase the weight/size.",
-}
-
-# 개발자 모드 문제 카드: 명암(밝기) 문제 문구 — {label}=색약 유형명
-DEV_LIGHTNESS_PROBLEM = {
-    "ko": "{label} 색각이상 환경에서 글자와 배경의 명암 차이가 작아집니다.",
-    "en": "Under {label} color vision deficiency, the lightness difference between text and background becomes smaller.",
-}
-
-# 개발자 모드 문제 카드: 명암 문제 개선 팁
-DEV_LIGHTNESS_TIP = {
-    "ko": "명도 차이를 더 크게 하거나 테두리·밑줄을 추가하세요.",
-    "en": "Increase the lightness difference or add a border/underline.",
 }
 
 # 추천 색상 등급별 이유 설명
@@ -121,21 +127,14 @@ NON_COLOR_TIPS = [
     },
 ]
 
-# 접근성 점수 옆에 표시하는 고지 문구 (자체 지표임을 알림 — 규칙 7번)
-SCORE_NOTICE = {
-    "ko": "접근성 점수는 본 서비스의 분석 항목을 기반으로 산출한 자체 평가 지표이며 공식 WCAG 인증 점수가 아닙니다.",
-    "en": "The accessibility score is an in-house metric based on this service's analysis items; "
-          "it is not an official WCAG certification score.",
-}
-
-# AI 설명 요청이 실패했을 때 쓰는 기본(fallback) 문구
+# AI 설명 요청이 실패했을 때 쓰는 기본(fallback) 문구 — 일반인도 이해하기 쉬운 표현
 FALLBACK_EXPLAIN = {
     "issues": {
-        "ko": "{count}개의 접근성 문제가 발견되었습니다. 아래 추천 색상과 비색상 개선 방법을 확인해보세요.",
-        "en": "{count} accessibility issues were found. Check the suggested colors and non-color fixes below.",
+        "ko": "선택한 색각이상 환경에서 {count}곳의 색이 서로 잘 구분되지 않을 수 있어요. 아래에서 어떤 색이 겹쳐 보이는지와 바꿔볼 수 있는 색을 확인해 보세요.",
+        "en": "Under the selected color vision deficiency, {count} spot(s) may be hard to tell apart. See below for which colors overlap and suggested alternatives.",
     },
     "no_issues": {
-        "ko": "발견된 주요 접근성 문제가 없습니다.",
-        "en": "No major accessibility issues were found.",
+        "ko": "선택한 색각이상 환경에서도 색들이 비교적 잘 구분됩니다. 큰 문제는 발견되지 않았어요.",
+        "en": "Colors stay relatively distinguishable under the selected color vision deficiency. No major issues were found.",
     },
 }

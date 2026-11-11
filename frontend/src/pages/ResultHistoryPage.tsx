@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import ResultSummary from '../components/ResultSummary'
-import ScoreBlock from '../components/ScoreBlock'
+import VerdictBadge from '../components/VerdictBadge'
 import { useT } from '../i18n/useT'
 import { removeServerResult, useResultStore } from '../stores/resultStore'
 import { useAuthStore } from '../stores/authStore'
@@ -99,10 +99,13 @@ export default function ResultHistoryPage() {
                   className="text-left"
                 >
                   <span className="block font-semibold">{r.fileName}</span>
-                  {/* 부제: 일시 · 모드 · 색약 유형 · 점수 */}
-                  <span className="text-sm text-graphite">
-                    {new Date(r.createdAt).toLocaleString(locale)} · {modeLabel(r.mode)} ·{' '}
-                    {t(r.cvdType)} · {t('scoreShort')} {r.score}
+                  {/* 부제: 일시 · 모드 · 색약 유형 · 판정 */}
+                  <span className="flex flex-wrap items-center gap-1.5 text-sm text-graphite">
+                    <span>
+                      {new Date(r.createdAt).toLocaleString(locale)} · {modeLabel(r.mode)} ·{' '}
+                      {t(r.cvdType)}
+                    </span>
+                    <VerdictBadge verdict={(r.data as ImageAnalysis | DeveloperAnalysis).verdict} />
                   </span>
                 </button>
                 <button
@@ -115,7 +118,7 @@ export default function ResultHistoryPage() {
               </li>
             ))}
           </ul>
-          {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 점수만 표시 */}
+          {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 결과 메시지 표시 */}
           {open &&
             ('simulated_image' in open.data ? (
               <ResultSummary
@@ -123,11 +126,11 @@ export default function ResultHistoryPage() {
                 mode={open.mode === 'user' ? 'user' : 'developer'}
               />
             ) : (
-              <div className="rounded-lg border border-rule bg-white p-5">
-                <ScoreBlock
-                  score={(open.data as DeveloperAnalysis).summary.score}
-                  notice={(open.data as DeveloperAnalysis).score_notice}
-                />
+              <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
+                  <VerdictBadge verdict={(open.data as DeveloperAnalysis).verdict} />
+                  <span>{(open.data as DeveloperAnalysis).result_message}</span>
+                </div>
               </div>
             ))}
         </>

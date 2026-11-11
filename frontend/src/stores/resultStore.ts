@@ -13,7 +13,6 @@ export interface AnalysisRecord {
   fileName: string // 업로드한 파일명 (코드 모드는 'HTML/CSS 코드')
   mode: 'user' | 'developer-image' | 'developer-code'
   cvdType: CvdType
-  score: number
   originalUrl?: string // 원본 이미지 미리보기 URL (선택)
   data: ImageAnalysis | DeveloperAnalysis // 백엔드가 준 분석 결과 전체
   dbId?: number // 백엔드 결과 ID (있으면 DB 삭제 API 호출)
@@ -37,14 +36,7 @@ function toRecord(item: HistoryItem): AnalysisRecord {
       : item.mode === 'developer'
         ? 'developer-image'
         : 'user'
-  const isImageMode = mode === 'user' || mode === 'developer-image'
   const data = item.data as unknown as ImageAnalysis | DeveloperAnalysis
-  const score =
-    isImageMode && 'score' in data
-      ? (data as ImageAnalysis).score
-      : !isImageMode && 'summary' in data
-        ? (data as DeveloperAnalysis).summary.score
-        : (item.score ?? 0)
   return {
     id: `db:${item.id}`,
     dbId: item.id,
@@ -52,7 +44,6 @@ function toRecord(item: HistoryItem): AnalysisRecord {
     fileName: item.input_meta ?? (mode === 'developer-code' ? 'HTML/CSS 코드' : '이미지 분석'),
     mode,
     cvdType: item.cvd_type,
-    score: score,
     data,
   }
 }

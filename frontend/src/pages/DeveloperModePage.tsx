@@ -3,13 +3,14 @@
 // 방식2: HTML/CSS 코드 입력 → 브라우저에서 색상 추출 → 백엔드 코드 분석
 // 두 방식 모두 결과에 "문제 해결 방법" 카드와 "요약" 영역을 표시 (개발자 모드 전용 기능)
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../api/types'
 import ColorChip from '../components/ColorChip'
+import ContrastExample from '../components/ContrastExample'
 import CvdSelector from '../components/CvdSelector'
 import ResultCompare from '../components/ResultCompare'
 import ResultSummary from '../components/ResultSummary'
-import ScoreBlock from '../components/ScoreBlock'
 import SolutionCards from '../components/SolutionCards'
 import UploadDropzone from '../components/UploadDropzone'
 import VerdictBadge from '../components/VerdictBadge'
@@ -91,7 +92,6 @@ export default function DeveloperModePage() {
             fileName: file.name,
             mode: 'developer-image',
             cvdType: cvd,
-            score: data.score,
             data,
           })
       } else {
@@ -108,7 +108,6 @@ export default function DeveloperModePage() {
             fileName: t('codeFileName'),
             mode: 'developer-code',
             cvdType: cvd,
-            score: data.summary.score,
             data,
           })
       }
@@ -125,7 +124,16 @@ export default function DeveloperModePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">{t('developer')}</h1>
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-bold">{t('developer')}</h1>
+        {/* 간단한 검사가 필요한 사용자를 사용자 모드로 안내 */}
+        <Link
+          to="/user"
+          className="text-sm font-medium text-graphite underline underline-offset-4 hover:text-ink"
+        >
+          {t('switchToUser')} →
+        </Link>
+      </div>
 
       {/* 입력 방식 선택 탭 (role="tablist"/aria-selected로 탭임을 알림) */}
       <div role="tablist" aria-label={t('inputMethod')} className="flex gap-2">
@@ -141,16 +149,19 @@ export default function DeveloperModePage() {
               setImageResult(null)
               setCodeResult(null)
             }}
-            className={`rounded border px-4 py-2 text-sm ${method === m ? 'border-2 border-ink font-semibold' : 'border-rule'}`}
+            className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
+              method === m
+                ? 'border-2 border-ink font-semibold bg-ink text-white'
+                : 'border-rule bg-white hover:bg-paper'
+            }`}
           >
-            {method === m ? '✓ ' : ''}
             {m === 'image' ? t('method1') : t('method2')}
           </button>
         ))}
       </div>
 
-      <div className="flex flex-col gap-6 md:flex-row">
-        {/* 탭에 따라 좌측 입력 UI 교체: 드롭존 또는 코드 편집기 */}
+      <div className="flex flex-col gap-4">
+        {/* 탭에 따라 입력 UI 교체: 드롭존 또는 코드 편집기 */}
         {method === 'image' ? (
           <UploadDropzone
             previewUrl={preview}
@@ -160,7 +171,7 @@ export default function DeveloperModePage() {
             }}
           />
         ) : (
-          <div className="flex flex-1 flex-col gap-3">
+          <div className="flex flex-1 flex-col gap-3 rounded-xl border border-rule bg-white p-4 shadow-sm">
             {/* 코드 파일 업로드: .html은 HTML 박스로, .css는 CSS 박스으로 자동 분류 */}
             <label className="text-sm font-semibold">
               {t('codeFile')}
@@ -181,7 +192,7 @@ export default function DeveloperModePage() {
                 rows={8}
                 autoFocus
                 placeholder={t('htmlPlaceholder')}
-                className="mt-1 w-full rounded border border-rule bg-white p-2 font-mono text-xs"
+                className="mt-1 w-full rounded-lg border border-rule bg-paper p-2 font-mono text-xs"
               />
             </label>
             {/* CSS 코드 입력 박스 (선택 사항) */}
@@ -192,29 +203,29 @@ export default function DeveloperModePage() {
                 onChange={(e) => setCss(e.target.value)}
                 rows={6}
                 placeholder={t('cssPlaceholder')}
-                className="mt-1 w-full rounded border border-rule bg-white p-2 font-mono text-xs"
+                className="mt-1 w-full rounded-lg border border-rule bg-paper p-2 font-mono text-xs"
               />
             </label>
             {/* 안내: 입력 코드는 실행되지 않음 (규칙 9번) */}
             <p className="text-xs text-graphite">{t('codeSafe')}</p>
           </div>
         )}
-        {/* 우측: 색약 유형 선택 + 검사 버튼 */}
-        <div className="flex flex-col justify-between gap-4 md:w-40">
-          <CvdSelector value={cvd} onChange={setCvd} />
+        {/* 컨트롤 바: 색약 유형 선택(가로) + 검사 버튼 */}
+        <div className="flex flex-col gap-4 rounded-xl border border-rule bg-white p-5 shadow-sm">
+          <CvdSelector value={cvd} onChange={setCvd} orientation="horizontal" />
           <button
             type="button"
             onClick={inspect}
             disabled={loading}
             aria-busy={loading}
-            className="self-end rounded-lg bg-ink px-6 py-3 font-bold text-white disabled:opacity-60"
+            className="w-full rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? t('inspecting') : t('inspect')}
           </button>
         </div>
       </div>
       {error && (
-        <p role="alert" className="font-medium text-red-800">
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-800">
           ✕ {error}
         </p>
       )}
@@ -243,6 +254,10 @@ export default function DeveloperModePage() {
               {t('resultLabel')}: {codeResult.result_message}
             </span>
           </p>
+          {/* 대비율이 뭔지 실제 예시로 보여주는 안내 — 숫자가 익숙하지 않은 사용자용 (접기/펼침) */}
+          <div className="mb-3">
+            <ContrastExample />
+          </div>
           {/* overflow-x-auto: 테이블이 화면보다 넓으면 가로 스크롤로 처리 */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -290,7 +305,7 @@ export default function DeveloperModePage() {
           <button
             type="button"
             onClick={() => solutionsRef.current?.scrollIntoView()}
-            className="self-center rounded border border-ink px-4 py-2 text-sm"
+            className="self-center rounded-full border border-ink px-5 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-white"
           >
             ↓ {t('goSolutions')}
           </button>
@@ -304,40 +319,35 @@ export default function DeveloperModePage() {
               {t('solutions')}
             </h2>
             <SolutionCards boxes={boxes} />
-            {/* 요약: 점수 + 통계 문구 */}
-            <div className="rounded-lg border border-rule bg-white p-5">
+            {/* 요약: 통계 문구 (점수는 표시하지 않음) */}
+            <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-lg font-bold">{t('summary')}</h2>
               {codeResult ? (
-                <>
-                  {/* 코드 분석 요약: 점수 + 전체/PASS/WARNING/FAIL 통계 */}
-                  <ScoreBlock score={codeResult.summary.score} notice={codeResult.score_notice} />
-                  <p className="mt-3 text-sm">
-                    {t('devSummary')
-                      .replace('{total}', String(codeResult.summary.total))
-                      .replace('{pass}', String(codeResult.summary.pass))
-                      .replace('{warning}', String(codeResult.summary.warning))
-                      .replace('{fail}', String(codeResult.summary.fail))}
-                  </p>
-                </>
+                <p className="text-sm">
+                  {t('devSummary')
+                    .replace('{total}', String(codeResult.summary.total))
+                    .replace('{pass}', String(codeResult.summary.pass))
+                    .replace('{warning}', String(codeResult.summary.warning))
+                    .replace('{fail}', String(codeResult.summary.fail))}
+                </p>
               ) : (
                 imageResult && (
-                  <>
-                    {/* 이미지 분석 요약: 점수 + 문제 수/주요 색상 수 */}
-                    <ScoreBlock score={imageResult.score} notice={imageResult.score_notice} />
-                    <p className="mt-3 text-sm">
-                      {t('imgSummary')
-                        .replace('{issues}', String(imageResult.issues.length))
-                        .replace('{colors}', String(imageResult.palette.length))}
-                    </p>
-                  </>
+                  <p className="text-sm">
+                    {t('imgSummary')
+                      .replace('{issues}', String(imageResult.issues.length))
+                      .replace('{colors}', String(imageResult.palette.length))}
+                  </p>
                 )
               )}
-              {/* 우선 수정 대상: 첫 번째 해결 카드의 대상 표시 */}
+              {/* 우선 수정 대상: 첫 번째 해결 카드의 대상 + 왜 먼저 고치는지 이유 */}
               {boxes.length > 0 && (
-                <p className="mt-2 text-sm">
-                  {t('fixFirst')}
-                  <code>{boxes[0].selector}</code>
-                </p>
+                <div className="mt-2 flex flex-col gap-1 text-sm">
+                  <p>
+                    {t('fixFirst')}
+                    <code className="rounded bg-paper px-1.5 py-0.5">{boxes[0].selector}</code>
+                  </p>
+                  <p className="text-graphite">{t('fixFirstReason')}</p>
+                </div>
               )}
             </div>
           </section>

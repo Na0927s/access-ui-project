@@ -1,6 +1,7 @@
 // (한국어 요약) 사용자 모드 페이지 — 캡처 이미지 한 장으로 간단히 검사하는 화면.
 // 흐름: 이미지 업로드 → 색약 유형 선택 → 검사 버튼 → 원본/시뮬레이션 비교 + 결과 요약 표시
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { analyzeImage } from '../api/client'
 import type { CvdType, ImageAnalysis } from '../api/types'
 import CvdSelector from '../components/CvdSelector'
@@ -53,8 +54,7 @@ export default function UserModePage() {
       const data = await analyzeImage(file, cvd, 'user', lang, token) // 사용자 모드로 요청
       setResult(data)
       // 로그인 상태일 때만 결과 내역에 기록 (백엔드에도 저장됨, 메모리는 즉시 표시용)
-      if (user)
-        addResult({ fileName: file.name, mode: 'user', cvdType: cvd, score: data.score, data })
+      if (user) addResult({ fileName: file.name, mode: 'user', cvdType: cvd, data })
     } catch (e) {
       setError((e as Error).message)
     } finally {
@@ -64,27 +64,42 @@ export default function UserModePage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <h1 className="text-2xl font-bold">{t('user')}</h1>
-      <div className="flex flex-col gap-6 md:flex-row">
-        {/* 좌: 업로드 영역 / 우: 색약 유형 선택 + 원형 검사 버튼 */}
-        <UploadDropzone previewUrl={preview} onFile={onFile} />
-        <div className="flex flex-col justify-between gap-4 md:w-40">
-          <CvdSelector value={cvd} onChange={setCvd} />
-          {/* aria-busy: 진행 중임을 스크린리더에 알림 */}
-          <button
-            type="button"
-            onClick={inspect}
-            disabled={loading}
-            aria-busy={loading}
-            className="self-end rounded-lg bg-ink px-6 py-3 font-bold text-white disabled:opacity-60"
-          >
-            {loading ? t('inspecting') : t('inspect')}
-          </button>
-        </div>
+      <div className="flex items-baseline justify-between gap-3">
+        <h1 className="text-2xl font-bold">{t('user')}</h1>
+        {/* 개발자 모드로 전환 — 더 자세한 분석(코드 입력·CSS 수정안)이 필요할 때 */}
+        <Link
+          to="/developer"
+          className="text-sm font-medium text-graphite underline underline-offset-4 hover:text-ink"
+        >
+          {t('switchToDeveloper')} →
+        </Link>
       </div>
+
+      {/* 1단계: 이미지 업로드 */}
+      <div className="flex flex-col gap-3">
+        <h2 className="text-sm font-semibold text-graphite">
+          1. {t('chooseFile')}
+        </h2>
+        <UploadDropzone previewUrl={preview} onFile={onFile} />
+      </div>
+
+      {/* 2단계: 색약 유형 선택 + 검사 버튼 (컨트롤 바) */}
+      <div className="flex flex-col gap-4 rounded-xl border border-rule bg-white p-5 shadow-sm">
+        <CvdSelector value={cvd} onChange={setCvd} orientation="horizontal" />
+        <button
+          type="button"
+          onClick={inspect}
+          disabled={loading}
+          aria-busy={loading}
+          className="w-full rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {loading ? t('inspecting') : t('inspect')}
+        </button>
+      </div>
+
       {/* 에러 메시지 (스크린리더 즉시 알림) */}
       {error && (
-        <p role="alert" className="font-medium text-red-800">
+        <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 font-medium text-red-800">
           ✕ {error}
         </p>
       )}

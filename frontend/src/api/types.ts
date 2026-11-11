@@ -23,7 +23,7 @@ export interface HistoryItem {
   mode: string // "user" | "developer"
   cvd_type: CvdType
   input_meta: string | null // 파일명 또는 "HTML/CSS 코드"
-  score: number | null
+  score: number | null // 레거시 — 더 이상 사용하지 않지만 백엔드가 반환할 수 있음
   verdict: Verdict
   created_at: string // ISO 문자열
   data: Record<string, unknown> // 분석 결과 전체 (시뮬레이션 이미지는 제거됨)
@@ -95,8 +95,6 @@ export interface ImageAnalysis {
   /** Developer mode only — user mode provides no fixes per the design doc.
    *  (한국어) 개발자 모드에서만 포함됨 (설계 문서상 사용자 모드는 해결책 제공 안 함) */
   recommendations?: Recommendation[]
-  score: number
-  score_notice: string // "자체 지표" 고지 문구
 }
 
 // 코드 분석 요청 시 보낼 요소 하나 (selector + 색 + 폰트 정보)
@@ -122,10 +120,10 @@ export interface ElementResult {
   distance_simulated: number
 }
 
-// 문제 해결 방법 카드 하나 (CONTRAST=대비, LIGHTNESS=명암, COLOR_ONLY=색 의존)
+// 문제 해결 방법 카드 하나 (CONTRAST=색상 대비, COLOR_ONLY=색 의존)
 export interface SolutionBox {
   selector: string
-  check_type: 'CONTRAST' | 'LIGHTNESS' | 'COLOR_ONLY'
+  check_type: 'CONTRAST' | 'COLOR_ONLY'
   problem: string
   css_fix: string | null
   non_color_fix: string | null
@@ -137,6 +135,5 @@ export interface DeveloperAnalysis {
   solution_boxes: SolutionBox[] // 해결 방법 카드 목록
   verdict: Verdict
   result_message: string
-  summary: { total: number; pass: number; warning: number; fail: number; score: number }
-  score_notice: string
+  summary: { total: number; pass: number; warning: number; fail: number }
 }

@@ -5,6 +5,7 @@ import Header from './components/Header'
 import Footer from './components/Footer'
 import ScrollTopButton from './components/ScrollTopButton'
 import MainPage from './pages/MainPage'
+import AboutPage from './pages/AboutPage'
 import UserModePage from './pages/UserModePage'
 import DeveloperModePage from './pages/DeveloperModePage'
 import SignupPage from './pages/SignupPage'
@@ -30,6 +31,7 @@ export default function App() {
       <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Routes>
           <Route path="/" element={<MainPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/user" element={<UserModePage />} />
           <Route path="/developer" element={<DeveloperModePage />} />
           <Route path="/signup" element={<SignupPage />} />

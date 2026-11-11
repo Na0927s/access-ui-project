@@ -100,11 +100,17 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
         if p["verdict"] == "PASS":
             continue
         # 대비율 미달 이슈 (FAIL이면 심각도 HIGH, WARNING이면 MEDIUM)
+        # 문구는 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 기술적으로.
+        if mode == "user":
+            lc_msg = texts.LOW_CONTRAST_ISSUE["user"][lang]
+        else:
+            lc_msg = texts.LOW_CONTRAST_ISSUE["developer"][lang].format(
+                fg=p["fg"], bg=p["bg"], ratio=f"{p['ratio']:.2f}")
         issues.append({
             "id": next_id, "type": "LOW_CONTRAST",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["fg"], p["bg"]],
-            "message": texts.LOW_CONTRAST_ISSUE[lang].format(fg=p["fg"], bg=p["bg"], ratio=f"{p['ratio']:.2f}"),
+            "message": lc_msg,
         })
         next_id += 1
         if mode == "developer":   # 추천 색상은 개발자 모드에서만 제공
@@ -112,24 +118,29 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
     for p in confusable_pairs:
         if p["verdict"] == "PASS":
             continue
-        # 색상 혼동 이슈 (시뮬레이션 후 구분 어려움)
+        # 색상 혼동 이슈 (시뮬레이션 후 구분 어려움). 문구는 모드별.
+        if mode == "user":
+            cc_msg = texts.COLOR_CONFUSION_ISSUE["user"][lang].format(label=label)
+        else:
+            cc_msg = texts.COLOR_CONFUSION_ISSUE["developer"][lang].format(
+                label=label, a=p["a"], b=p["b"])
         issues.append({
             "id": next_id, "type": "COLOR_CONFUSION",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["a"], p["b"]],
-            "message": texts.COLOR_CONFUSION_ISSUE[lang].format(label=label, a=p["a"], b=p["b"]),
+            "message": cc_msg,
         })
         next_id += 1
         if mode == "developer":
             recommendations.append(recommend(p["a"], p["b"], cvd_type, lang))
 
-    # 모든 판정을 점수 공식에 넣어 자체 접근성 점수 산출
+    # 접근성 점수는 내부 판정 산출용으로만 사용하고 응답에는 노출하지 않는다.
+    # (한국어) 점수는 전체 판정(verdict)을 구하기 위해서만 계산 — 사용자에게는 판정만 전달.
     score = calculate_score(
         [p["verdict"] for p in contrast_pairs],
         [p["verdict"] for p in confusable_pairs],
     )
-    # 전체 판정은 점수 구간 기반 (80↑ PASS, 60~79 WARNING, <60 FAIL).
-    # 이전엔 "이슈 1개라도 있으면 FAIL" 이분법이라 점수 95점인데 FAIL이 되는 모순이 있었음.
+    # 전체 판정은 점수 구간 기반 (90↑ PASS, 70~89 WARNING, <70 FAIL).
     verdict = score_to_verdict(score)
     response = {
         "cvd_type": cvd_type,
@@ -141,8 +152,6 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
         "issues": issues,                             # 발견된 문제 목록
         "verdict": verdict,
         "result_message": texts.RESULT_MESSAGES[verdict][lang],
-        "score": score,
-        "score_notice": texts.SCORE_NOTICE[lang],     # "자체 지표" 고지 문구
     }
     if mode == "developer":
         response["recommendations"] = recommendations
@@ -196,18 +205,10 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
                 "css_fix": css_fix,                       # 바로 복사해 쓸 수 있는 CSS 한 줄
                 "non_color_fix": texts.DEV_CONTRAST_TIP[lang],  # 색 외 개선 팁
             })
-        elif d_sim < config.CONFUSION_WARN:
-            # 대비율은 통과했지만, 색약 시뮬레이션 시 명암 차가 크게 줄어드는 경우 → 별도 경고 카드
-            boxes.append({
-                "selector": el["selector"],
-                "check_type": "LIGHTNESS",
-                "problem": texts.DEV_LIGHTNESS_PROBLEM[lang].format(label=texts.CVD_LABELS[cvd_type][lang]),
-                "css_fix": None,
-                "non_color_fix": texts.DEV_LIGHTNESS_TIP[lang],
-            })
+        # 명암 대비(LIGHTNESS) 보조 검사는 제거되었다 — 색상 대비(CONTRAST)와 색 추천만 제공.
 
-    # 전체 판정: 점수 구간 기반 (80↑ PASS, 60~79 WARNING, <60 FAIL).
-    # 미달 요소 수(failed)는 메시지 표시용으로 별도 집계.
+    # 전체 판정: 점수 구간 기반 (90↑ PASS, 70~89 WARNING, <70 FAIL).
+    # 미달 요소 수(failed)는 메시지 표시용으로 별도 집계. 점수 자체는 응답에 노출하지 않는다.
     verdicts = [r["verdict"] for r in results]
     failed = verdicts.count("FAIL") + verdicts.count("WARNING")
     score = calculate_score(verdicts, [])
@@ -217,17 +218,15 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
         if verdict == "PASS"
         else texts.DEV_RESULT[verdict][lang].format(failed=failed)
     )
-    score = calculate_score(verdicts, [])
     return {
         "results": results,                  # 요소별 상세 결과 (테이블에 표시됨)
         "solution_boxes": boxes,             # 문제 해결 방법 카드 목록
         "verdict": verdict,
         "result_message": result_message,
-        "summary": {                         # 통계 요약 (전체/PASS/WARNING/FAIL 개수 + 점수)
+        "summary": {                         # 통계 요약 (전체/PASS/WARNING/FAIL 개수)
             "total": len(results), "pass": verdicts.count("PASS"),
-            "warning": verdicts.count("WARNING"), "fail": verdicts.count("FAIL"), "score": score,
+            "warning": verdicts.count("WARNING"), "fail": verdicts.count("FAIL"),
         },
-        "score_notice": texts.SCORE_NOTICE[lang],
     }
 
 
