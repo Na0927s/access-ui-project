@@ -23,13 +23,17 @@ def analyze_code(
     authorization: str | None = Header(default=None),
     db: Session = Depends(get_db),
 ):
+    # 토큰이 있으면 로그인 사용자 식별 (결과 저장용). 없으면 비로그인(저장 안 함).
+    # 토큰 검증은 try 블록 밖에서 수행해야 만료/무효 토큰이 401로 올바르게 응답됨.
+    # try 안에서 호출하면 current_user_id가 던지는 401 HTTPException이 broad except에 잡혀
+    # ANALYSIS_FAILED(500)로 둔갑하는 버그가 생김 (analysis.py와 동일한 패턴).
+    user_id = current_user_id(authorization) if authorization else None
+
     try:
         # Pydantic 모델을 dict로 변환해 분석 파이프라인에 전달
         result = analyze_elements([e.model_dump() for e in req.elements], req.cvd_type, req.lang)
         # 로그인 사용자면 히스토리에 저장 (코드 모드는 input_meta를 고정 문구로)
-        # 토큰이 없거나 유효하지 않으면 비로그인(저장 안 함) — 토큰 있으면 검증해 user_id 추출
-        if authorization:
-            user_id = current_user_id(authorization)
+        if user_id is not None:
             save_result(
                 db, user_id, "developer-code", req.cvd_type, result,
                 input_meta="HTML/CSS 코드",

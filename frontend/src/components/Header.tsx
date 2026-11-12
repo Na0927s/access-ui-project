@@ -19,13 +19,15 @@ export default function Header() {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:p-2">
         본문 바로가기
       </a>
-      <div className="mx-auto max-w-6xl pl-0 pr-4 py-8 sm:pl-0">
+      {/* 좌우 패딩을 같게(px-4) — 좁은 화면에서 로고 음수 마진이 화면 밖으로 나가는 것 방지.
+          넓은 화면 느낌은 아래 로고 Link의 xl 음수 마진으로 복원. */}
+      <div className="mx-auto max-w-6xl px-4 py-8">
         {/* --- 1줄: 로고 + 사용자 메뉴/언어 전환 --- */}
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           {/* 로고: "CVDS" 표시. 마우스 호버 시 아래 네모 박스에 풀네임(영문+한글)이 뜸 */}
           <Link
             to="/"
-            className="group relative inline-flex flex-col -ml-10 mt-2 sm:-ml-16 sm:mt-4"
+            className="group relative inline-flex flex-col mt-2 sm:mt-4 xl:-ml-10 2xl:-ml-16"
             aria-label={`${t('titleAbbr')} · ${t('title')}`}
           >
             <span className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">

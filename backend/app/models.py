@@ -29,7 +29,9 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
     login_id: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)             # bcrypt 해시
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), nullable=False)
+    # default must be a callable so the timestamp is evaluated per-row at insert time;
+    # datetime.now(UTC) evaluated eagerly would freeze every row to the app's start time.
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # 1:N — 한 사용자는 여러 분석 결과를 가질 수 있음
     results: Mapped[list["AnalysisResult"]] = relationship(
@@ -59,7 +61,7 @@ class AnalysisResult(Base):
     # 전체 분석 결과를 JSON 문자열로 저장. 시뮬레이션 base64 포함 여부는 호출 측에서 결정.
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.now(UTC), nullable=False, index=True
+        DateTime, default=lambda: datetime.now(UTC), nullable=False, index=True
     )
 
     user: Mapped["User"] = relationship(back_populates="results")
@@ -83,7 +85,7 @@ class AnalysisCache(Base):
     mode: Mapped[str] = mapped_column(String(16), nullable=False)        # "user" | "developer" — 캐시 키에 포함
     lang: Mapped[str] = mapped_column(String(4), nullable=False, default="ko")   # "ko" | "en" — 응답 언어별 캐시
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
-    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.now(UTC), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
     # (image_hash, cvd_type, mode, lang) 복합 유니크 — 같은 조합은 한 줄만 유지.
     # mode·lang이 키에 포함되어야 모드·언어별 결과가 서로 덮어쓰이지 않음
