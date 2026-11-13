@@ -20,18 +20,18 @@ export default function MainPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-12">
-      {/* 상단 히어로 + 사이트 간단 설명(접기/펼침) */}
-      <section className="flex flex-col gap-4">
-        <span className="w-fit rounded-full border border-rule bg-white px-3 py-1 text-xs font-semibold text-graphite">
+    <div className="flex flex-col gap-14">
+      {/* 상단 히어로 + 사이트 간단 설명(접기/펼침) — 사이트 전체 너비 활용 */}
+      <section className="flex flex-col gap-5">
+        <span className="w-fit rounded-full border border-rule bg-white px-4 py-1.5 text-sm font-semibold text-graphite">
           CVDS
         </span>
-        <h1 className="max-w-2xl text-3xl font-bold leading-tight md:text-5xl">{t('tagline')}</h1>
-        <p className="max-w-2xl text-base text-graphite md:text-lg">{t('lead')}</p>
+        <h1 className="text-4xl font-bold leading-tight md:text-6xl">{t('tagline')}</h1>
+        <p className="text-lg text-graphite md:text-xl">{t('lead')}</p>
         {/* 사이트 간단 설명 — 접고 싶은 사람은 접을 수 있음 */}
-        <div className="max-w-2xl">
+        <div>
           {introOpen && (
-            <p className="rounded-xl border border-rule bg-white p-4 text-sm leading-relaxed text-graphite shadow-sm">
+            <p className="rounded-xl border border-rule bg-white p-5 text-base leading-relaxed text-graphite shadow-sm md:text-lg">
               {t('homeIntro')}
             </p>
           )}
@@ -39,7 +39,7 @@ export default function MainPage() {
             type="button"
             aria-expanded={introOpen}
             onClick={() => setIntroOpen((v) => !v)}
-            className="mt-2 text-xs font-medium text-graphite underline underline-offset-4 hover:text-ink"
+            className="mt-2 text-sm font-medium text-graphite underline underline-offset-4 hover:text-ink"
           >
             {introOpen ? `▲ ${t('homeIntroToggle')}` : `▼ ${t('homeIntro')}`}
           </button>
@@ -52,18 +52,18 @@ export default function MainPage() {
           <Link
             key={c.to}
             to={c.to}
-            className="group flex min-h-56 flex-col justify-between rounded-2xl border border-ink bg-white p-7 transition-all hover:-translate-y-0.5 hover:bg-ink hover:text-white hover:shadow-lg"
+            className="group flex min-h-72 flex-col justify-between rounded-2xl border border-ink bg-white p-8 transition-all hover:-translate-y-0.5 hover:bg-ink hover:text-white hover:shadow-lg"
           >
             <span
               aria-hidden
-              className="grid size-12 place-items-center rounded-xl border border-rule text-xl font-mono group-hover:border-white/40"
+              className="grid size-14 place-items-center rounded-xl border border-rule text-2xl font-mono group-hover:border-white/40"
             >
               {c.icon}
             </span>
-            <span className="mt-6">
-              <span className="block text-2xl font-bold">{c.title}</span>
-              <span className="mt-1.5 block text-graphite group-hover:text-white/80">{c.desc}</span>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold">
+            <span className="mt-8">
+              <span className="block text-3xl font-bold">{c.title}</span>
+              <span className="mt-2 block text-graphite group-hover:text-white/80">{c.desc}</span>
+              <span className="mt-5 inline-flex items-center gap-1 text-base font-semibold">
                 {t('inspect')} <span aria-hidden>→</span>
               </span>
             </span>

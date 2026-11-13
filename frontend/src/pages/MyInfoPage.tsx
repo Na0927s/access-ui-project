@@ -90,12 +90,21 @@ export default function MyInfoPage() {
   return (
     <div className="mx-auto flex max-w-md flex-col gap-6">
       <h1 className="text-2xl font-bold">{t('myInfo')}</h1>
-      {/* 프로필 아바타 대신 이름 이니셜 원형 표시 */}
+      {/* 프로필 아바타 — 사람 아이콘이 들어간 원형 */}
       <div
         aria-hidden
-        className="mx-auto grid size-28 place-items-center rounded-full border-2 border-ink text-4xl"
+        className="mx-auto grid size-28 place-items-center rounded-full border-2 border-ink bg-paper"
       >
-        {user.name.slice(0, 1)}
+        {/* 사람 모양 아이콘 (머리 + 어깨) */}
+        <svg
+          viewBox="0 0 24 24"
+          className="size-14 text-ink"
+          fill="currentColor"
+          aria-hidden
+        >
+          <circle cx="12" cy="8" r="4" />
+          <path d="M12 14c-4.418 0-8 2.686-8 6v2h16v-2c0-3.314-3.582-6-8-6z" />
+        </svg>
       </div>
       {row(t('nameLabel'), name, setName)} {/* 수정 가능 */}
       {row(t('emailLabel'), email, setEmail)} {/* 수정 가능 */}
@@ -198,14 +207,23 @@ export default function MyInfoPage() {
                 {t('pwChanged')}
               </p>
             )}
-            <button
-              type="button"
-              onClick={submitPassword}
-              disabled={loading}
-              className="mt-2 rounded bg-ink px-4 py-2 text-sm text-white disabled:opacity-60"
-            >
-              {loading ? t('changing') : t('changeBtn')}
-            </button>
+            <div className="mt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setPwOpen(false)}
+                className="rounded border border-ink px-4 py-2 text-sm"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={submitPassword}
+                disabled={loading}
+                className="rounded bg-ink px-4 py-2 text-sm text-white disabled:opacity-60"
+              >
+                {loading ? t('changing') : t('changeBtn')}
+              </button>
+            </div>
           </div>
         </Modal>
       )}
