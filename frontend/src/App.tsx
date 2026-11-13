@@ -28,7 +28,7 @@ export default function App() {
     <div className="flex min-h-screen flex-col">
       <Header />
       {/* 본문: 최대 폭 제한 + 중앙 정렬. id="main"은 "본문 바로가기" 링크의 이동 지점 */}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-0">
         <Routes>
           <Route path="/" element={<MainPage />} />
           <Route path="/about" element={<AboutPage />} />

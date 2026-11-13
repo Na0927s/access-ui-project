@@ -15,7 +15,14 @@ $ErrorActionPreference = 'SilentlyContinue'
 $root = Split-Path $PSScriptRoot -Parent
 $backend = Join-Path $root 'backend'
 $frontend = Join-Path $root 'frontend'
-$python = Join-Path $backend '.venv\Scripts\python.exe'
+# venv(.venv)가 다른 사용자 Python 경로를 참조해 깨진 문제 우회 —
+# 시스템 Python(모든 의존성 설치됨)을 직접 사용.
+$python = "$env:LOCALAPPDATA\Programs\Python\Python312\python.exe"
+if (-not (Test-Path $python)) {
+  # 폴백: PATH에서 python 탐색
+  $found = Get-Command python -ErrorAction SilentlyContinue
+  if ($found) { $python = $found.Source }
+}
 $ports = 8002, 5176
 
 function Clear-DevPorts {
@@ -58,12 +65,19 @@ Write-Host '[1/2] 포트 정리' -ForegroundColor Cyan
 Clear-DevPorts
 
 if (-not (Test-Path $python)) {
-  Write-Host "오류: backend/.venv 가상환전이 없습니다. 먼저 생성하세요: python -m venv backend\.venv" -ForegroundColor Red
+  Write-Host "오류: Python을 찾을 수 없습니다. Python 3.12를 설치하세요." -ForegroundColor Red
+  exit 1
+}
+
+# 의존성(fastapi 등) 설치 여부 확인
+& $python -c "import fastapi, uvicorn, sqlalchemy, PIL, numpy, bcrypt" 2>$null
+if ($LASTEXITCODE -ne 0) {
+  Write-Host "오류: 백엔드 의존성이 설치되지 않았습니다. pip install -r backend\requirements.txt 실행 필요" -ForegroundColor Red
   exit 1
 }
 
 Write-Host '[2/2] 서버 실행 (각각 새 창)' -ForegroundColor Cyan
-# 백엔드: venv python 으로 uvicorn (reload). 별도 창에서 로그 확인 가능.
+# 백엔드: 시스템 Python 으로 uvicorn (reload). 별도 창에서 로그 확인 가능.
 Start-Process cmd -ArgumentList "/k", "title ColorLens Backend && cd /d `"$backend`" && `"$python`" -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8002"
 # 프론트엔드: vite dev (포트 고정 5176).
 Start-Process cmd -ArgumentList "/k", "title ColorLens Frontend && cd /d `"$frontend`" && npm run dev -- --port 5176"

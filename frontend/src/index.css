@@ -6,11 +6,26 @@
    또한 색각이상 사용자가 서비스 자체를 사용하는 데 어려움이 없게 함 (규칙 8번). */
 @theme {
   --font-sans: 'Pretendard', system-ui, -apple-system, 'Segoe UI', sans-serif; /* 기본 폰트 */
-  --color-paper: #fafaf9; /* 배경용 밝은 회색 */
-  --color-ink: #1c1c1c; /* 주 텍스트·버튼용 진한 회색(거의 검정) */
-  --color-graphite: #52525b; /* 보조 텍스트용 중간 회색 */
-  --color-rule: #d4d4d8; /* 테두리·구분선용 연한 회색 */
-  --color-focus: #1d4ed8; /* 키보드 포커스 링 색 (대비 확보용 파랑) */
+  /* Black & White only — 회색 톤은 검정의 투명도(opacity)로만 표현.
+     명시적 회색 hex를 없애고, 사실상 블랙(#0a0a0a)과 화이트(#ffffff)만 사용.
+     분석 대상 이미지만 화면에서 유일한 색 요소 (규칙 8번). */
+  --color-paper: #ffffff; /* 캔버스 배경 — 순백 */
+  --color-ink: #0a0a0a; /* 주 텍스트·버튼 — 순흑 */
+  --color-graphite: #6b6b6b; /* 보조 텍스트 — 중간 회색 (기업 톤) */
+  --color-rule: #d4d4d4; /* 테두리·구분선 — 연한 회색 (기업 사이트 톤) */
+  --color-rule-strong: #0a0a0a; /* 강조 구분선 — 검정 (섹션 분리용) */
+  --color-focus: #1d4ed8; /* 키보드 포커스 링 색 (대비 확보용 파랑 — 기능적 색, 접근성) */
+
+  /* 입체감용 그림자 — 2단 레이어드(근접+확산)로 자연스러운 떠있음 표현.
+     모두 블랙 투명도 기반(순수 회색, 색 없음). */
+  --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 2px 6px -2px rgb(0 0 0 / 0.06);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 8px 20px -8px rgb(0 0 0 / 0.12);
+  --shadow-lift: 0 4px 10px -2px rgb(0 0 0 / 0.10), 0 18px 40px -12px rgb(0 0 0 / 0.20);
+  /* inset 하이라이트 — 카드 상단에 빛이 닿는 느낌 (입체감) */
+  --shadow-inset-line: inset 0 1px 0 0 rgb(255 255 255 / 0.9);
+  /* 조명 효과용 — 호버 시 카드 위에서 흰 빛이 퍼짐 (블랙/화이트 투명도만) */
+  --light-spotlight: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.16), transparent 60%);
+  --light-spotlight-dark: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.14), transparent 55%);
 }
 
 /* 부드러운 스크롤 (맨 위로 버튼, 해결 방법 이동 등에 적용됨) */
@@ -23,9 +38,21 @@ html {
     scroll-behavior: auto;
   }
 }
-/* 기본 배경/글자색/폰트 적용 */
+/* 기본 배경/글자색/폰트 적용 — 순백 캔버스 (기업 사이트 톤).
+   antialiased(그레이스케일 렌더링) 강제 적용: Windows ClearType이 검정 텍스트
+   가장자리를 주황/파랑 서브픽셀로 렌더링하는 현상을 막아 순수 무채색으로 보이게 함. */
 body {
   @apply bg-paper text-ink font-sans;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  -webkit-text-stroke: 0;
+  font-smooth: never;
+}
+/* 모든 텍스트에 grayscale 안티앨리어싱 강제 — 서브픽셀 색번짐(주황/파랑) 방지 */
+* {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 /* 키보드로 탐색할 때만 뚜렷한 포커스 링 표시 (마우스 클릭에는 나타나지 않음) */
 :focus-visible {

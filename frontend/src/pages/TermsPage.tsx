@@ -4,7 +4,7 @@ import { useT } from '../i18n/useT'
 export default function TermsPage() {
   const t = useT()
   return (
-    <article className="mx-auto flex max-w-2xl flex-col gap-4 leading-relaxed">
+    <article className="mx-auto flex max-w-2xl flex-col gap-4 py-8 leading-relaxed md:py-10">
       <h1 className="text-2xl font-bold">{t('siteInfo')}</h1>
       {/* 서비스 성격 소개 */}
       <p>{t('termsIntro')}</p>

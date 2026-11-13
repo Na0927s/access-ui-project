@@ -26,7 +26,7 @@ export default function AboutPage() {
   ]
 
   return (
-    <article className="mx-auto flex max-w-2xl flex-col gap-6 leading-relaxed">
+    <article className="mx-auto flex max-w-2xl flex-col gap-6 py-8 leading-relaxed md:py-10">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('aboutLink')}</h1>
         {/* 약관은 별도 페이지로 */}
@@ -95,7 +95,7 @@ export default function AboutPage() {
       )}
 
       {/* 검사하러 가기 */}
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 pb-8 md:pb-10">
         <Link
           to="/user"
           className="rounded-lg border border-ink px-4 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-white"
