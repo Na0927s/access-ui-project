@@ -32,8 +32,9 @@ RESULT_MESSAGES = {
     },
 }
 
-# 저대비(대비율 미달) 이슈 문구 — 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 기술적으로.
+# 저대비(대비율 미달) 이슈 문구 — 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 객관적으로.
 # 사용자 모드는 색 칩이 옆에 표시되므로 "이 두 색"으로 지칭. 행동을 구체적으로 안내.
+# 개발자 모드는 대비율 숫자를 노출하지 않는다(내부 계산은 유지, UI에서만 숨김).
 LOW_CONTRAST_ISSUE = {
     "user": {
         "ko": "이 두 색의 밝고 어두움 차이가 충분하지 않아, 글자가 배경에 묻혀 잘 안 보일 수 있어요. "
@@ -42,8 +43,8 @@ LOW_CONTRAST_ISSUE = {
               "Try making the text darker or changing the background.",
     },
     "developer": {
-        "ko": "{fg}와 {bg}의 대비율이 {ratio}:1로 일반 텍스트 기준(4.5:1)에 미달합니다.",
-        "en": "The contrast between {fg} and {bg} is {ratio}:1, below the normal-text criterion (4.5:1).",
+        "ko": "{fg}와 {bg}의 밝기 차이가 충분하지 않아 글자가 배경에 묻혀 보일 수 있습니다.",
+        "en": "The lightness difference between {fg} and {bg} is insufficient, so text may blend into the background.",
     },
 }
 

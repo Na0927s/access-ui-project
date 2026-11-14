@@ -7,6 +7,7 @@ import type { ImageAnalysis } from '../api/types'
 import { useT } from '../i18n/useT'
 import { useUiStore } from '../stores/uiStore'
 import ColorChip from './ColorChip'
+import InfoPopover from './InfoPopover'
 import VerdictBadge from './VerdictBadge'
 
 export default function ResultSummary({
@@ -19,6 +20,7 @@ export default function ResultSummary({
   const t = useT()
   const lang = useUiStore((s) => s.lang)
   const [ai, setAi] = useState<Explanation | null>(null) // AI/요약 설명 응답
+  const [copiedHex, setCopiedHex] = useState<string | null>(null) // 추천 색상 HEX 복사 표시
 
   // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
   // AbortController로 진행 중인 이전 요청을 취소해 경쟁(race)과 불필요한 네트워크 호출을 방지.
@@ -77,6 +79,15 @@ export default function ResultSummary({
         </p>
       </div>
 
+      {/* 검사 결과 요약 문구 — 개발자 모드에서만 표시 (N은 실제 검사 결과) */}
+      {mode === 'developer' && (
+        <p className="rounded-lg bg-paper p-3 text-sm leading-relaxed">
+          {data.issues.length > 0
+            ? t('imgResultIntro', { count: data.issues.length })
+            : t('imgResultIntroOk')}
+        </p>
+      )}
+
       {/* AI 설명(또는 AI 없을 때 백엔드 템플릿 요약) — 출처를 라벨로 구분해 표시 */}
       {ai && (
         <div className="rounded-lg border border-rule p-4 text-sm leading-relaxed">
@@ -89,7 +100,15 @@ export default function ResultSummary({
 
       {/* 주요 색상 팔레트: 색 견본 + HEX + 화면 차지 비율(%) */}
       <div>
-        <h3 className="mb-2.5 font-semibold">{t('palette')}</h3>
+        <h3 className="mb-2.5 font-semibold">
+          {t('palette')}
+          {mode === 'developer' && (
+            <InfoPopover label={t('palette')}>
+              <p className="mb-1 font-semibold">{t('popPaletteTitle')}</p>
+              <p className="text-graphite">{t('popPaletteBody')}</p>
+            </InfoPopover>
+          )}
+        </h3>
         <ul className="flex flex-wrap gap-3">
           {data.palette.map((c) => (
             <li key={c.hex} className="flex items-center gap-1.5">
@@ -102,7 +121,25 @@ export default function ResultSummary({
 
       {/* 발견된 문제 목록: 심각도 배지 + 관련 색상 + 설명 문구 + (있으면) 쉬운 풀이 */}
       <div>
-        <h3 className="mb-2.5 font-semibold">{t('issues')}</h3>
+        <h3 className="mb-2.5 font-semibold">
+          {t('issues')}
+          {mode === 'developer' && (
+            <InfoPopover label={t('issues')}>
+              <p className="mb-1 font-semibold">{t('popIssuesTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popIssuesTargetBody')}</p>
+              <p className="mb-0.5 font-semibold">{t('popIssuesContrastTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popIssuesContrastBody')}</p>
+              <p className="mb-0.5 font-semibold">{t('popIssuesDistanceTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popIssuesDistanceBody')}</p>
+              <p className="mb-0.5 font-semibold">{t('popIssuesOverallTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popIssuesOverallBody')}</p>
+              <p className="mb-1 font-semibold">{t('popVerdictMeaningTitle')}</p>
+              <p className="text-graphite">{t('popPassDesc')}</p>
+              <p className="text-graphite">{t('popWarnDesc')}</p>
+              <p className="text-graphite">{t('popFailDesc')}</p>
+            </InfoPopover>
+          )}
+        </h3>
         {data.issues.length === 0 ? (
           <p className="rounded-lg bg-paper p-3 text-sm">✓ {t('noIssues')}</p>
         ) : (
@@ -133,10 +170,19 @@ export default function ResultSummary({
         )}
       </div>
 
-      {/* 추천 색상 — 규칙 7번에 따라 개발자 모드에서만 표시 */}
+      {/* 추천 색상 — 규칙 7번에 따라 개발자 모드에서만 표시.
+          간소화: 대비율 숫자·AA/AAA 기술 수치는 숨기고(상세는 ⓘ 팝오버에서 확인),
+          색상 칩 + HEX + 복사 + 등급 라벨 + 쉬운 이유만 표시. */}
       {mode === 'developer' && data.recommendations && data.recommendations.length > 0 && (
         <div>
-          <h3 className="mb-2.5 font-semibold">{t('recommend')}</h3>
+          <h3 className="mb-2.5 font-semibold">
+            {t('recommend')}
+            <InfoPopover label={t('recommend')}>
+              <p className="mb-1 font-semibold">{t('popRecommendTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popRecommendBody')}</p>
+              <p className="text-graphite">💡 {t('popRecommendEasy')}</p>
+            </InfoPopover>
+          </h3>
           <ul className="flex flex-col gap-3">
             {data.recommendations.map((r, i) => (
               <li
@@ -149,19 +195,38 @@ export default function ResultSummary({
                   <span className="text-graphite">vs {r.against}</span>
                 </p>
                 {r.candidates.length > 0 ? (
-                  // 추천 후보 목록: 색 견본 + 대비율 + 등급 + 이유 설명 + 쉬운 한 줄 안내
+                  // 추천 후보 목록: 색 견본 + HEX + 복사 버튼 + 등급 라벨(강력 추천 강조) + 쉬운 안내
                   <ul className="flex flex-col gap-2">
                     {r.candidates.map((c) => (
                       <li key={c.hex} className="flex flex-col gap-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <span aria-hidden>→</span>
                           <ColorChip hex={c.hex} />
-                          <span className="tabular-nums">{c.ratio.toFixed(2)}:1</span>
-                          <strong>{GRADE_LABEL[c.grade]}</strong>
-                          <span className="text-graphite">{c.reason}</span>
+                          <button
+                            type="button"
+                            className="shrink-0 rounded border border-rule px-2 py-0.5 text-xs font-medium transition-colors hover:bg-ink hover:text-white"
+                            onClick={() =>
+                              navigator.clipboard
+                                .writeText(c.hex)
+                                .then(() => setCopiedHex(c.hex))
+                                .catch(() => setCopiedHex(null))
+                            }
+                          >
+                            {copiedHex === c.hex ? `✓ ${t('copied')}` : t('copyHex')}
+                          </button>
+                          {/* 강력 추천(STRONG)은 배경으로 강조 */}
+                          <strong
+                            className={
+                              c.grade === 'STRONG'
+                                ? 'rounded bg-ink px-2 py-0.5 text-xs text-white'
+                                : 'text-xs'
+                            }
+                          >
+                            {GRADE_LABEL[c.grade]}
+                          </strong>
                         </div>
-                        {/* 비율·등급 아래에 일반인도 이해할 수 있는 쉬운 설명 */}
-                        <p className="pl-5 text-xs text-graphite">💡 {t('recommendEasyHint')}</p>
+                        {/* 수치 대신 쉬운 문장으로 추천 이유 설명 */}
+                        <p className="pl-5 text-xs text-graphite">💡 {t('recommendEasyHintSimple')}</p>
                       </li>
                     ))}
                   </ul>
