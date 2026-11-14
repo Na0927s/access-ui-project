@@ -6,7 +6,6 @@ import { analyzeImage } from '../api/client'
 import type { CvdType, ImageAnalysis } from '../api/types'
 import CvdSelector from '../components/CvdSelector'
 import ResultCompare from '../components/ResultCompare'
-import ResultSummary from '../components/ResultSummary'
 import UploadDropzone from '../components/UploadDropzone'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
@@ -104,7 +103,7 @@ export default function UserModePage() {
         </p>
       )}
 
-      {/* 분석 완료: 원본/시뮬레이션 비교 + 결과 요약 (사용자 모드는 추천 색상 없음) */}
+      {/* 분석 완료: 원본/시뮬레이션 비교만 표시 (상세 분석은 개발자 모드에서) */}
       {result && preview && (
         <div className="flex flex-col gap-6">
           <ResultCompare
@@ -112,7 +111,6 @@ export default function UserModePage() {
             simulated={result.simulated_image}
             cvdType={result.cvd_type}
           />
-          <ResultSummary data={result} mode="user" />
         </div>
       )}
     </div>
