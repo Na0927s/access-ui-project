@@ -7,7 +7,6 @@ import { Link } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../api/types'
 import ColorChip from '../components/ColorChip'
-import ContrastExample from '../components/ContrastExample'
 import CvdSelector from '../components/CvdSelector'
 import ImprovedCompare from '../components/ImprovedCompare'
 import InfoPopover from '../components/InfoPopover'
@@ -322,10 +321,6 @@ export default function DeveloperModePage() {
               {t('resultLabel')}: {codeResult.result_message}
             </span>
           </p>
-          {/* 대비율이 뭔지 실제 예시로 보여주는 안내 — 숫자가 익숙하지 않은 사용자용 (접기/펼침) */}
-          <div className="mb-3">
-            <ContrastExample />
-          </div>
           {/* overflow-x-auto: 테이블이 화면보다 넓으면 가로 스크롤로 처리 */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -334,7 +329,6 @@ export default function DeveloperModePage() {
                   <th className="py-2">{t('selector')}</th>
                   <th>{t('textColor')}</th>
                   <th>{t('bgColor')}</th>
-                  <th>{t('ratio')}</th>
                   <th>{t('verdictCol')}</th>
                 </tr>
               </thead>
@@ -354,7 +348,6 @@ export default function DeveloperModePage() {
                     <td>
                       <ColorChip hex={r.background} />
                     </td>
-                    <td className="tabular-nums">{r.ratio.toFixed(2)}:1</td>
                     <td>
                       <VerdictBadge verdict={r.verdict} />
                     </td>
