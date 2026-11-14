@@ -27,8 +27,9 @@ export default function App() {
     // min-h-screen + flex-col: 푸터가 화면 하단에 붙도록 하는 세로 레이아웃
     <div className="flex min-h-screen flex-col">
       <Header />
-      {/* 본문: 최대 폭 제한 + 중앙 정렬. id="main"은 "본문 바로가기" 링크의 이동 지점 */}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-0">
+      {/* 본문: 최대 폭 제한 + 중앙 정렬. id="main"은 "본문 바로가기" 링크의 이동 지점.
+          py-8: 헤더 하단 선·푸터 상단 선과 본문 첫 텍스트 사이 여백 확보 */}
+      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
         <Routes>
           <Route path="/" element={<MainPage />} />
           <Route path="/about" element={<AboutPage />} />

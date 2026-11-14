@@ -229,6 +229,7 @@ export const messages = {
     // ---- 약관 페이지 ----
     termsIntro:
       'CVDS는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.',
+    termsUpdated: '최종 업데이트: 2026년 11월 15일',
     termsAnalysisTitle: '분석 방식',
     termsAnalysisBody:
       '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 OKLab ΔE(Ottosson 2020)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 색이 겹쳐 보이는 정도는 시뮬레이션 후의 색 거리로 판정하며, 추천 색상은 대비와 구분 가능성을 다시 검증한 뒤에만 제안합니다.',
@@ -527,6 +528,7 @@ export const messages = {
     // ---- Terms page ----
     termsIntro:
       'CVDS is a school team project that analyzes whether web screen colors stay distinguishable for users with color vision deficiency, and suggests improvements.',
+    termsUpdated: 'Last updated: November 15, 2026',
     termsAnalysisTitle: 'Analysis method',
     termsAnalysisBody:
       'Color vision deficiency simulation uses the Machado (2009) model, color distance uses OKLab ΔE (Ottosson 2020), and contrast verdicts follow the WCAG 2 AA criteria. How much colors overlap is judged from the color distance after simulation, and suggested colors are offered only after re-verifying contrast and distinguishability.',
