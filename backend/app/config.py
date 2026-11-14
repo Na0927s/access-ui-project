@@ -54,6 +54,10 @@ PALETTE_MIN_RATIO = 0.005         # 화면의 0.5% 미만으로 차지하는 색
 # 인접 색조(빨강 vs 주황 ≈ 0.10)는 분리하도록 0.03으로 설정.
 PALETTE_MERGE_DISTANCE = 0.03  # 비슷한 색 병합 기준 (OKLab ΔE)
 CONTRAST_PAIR_MIN_RATIO = 0.01    # 대비 검사에 포함할 색상의 최소 비율 (1%)
+# (한국어) 대응 적용 이미지 생성 시 픽셀 교체 임계값.
+# 팔레트 주요 색과 OKLab ΔE가 이 값 미만인 픽셀만 추천 색으로 교체.
+# 안티앨리어싱·그라데이션 영역은 원본 유지해 부작용을 최소화.
+APPLY_REPLACE_DISTANCE = 0.10  # DISTINCT_MIN과 동일 — 원래 구분 가능했던 범위까지만 교체
 
 # --- WCAG AA 기준 (디자인 문서의 알고리즘 규칙) ---
 WCAG_NORMAL = 4.5     # 일반 텍스트 최소 대비율

@@ -9,6 +9,7 @@ import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../
 import ColorChip from '../components/ColorChip'
 import ContrastExample from '../components/ContrastExample'
 import CvdSelector from '../components/CvdSelector'
+import ImprovedCompare from '../components/ImprovedCompare'
 import InfoPopover from '../components/InfoPopover'
 import ResultCompare from '../components/ResultCompare'
 import ResultSummary from '../components/ResultSummary'
@@ -55,6 +56,7 @@ export default function DeveloperModePage() {
   const [error, setError] = useState<string | null>(null)
   const [imageResult, setImageResult] = useState<ImageAnalysis | null>(null) // 이미지 분석 결과
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
+  const [resultTab, setResultTab] = useState<'analysis' | 'compare'>('analysis') // 결과 화면 탭
   const solutionsRef = useRef<HTMLElement>(null) // "문제 해결 방법 보기" 버튼의 스크롤 이동 대상
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.currentUser)
@@ -88,6 +90,7 @@ export default function DeveloperModePage() {
         const data = await analyzeImage(file, cvd, 'developer', lang, token)
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
+        setResultTab('analysis') // 결과 탭을 첫 탭으로 초기화
         if (user)
           addResult({
             fileName: file.name,
@@ -240,15 +243,61 @@ export default function DeveloperModePage() {
         </p>
       )}
 
-      {/* [이미지 방식] 결과: 원본/시뮬레이션 비교 + 결과 요약(추천 포함) */}
+      {/* [이미지 방식] 결과: 두 개 탭 — 검사 결과 및 대응 방안 / 대응 적용 이미지 비교 */}
       {imageResult && preview && (
         <div className="flex flex-col gap-6">
-          <ResultCompare
-            original={preview}
-            simulated={imageResult.simulated_image}
-            cvdType={imageResult.cvd_type}
-          />
-          <ResultSummary data={imageResult} mode="developer" />
+          {/* 대응 이미지가 있을 때만 비교 탭 노출 (추천이 없으면 두 번째 탭 숨김) */}
+          {imageResult.improved_image && imageResult.improved_simulated_image ? (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-bold">{t('resultContent')}</h2>
+              <div role="tablist" aria-label={t('resultContent')} className="flex gap-2">
+                {(
+                  [
+                    { key: 'analysis', label: t('tabAnalysis') },
+                    { key: 'compare', label: t('tabCompare') },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    role="tab"
+                    type="button"
+                    aria-selected={resultTab === tab.key}
+                    onClick={() => setResultTab(tab.key)}
+                    className={`flex-1 rounded-xl border px-5 py-3 text-sm font-semibold transition-colors ${
+                      resultTab === tab.key
+                        ? 'border-2 border-ink bg-ink text-white'
+                        : 'border-rule bg-white text-graphite hover:bg-paper'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {/* 탭1: 검사 결과 및 대응 방안 — 원본/시뮬레이션 비교 + 결과 요약(추천 포함) */}
+          {resultTab === 'analysis' && (
+            <>
+              <ResultCompare
+                original={preview}
+                simulated={imageResult.simulated_image}
+                cvdType={imageResult.cvd_type}
+              />
+              <ResultSummary data={imageResult} mode="developer" />
+            </>
+          )}
+          {/* 탭2: 대응 적용 이미지 비교 — Before/After 2×2 그리드 */}
+          {resultTab === 'compare' &&
+            imageResult.improved_image &&
+            imageResult.improved_simulated_image && (
+              <ImprovedCompare
+                original={preview}
+                simulated={imageResult.simulated_image}
+                improved={imageResult.improved_image}
+                improvedSimulated={imageResult.improved_simulated_image}
+                cvdType={imageResult.cvd_type}
+              />
+            )}
         </div>
       )}
 
