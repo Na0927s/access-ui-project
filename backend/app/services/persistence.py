@@ -110,11 +110,20 @@ def set_cached(
 
 
 def serialize_history_item(row: AnalysisResult) -> dict[str, Any]:
-    """히스토리 한 줄을 API 응답용 dict로 변환. result_json은 파싱해 포함."""
+    """히스토리 한 줄을 API 응답용 dict로 변환. result_json은 파싱해 포함.
+
+    (한국어) created_at은 UTC로 저장되나 SQLite에서 타임존 정보가 손실되므로,
+    응답 시 +00:00(UTC)을 명시해 프론트엔드가 로컬 시간대로 올바르게 변환하도록 함.
+    """
     try:
         data = json.loads(row.result_json) if row.result_json else {}
     except (json.JSONDecodeError, TypeError):
         data = {}
+    # SQLite가 타임존을 떼어 naive datetime으로 돌려주므로, UTC로 간주해 명시.
+    created = row.created_at
+    if created is not None and created.tzinfo is None:
+        from datetime import timezone
+        created = created.replace(tzinfo=timezone.utc)
     return {
         "id": row.id,
         "user_id": row.user_id,
@@ -123,6 +132,6 @@ def serialize_history_item(row: AnalysisResult) -> dict[str, Any]:
         "input_meta": row.input_meta,
         "score": row.score,
         "verdict": row.verdict,
-        "created_at": row.created_at.isoformat() if row.created_at else None,
+        "created_at": created.isoformat() if created else None,
         "data": data,  # 시뮬레이션 이미지는 제거되어 있음 (메타·판정·점수만)
     }
