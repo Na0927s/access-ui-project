@@ -228,6 +228,8 @@ export const messages = {
     changePwTitle: '비밀번호 변경',
     // ---- 결과 내역 페이지 ----
     historyLoading: '불러오는 중…',
+    historyLoadError: '결과 내역을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+    deleteFailed: '삭제에 실패했습니다. 잠시 후 다시 시도해주세요.',
     emptyResults: '결과 없음',
     emptyResultsMsg: '아직 분석한 결과가 없습니다. 사용자 모드나 개발자 모드에서 검사를 해보세요.',
     dateSelect: '날짜 선택',
@@ -538,6 +540,8 @@ export const messages = {
     changePwTitle: 'Change password',
     // ---- Results history page ----
     historyLoading: 'Loading…',
+    historyLoadError: 'Failed to load results. Please try again later.',
+    deleteFailed: 'Failed to delete. Please try again later.',
     emptyResults: 'No results',
     emptyResultsMsg: 'No results yet. Run an inspection in user or developer mode.',
     dateSelect: 'Date',

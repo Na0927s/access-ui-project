@@ -94,6 +94,20 @@ export default function UserModePage() {
         >
           {loading ? t('inspecting') : t('inspect')}
         </button>
+        {/* 분석 중: 검사 버튼 바로 아래에 진행 표시 (스피너, D1) */}
+        {loading && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex items-center justify-center gap-2 text-sm text-graphite"
+          >
+            <span
+              aria-hidden
+              className="size-4 animate-spin rounded-full border-2 border-rule border-t-ink"
+            />
+            {t('inspecting')}
+          </div>
+        )}
       </div>
 
       {/* 에러 메시지 (스크린리더 즉시 알림) */}
