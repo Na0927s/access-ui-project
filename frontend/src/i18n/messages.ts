@@ -163,6 +163,9 @@ export const messages = {
     contrastExampleBad: '흐릿해서 안 보여요',
     contrastExampleOutro: '아래 결과 표의 숫자도 같은 기준이에요. 4.5 이상이면 글자가 안전하게 보인답니다.',
     noFixNeeded: '수정이 필요한 항목이 없습니다.',
+    btnExpand: '펼쳐 보기',
+    btnCollapse: '접기',
+    countUnit: '개',
     altOriginal: '원본 화면',
     altSimulated: '{cvd} 계열 색각이상 시뮬레이션 화면',
     // ---- 로그인 페이지 ----
@@ -469,6 +472,9 @@ export const messages = {
     contrastExampleBad: 'too faint to read',
     contrastExampleOutro: 'The table below uses the same scale. 4.5 or above means text is safely visible.',
     noFixNeeded: 'Nothing to fix.',
+    btnExpand: 'Expand',
+    btnCollapse: 'Collapse',
+    countUnit: ' items',
     altOriginal: 'Original screen',
     altSimulated: 'Simulated screen for {cvd} color vision deficiency',
     // ---- Login page ----

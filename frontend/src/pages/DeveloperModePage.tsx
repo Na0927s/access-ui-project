@@ -2,10 +2,11 @@
 // 방식1: 화면 이미지 업로드 → 백엔드 이미지 분석 (mode='developer')
 // 방식2: HTML/CSS 코드 입력 → 브라우저에서 색상 추출 → 백엔드 코드 분석
 // 두 방식 모두 결과에 "문제 해결 방법" 카드와 "요약" 영역을 표시 (개발자 모드 전용 기능)
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../api/types'
+import CodeResultTable from '../components/CodeResultTable'
 import ColorChip from '../components/ColorChip'
 import CvdSelector from '../components/CvdSelector'
 import ImprovedCompare from '../components/ImprovedCompare'
@@ -56,7 +57,8 @@ export default function DeveloperModePage() {
   const [imageResult, setImageResult] = useState<ImageAnalysis | null>(null) // 이미지 분석 결과
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
   const [resultTab, setResultTab] = useState<'analysis' | 'compare'>('analysis') // 결과 화면 탭
-  const solutionsRef = useRef<HTMLElement>(null) // "문제 해결 방법 보기" 버튼의 스크롤 이동 대상
+  const [solutionsOpen, setSolutionsOpen] = useState(false) // 문제 해결 방법 영역 펼침 여부
+  const [codeDetailOpen, setCodeDetailOpen] = useState(false) // 코드 모드 결과 내용(표) 펼침 여부
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.currentUser)
   const addResult = useResultStore((s) => s.add)
@@ -106,6 +108,7 @@ export default function DeveloperModePage() {
         const data = await analyzeElements(elements, cvd, lang, token)
         setCodeResult(data)
         setImageResult(null)
+        setResultTab('analysis') // 결과 탭을 분석 탭으로 초기화 (코드 모드는 탭이 없지만 상태 일관성 유지)
         if (user)
           addResult({
             fileName: t('codeFileName'),
@@ -282,7 +285,8 @@ export default function DeveloperModePage() {
                 simulated={imageResult.simulated_image}
                 cvdType={imageResult.cvd_type}
               />
-              <ResultSummary data={imageResult} mode="developer" />
+              {/* collapsible: 상세 영역(주요 색상/문제/추천)을 접었다 펼침, 판정·요약은 항상 보임 */}
+              <ResultSummary data={imageResult} mode="developer" collapsible />
             </>
           )}
           {/* 탭2: 대응 적용 이미지 비교 — Before/After 2×2 그리드 */}
@@ -300,7 +304,8 @@ export default function DeveloperModePage() {
         </div>
       )}
 
-      {/* [코드 방식] 결과: 요소별 상세 테이블 (선택자/글자색/배경색/대비율/판정) */}
+      {/* [코드 방식] 결과: 판정 + 요소별 상세 표 (판정별 묶음).
+          판정·결과 메시지는 항상 보이고, 표는 접었다 펼침 (#3). */}
       {codeResult && (
         <section aria-labelledby="detail" className="rounded-lg border border-rule bg-white p-5">
           <h2 id="detail" className="mb-3 text-lg font-bold">
@@ -315,81 +320,77 @@ export default function DeveloperModePage() {
               <p className="text-graphite">{t('popCodeFailDesc')}</p>
             </InfoPopover>
           </h2>
+          {/* 판정 + 결과 메시지 — 항상 보임 */}
           <p className="mb-3 flex flex-wrap items-center gap-2 text-sm font-medium">
             <VerdictBadge verdict={codeResult.verdict} />
             <span>
               {t('resultLabel')}: {codeResult.result_message}
             </span>
           </p>
-          {/* overflow-x-auto: 테이블이 화면보다 넓으면 가로 스크롤로 처리 */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-rule">
-                  <th className="py-2">{t('selector')}</th>
-                  <th>{t('textColor')}</th>
-                  <th>{t('bgColor')}</th>
-                  <th>{t('verdictCol')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {codeResult.results.map((r, i) => (
-                  <tr key={`${r.selector}-${i}`} className="border-b border-rule/60">
-                    {/* 큰 텍스트 요소는 옆에 "(큰 텍스트)" 표시 — 적용 기준이 다르다는 뜻 */}
-                    <td className="py-2">
-                      <code>{r.selector}</code>
-                      {r.is_large_text && (
-                        <span className="ml-1 text-xs text-graphite">({t('largeText')})</span>
-                      )}
-                    </td>
-                    <td>
-                      <ColorChip hex={r.color} />
-                    </td>
-                    <td>
-                      <ColorChip hex={r.background} />
-                    </td>
-                    <td>
-                      <VerdictBadge verdict={r.verdict} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* 요소별 결과 표 — 접기/펼치기. 기본 접힘. */}
+          <div className="rounded-lg border border-rule">
+            <button
+              type="button"
+              aria-expanded={codeDetailOpen}
+              onClick={() => setCodeDetailOpen((v) => !v)}
+              className="flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-colors hover:bg-paper"
+            >
+              <span>{codeDetailOpen ? t('btnCollapse') : t('btnExpand')}</span>
+              <span aria-hidden className="text-graphite">
+                {codeDetailOpen ? '▲' : '▼'}
+              </span>
+            </button>
+            {codeDetailOpen && (
+              <div className="border-t border-rule p-4">
+                {/* 판정(FAIL/WARNING/PASS)별 묶음으로 표시 (#4) */}
+                <CodeResultTable results={codeResult.results} />
+              </div>
+            )}
           </div>
         </section>
       )}
 
-      {/* 두 방식 공통: 문제 해결 방법 + 요약 (개발자 모드 전용 영역) */}
-      {hasResult && (
+      {/* 두 방식 공통: 문제 해결 방법 + 요약 (개발자 모드 전용 영역).
+          #1: "대응 적용 이미지 비교" 탭에서는 숨기고 "검사 결과 및 대응 방안" 탭에서만 표시.
+          코드 모드는 탭이 없으므로 항상 표시. */}
+      {hasResult && (codeResult || resultTab === 'analysis') && (
         <>
-          {/* 눌러면 해결 방법 섹션으로 부드럽게 스크롤 이동 */}
-          <button
-            type="button"
-            onClick={() => solutionsRef.current?.scrollIntoView()}
-            className="self-center rounded-full border border-ink px-5 py-2 text-sm font-medium transition-colors hover:bg-ink hover:text-white"
-          >
-            ↓ {t('goSolutions')}
-          </button>
-          {/* scroll-mt-4: 스크롤 이동 시 상단에 여백 확보 */}
-          <section
-            ref={solutionsRef}
-            aria-labelledby="solutions"
-            className="flex flex-col gap-6 scroll-mt-4"
-          >
-            <h2 id="solutions" className="text-lg font-bold">
-              {t('solutions')}
-              {/* 이미지·코드 모드 모두에 ⓘ 표시 (추천 색상·아이콘 함께 사용 안내) */}
-              {(imageResult || codeResult) && (
-                <InfoPopover label={t('solutions')}>
-                  <p className="mb-1 font-semibold">{t('popSolColorTitle')}</p>
-                  <p className="mb-2 text-graphite">{t('popSolColorBody')}</p>
-                  <p className="mb-1 font-semibold">{t('popSolIconTitle')}</p>
-                  <p className="text-graphite">{t('popSolIconBody')}</p>
-                </InfoPopover>
+          <section aria-labelledby="solutions" className="flex flex-col gap-6">
+            {/* 문제 해결 방법: 제목을 박스 안에 배치 (결과 내용과 동일한 패턴).
+                접기/펼치기 헤더에 제목을 두어 배경에 떠 있지 않도록 함. */}
+            <div className="rounded-xl border border-rule bg-white shadow-sm">
+              <button
+                type="button"
+                aria-expanded={solutionsOpen}
+                onClick={() => setSolutionsOpen((v) => !v)}
+                className="flex w-full items-center justify-between gap-2 rounded-xl px-5 py-4 text-left transition-colors hover:bg-paper"
+              >
+                <span className="flex items-center gap-2 text-lg font-bold">
+                  {t('solutions')}
+                  {/* 이미지·코드 모드 모두에 ⓘ 표시 (추천 색상·아이콘 함께 사용 안내) */}
+                  {(imageResult || codeResult) && (
+                    <InfoPopover label={t('solutions')}>
+                      <p className="mb-1 font-semibold">{t('popSolColorTitle')}</p>
+                      <p className="mb-2 text-graphite">{t('popSolColorBody')}</p>
+                      <p className="mb-1 font-semibold">{t('popSolIconTitle')}</p>
+                      <p className="text-graphite">{t('popSolIconBody')}</p>
+                    </InfoPopover>
+                  )}
+                  <span className="text-sm font-medium text-graphite">
+                    {solutionsOpen ? t('btnCollapse') : t('btnExpand')}
+                  </span>
+                </span>
+                <span aria-hidden className="text-graphite">
+                  {solutionsOpen ? '▲' : '▼'}
+                </span>
+              </button>
+              {solutionsOpen && (
+                <div className="border-t border-rule p-5">
+                  <SolutionCards boxes={boxes} />
+                </div>
               )}
-            </h2>
-            <SolutionCards boxes={boxes} />
-            {/* 요약: 코드 모드는 기존 통계 문구 유지, 이미지 모드는 동적 구조로 재구성 (점수는 표시하지 않음) */}
+            </div>
+            {/* 요약(검사 결과 요약): 항상 보임. 코드 모드는 기존 통계 문구 유지, 이미지 모드는 동적 구조 (점수는 표시하지 않음) */}
             <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-lg font-bold">{t('summaryTitle')}</h2>
               {codeResult ? (

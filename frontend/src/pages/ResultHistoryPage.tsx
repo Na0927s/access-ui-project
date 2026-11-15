@@ -125,6 +125,7 @@ export default function ResultHistoryPage() {
               <ResultSummary
                 data={open.data as ImageAnalysis}
                 mode={open.mode === 'user' ? 'user' : 'developer'}
+                collapsible
               />
             ) : (
               <CodeResultDetail data={open.data as DeveloperAnalysis} />
