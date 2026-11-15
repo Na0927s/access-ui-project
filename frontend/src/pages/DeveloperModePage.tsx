@@ -92,6 +92,8 @@ export default function DeveloperModePage() {
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
         setResultTab('analysis') // 결과 탭을 첫 탭으로 초기화
+        setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
+        setCodeDetailOpen(false)
         if (user)
           addResult({
             fileName: file.name,
@@ -109,6 +111,8 @@ export default function DeveloperModePage() {
         setCodeResult(data)
         setImageResult(null)
         setResultTab('analysis') // 결과 탭을 분석 탭으로 초기화 (코드 모드는 탭이 없지만 상태 일관성 유지)
+        setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
+        setCodeDetailOpen(false)
         if (user)
           addResult({
             fileName: t('codeFileName'),
@@ -164,9 +168,9 @@ export default function DeveloperModePage() {
               setImageResult(null)
               setCodeResult(null)
             }}
-            className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
+            className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
               method === m
-                ? 'border-2 border-ink font-semibold bg-ink text-white'
+                ? 'border-ink font-semibold bg-ink text-white'
                 : 'border-rule bg-white hover:bg-paper'
             }`}
           >
@@ -265,9 +269,9 @@ export default function DeveloperModePage() {
                     type="button"
                     aria-selected={resultTab === tab.key}
                     onClick={() => setResultTab(tab.key)}
-                    className={`flex-1 rounded-xl border px-5 py-3 text-sm font-semibold transition-colors ${
+                    className={`flex-1 rounded-xl border-2 px-5 py-3 text-sm font-semibold transition-colors ${
                       resultTab === tab.key
-                        ? 'border-2 border-ink bg-ink text-white'
+                        ? 'border-ink bg-ink text-white'
                         : 'border-rule bg-white text-graphite hover:bg-paper'
                     }`}
                   >

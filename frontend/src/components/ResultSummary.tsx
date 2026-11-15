@@ -27,6 +27,12 @@ export default function ResultSummary({
   const [copiedHex, setCopiedHex] = useState<string | null>(null) // 추천 색상 HEX 복사 표시
   const [open, setOpen] = useState(false) // 상세 영역(주요 색상/문제/추천) 펼침 여부
 
+  // 분석 결과가 바뀌면 펼침 상태를 초기화 (A3).
+  // 결과 내역에서 다른 기록을 열거나 새 검사를 했을 때 이전 펼침 상태가 이월되는 것을 방지.
+  useEffect(() => {
+    setOpen(false)
+  }, [data])
+
   // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
   // AbortController로 진행 중인 이전 요청을 취소해 경쟁(race)과 불필요한 네트워크 호출을 방지.
   useEffect(() => {

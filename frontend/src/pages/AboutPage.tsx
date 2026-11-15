@@ -47,9 +47,9 @@ export default function AboutPage() {
             type="button"
             aria-selected={tab === tb}
             onClick={() => setTab(tb)}
-            className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
+            className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
               tab === tb
-                ? 'border-2 border-ink bg-ink font-semibold text-white'
+                ? 'border-ink bg-ink font-semibold text-white'
                 : 'border-rule bg-white hover:bg-paper'
             }`}
           >
