@@ -250,11 +250,11 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
                 # 두 옵션(글자색 변경 vs 배경색 변경) 중 변경 폭이 작은 쪽으로 CSS 수정안 생성
                 _, prop, fix = min(options)
                 css_fix = f"{el['selector']} {{ {prop}: {fix}; }}"
-            need = texts.NEED_LARGE[lang] if large else "4.5:1"   # 이 요소가 만족해야 하는 기준
+            # problem 문구에서 대비율 숫자·기준 수치를 숨김(간소화). ratio 계산·판정은 위에서 유지.
             boxes.append({
                 "selector": el["selector"],
                 "check_type": "CONTRAST",
-                "problem": texts.DEV_CONTRAST_PROBLEM[lang].format(ratio=f"{ratio:.2f}", need=need),
+                "problem": texts.DEV_CONTRAST_PROBLEM[lang],
                 "css_fix": css_fix,                       # 바로 복사해 쓸 수 있는 CSS 한 줄
                 "non_color_fix": texts.DEV_CONTRAST_TIP[lang],  # 색 외 개선 팁
             })

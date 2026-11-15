@@ -393,25 +393,47 @@ export default function DeveloperModePage() {
             <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
               <h2 className="mb-3 text-lg font-bold">{t('summaryTitle')}</h2>
               {codeResult ? (
-                <>
-                  <p className="text-sm">
-                    {t('devSummary')
-                      .replace('{total}', String(codeResult.summary.total))
-                      .replace('{pass}', String(codeResult.summary.pass))
-                      .replace('{warning}', String(codeResult.summary.warning))
-                      .replace('{fail}', String(codeResult.summary.fail))}
-                  </p>
-                  {/* 코드 모드 우선 수정 대상: 첫 번째 해결 카드 (기존 동작 유지) */}
-                  {boxes.length > 0 && (
-                    <div className="mt-2 flex flex-col gap-1 text-sm">
+                <div className="flex flex-col gap-1.5 text-sm">
+                  {codeResult.summary.total === 0 ? (
+                    // 검사 결과 없음 (0개로 오해되지 않도록 별도 안내)
+                    <p className="text-graphite">{t('sumEmptyCode')}</p>
+                  ) : codeResult.summary.fail === 0 &&
+                    codeResult.summary.warning === 0 ? (
+                    // 모든 요소 PASS
+                    <p className="text-graphite">{t('sumAllPassCode')}</p>
+                  ) : (
+                    <>
+                      {/* 항목별 통계 — 값은 실제 검사 결과 */}
                       <p>
-                        {t('fixFirst')}
-                        <code className="rounded bg-paper px-1.5 py-0.5">{boxes[0].selector}</code>
+                        {t('sumTotal')}: {codeResult.summary.total}개
                       </p>
-                      <p className="text-graphite">{t('fixFirstReason')}</p>
-                    </div>
+                      <p>
+                        {t('sumPass')}: {codeResult.summary.pass}개
+                      </p>
+                      <p>
+                        {t('sumWarn')}: {codeResult.summary.warning}개
+                      </p>
+                      <p>
+                        {t('sumFail')}: {codeResult.summary.fail}개
+                      </p>
+                      {/* 우선 확인할 요소: FAIL 우선, 없으면 WARNING 첫 해결 카드 selector */}
+                      {boxes.length > 0 && (
+                        <p className="mt-1 flex flex-wrap items-center gap-1.5">
+                          {t('sumPriorityEl')}:
+                          <code className="rounded bg-paper px-1.5 py-0.5">
+                            {boxes[0].selector}
+                          </code>
+                        </p>
+                      )}
+                      {/* FAIL 없이 WARNING만 있을 때 별도 안내, 아니면 기본 다음 단계 */}
+                      <p className="text-graphite">
+                        {codeResult.summary.fail === 0
+                          ? t('sumWarnOnlyCode')
+                          : `${t('sumNext')}: ${t('sumNextStepCode')}`}
+                      </p>
+                    </>
                   )}
-                </>
+                </div>
               ) : (
                 imageResult && (
                   <div className="flex flex-col gap-1.5 text-sm">
