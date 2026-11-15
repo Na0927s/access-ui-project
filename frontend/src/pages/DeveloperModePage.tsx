@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
-import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../api/types'
+import type { CvdType, DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import CodeResultTable from '../components/CodeResultTable'
 import ColorChip from '../components/ColorChip'
 import CvdSelector from '../components/CvdSelector'
@@ -21,27 +21,9 @@ import { useAuthStore } from '../stores/authStore'
 import { useResultStore } from '../stores/resultStore'
 import { useUiStore } from '../stores/uiStore'
 import { extractElements } from '../utils/extractElements'
+import { imageIssuesToBoxes } from '../utils/imageIssuesToBoxes'
 
 type Method = 'image' | 'code' // 현재 선택된 입력 방식 (탭)
-
-// 이미지 분석 결과를 문제 해결 카드(SolutionBox) 형태로 변환하는 어댑터 함수.
-// 이슈 목록과 추천 색상 목록은 같은 순서로 생성되었으므로 인덱스(i)로 서로 짝지을 수 있음
-function imageIssuesToBoxes(data: ImageAnalysis): SolutionBox[] {
-  return data.issues.map((issue, i) => {
-    const rec = data.recommendations?.[i]
-    // 조건부(CONDITIONAL) 등급은 되도록 피하고, 없으면 첫 후보 사용
-    const fix = rec
-      ? (rec.candidates.find((c) => c.grade !== 'CONDITIONAL') ?? rec.candidates[0])
-      : undefined
-    return {
-      selector: issue.colors.join(' / '), // 이미지 모드는 선택자가 없으므로 색상 쌍으로 표시
-      check_type: issue.type === 'LOW_CONTRAST' ? 'CONTRAST' : 'COLOR_ONLY',
-      problem: issue.message,
-      css_fix: rec && fix ? `/* ${rec.current} → */ color: ${fix.hex};` : null,
-      non_color_fix: rec ? rec.non_color_tips[0] : null,
-    }
-  })
-}
 
 export default function DeveloperModePage() {
   const t = useT()
@@ -58,7 +40,9 @@ export default function DeveloperModePage() {
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
   const [resultTab, setResultTab] = useState<'analysis' | 'compare'>('analysis') // 결과 화면 탭
   const [solutionsOpen, setSolutionsOpen] = useState(false) // 문제 해결 방법 영역 펼침 여부
-  const [codeDetailOpen, setCodeDetailOpen] = useState(false) // 코드 모드 결과 내용(표) 펼침 여부
+  // 코드 모드 결과 내용(표) 펼침 여부.
+  // 첫 검사 직후 펼친 상태로 보이도록 기본 true (문제 해결 방법은 접힘).
+  const [codeDetailOpen, setCodeDetailOpen] = useState(true)
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.currentUser)
   const addResult = useResultStore((s) => s.add)
@@ -93,7 +77,7 @@ export default function DeveloperModePage() {
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
         setResultTab('analysis') // 결과 탭을 첫 탭으로 초기화
         setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
-        setCodeDetailOpen(false)
+        setCodeDetailOpen(true) // 결과 내용은 펼침, 문제 해결 방법은 접힘
         if (user)
           addResult({
             fileName: file.name,
@@ -112,7 +96,7 @@ export default function DeveloperModePage() {
         setImageResult(null)
         setResultTab('analysis') // 결과 탭을 분석 탭으로 초기화 (코드 모드는 탭이 없지만 상태 일관성 유지)
         setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
-        setCodeDetailOpen(false)
+        setCodeDetailOpen(true) // 결과 내용은 펼침, 문제 해결 방법은 접힘
         if (user)
           addResult({
             fileName: t('codeFileName'),
@@ -237,24 +221,16 @@ export default function DeveloperModePage() {
             onClick={inspect}
             disabled={loading}
             aria-busy={loading}
-            className="w-full rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {loading ? t('inspecting') : t('inspect')}
-          </button>
-          {/* 분석 중: 검사 버튼 바로 아래에 진행 표시 (스피너, D1) */}
-          {loading && (
-            <div
-              role="status"
-              aria-live="polite"
-              className="flex items-center justify-center gap-2 text-sm text-graphite"
-            >
+            {loading && (
               <span
                 aria-hidden
-                className="size-4 animate-spin rounded-full border-2 border-rule border-t-ink"
+                className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
               />
-              {t('inspecting')}
-            </div>
-          )}
+            )}
+            {loading ? t('inspecting') : t('inspect')}
+          </button>
         </div>
       </div>
       {error && (

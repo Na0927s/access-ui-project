@@ -4,12 +4,16 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import CodeResultDetail from '../components/CodeResultDetail'
+import ColorChip from '../components/ColorChip'
+import InfoPopover from '../components/InfoPopover'
 import ResultSummary from '../components/ResultSummary'
+import SolutionCards from '../components/SolutionCards'
 import VerdictBadge from '../components/VerdictBadge'
 import { useT } from '../i18n/useT'
 import { removeServerResult, useResultStore } from '../stores/resultStore'
 import { useAuthStore } from '../stores/authStore'
 import { useUiStore } from '../stores/uiStore'
+import { imageIssuesToBoxes } from '../utils/imageIssuesToBoxes'
 
 export default function ResultHistoryPage() {
   const t = useT()
@@ -24,6 +28,13 @@ export default function ResultHistoryPage() {
   const [date, setDate] = useState<string>('') // 선택된 필터 날짜 (빈 값 = 전체)
   const [openId, setOpenId] = useState<string | null>(null) // 현재 펼쳐 본 기록의 ID
   const [deleteError, setDeleteError] = useState(false) // 서버 삭제 실패 표시 (D3)
+  // 이미지 모드 상세의 문제 해결 방법 영역 펼침 여부 (검사 화면과 동일: 기본 접힘)
+  const [solutionsOpen, setSolutionsOpen] = useState(false)
+
+  // 다른 기록을 열면 문제 해결 방법 영역을 접힘 상태로 초기화 (검사 화면과 동일)
+  useEffect(() => {
+    setSolutionsOpen(false)
+  }, [openId])
 
   // 로그인 사용자면 백엔드에서 히스토리 로드
   useEffect(() => {
@@ -150,14 +161,92 @@ export default function ResultHistoryPage() {
               </li>
             ))}
           </ul>
-          {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 상세(표+해결카드) 표시 */}
+          {/* 펼쳐진 기록의 상세 보기.
+              이미지 모드: 검사 화면 결과를 사진(ResultCompare)만 빼고 그대로 복제
+              — ResultSummary(collapsible) + 문제 해결 방법(접기/펼치기) + 요약 통계.
+              코드 모드: CodeResultDetail(박스 4섹션). */}
           {open &&
             ('simulated_image' in open.data ? (
-              <ResultSummary
-                data={open.data as ImageAnalysis}
-                mode={open.mode === 'user' ? 'user' : 'developer'}
-                collapsible
-              />
+              (() => {
+                const img = open.data as ImageAnalysis
+                const isDev = open.mode !== 'user'
+                // 검사 화면(DeveloperModePage)과 동일 로직: 이미지 결과 → SolutionBox 변환
+                const boxes = imageIssuesToBoxes(img)
+                // 심각도(HIGH=FAIL) 우선 정렬 후 첫 조합 (표시 순서만)
+                const SEV_RANK = { HIGH: 2, MEDIUM: 1, LOW: 0 } as const
+                const imagePriority =
+                  img.issues.length > 0
+                    ? [...img.issues].sort((a, b) => SEV_RANK[b.severity] - SEV_RANK[a.severity])[0]
+                    : undefined
+                return (
+                  <section className="flex flex-col gap-6">
+                    {/* 검사 화면 결과 영역: ResultSummary(collapsible) — 판정/요약설명/결과내용 */}
+                    <ResultSummary data={img} mode={isDev ? 'developer' : 'user'} collapsible />
+                    {/* 문제 해결 방법 + 요약 — 개발자 모드만 (규칙 7) */}
+                    {isDev && (
+                      <>
+                        {/* 문제 해결 방법: 검사 화면과 동일한 박스+접기/펼치기 (기본 접힘) */}
+                        {boxes.length > 0 && (
+                          <div className="rounded-xl border border-rule bg-white shadow-sm">
+                            <button
+                              type="button"
+                              aria-expanded={solutionsOpen}
+                              onClick={() => setSolutionsOpen((v) => !v)}
+                              className="flex w-full items-center justify-between gap-2 rounded-xl px-5 py-4 text-left transition-colors hover:bg-paper"
+                            >
+                              <span className="flex items-center gap-2 text-lg font-bold">
+                                {t('solutions')}
+                                <InfoPopover label={t('solutions')}>
+                                  <p className="mb-1 font-semibold">{t('popSolColorTitle')}</p>
+                                  <p className="mb-2 text-graphite">{t('popSolColorBody')}</p>
+                                  <p className="mb-1 font-semibold">{t('popSolIconTitle')}</p>
+                                  <p className="text-graphite">{t('popSolIconBody')}</p>
+                                </InfoPopover>
+                                <span className="text-sm font-medium text-graphite">
+                                  {solutionsOpen ? t('btnCollapse') : t('btnExpand')}
+                                </span>
+                              </span>
+                              <span aria-hidden className="text-graphite">
+                                {solutionsOpen ? '▲' : '▼'}
+                              </span>
+                            </button>
+                            {solutionsOpen && (
+                              <div className="border-t border-rule p-5">
+                                <SolutionCards boxes={boxes} />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {/* 요약 통계: 검사 화면과 동일 (이미지 모드 동적 구조, 점수 없음) */}
+                        <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
+                          <h2 className="mb-3 text-lg font-bold">{t('summaryTitle')}</h2>
+                          <div className="flex flex-col gap-1.5 text-sm">
+                            <p>
+                              {t('sumIssues')}: {img.issues.length}개
+                            </p>
+                            <p>
+                              {t('sumColors')}: {img.palette.length}개
+                            </p>
+                            {imagePriority && (
+                              <p className="flex flex-wrap items-center gap-1.5">
+                                {t('sumPriority')}:
+                                {imagePriority.colors.map((c) => (
+                                  <ColorChip key={c} hex={c} />
+                                ))}
+                              </p>
+                            )}
+                            <p className="text-graphite">
+                              {img.issues.length > 0
+                                ? `${t('sumNext')}: ${t('sumNextBody')}`
+                                : t('sumOk')}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </section>
+                )
+              })()
             ) : (
               <CodeResultDetail data={open.data as DeveloperAnalysis} />
             ))}

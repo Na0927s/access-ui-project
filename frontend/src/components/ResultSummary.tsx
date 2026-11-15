@@ -25,12 +25,15 @@ export default function ResultSummary({
   const lang = useUiStore((s) => s.lang)
   const [ai, setAi] = useState<Explanation | null>(null) // AI/요약 설명 응답
   const [copiedHex, setCopiedHex] = useState<string | null>(null) // 추천 색상 HEX 복사 표시
-  const [open, setOpen] = useState(false) // 상세 영역(주요 색상/문제/추천) 펼침 여부
+  // 상세 영역(주요 색상/문제/추천) 펼침 여부.
+  // collapsible 모드에서는 첫 검사 직후 펼쳐진 상태로 보이도록 기본 true.
+  // (문제 해결 방법은 별도 영역으로 기본 접힘 상태 — 결과는 먼저 보여주는 게 자연스러움)
+  const [open, setOpen] = useState(true)
 
   // 분석 결과가 바뀌면 펼침 상태를 초기화 (A3).
   // 결과 내역에서 다른 기록을 열거나 새 검사를 했을 때 이전 펼침 상태가 이월되는 것을 방지.
   useEffect(() => {
-    setOpen(false)
+    setOpen(true)
   }, [data])
 
   // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
@@ -258,16 +261,22 @@ export default function ResultSummary({
         </div>
       )}
 
-      {/* 상세 영역(주요 색상/문제/추천): collapsible이면 접었다 펼침, 아니면 그대로 펼침 */}
+      {/* 상세 영역(주요 색상/문제/추천): collapsible이면 접었다 펼침, 아니면 그대로 펼침.
+          collapsible 헤더는 코드 모드(CodeResultDetail)와 동일한 "제목 + 펼쳐보기/접기" 패턴. */}
       {collapsible ? (
         <div className="rounded-lg border border-rule">
           <button
             type="button"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
-            className="flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-sm font-semibold transition-colors hover:bg-paper"
+            className="flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-left transition-colors hover:bg-paper"
           >
-            <span>{open ? t('btnCollapse') : t('btnExpand')}</span>
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              {t('resultContent')}
+              <span className="font-medium text-graphite">
+                {open ? t('btnCollapse') : t('btnExpand')}
+              </span>
+            </span>
             <span aria-hidden className="text-graphite">
               {open ? '▲' : '▼'}
             </span>

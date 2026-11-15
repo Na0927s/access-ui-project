@@ -90,24 +90,16 @@ export default function UserModePage() {
           onClick={inspect}
           disabled={loading}
           aria-busy={loading}
-          className="w-full rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? t('inspecting') : t('inspect')}
-        </button>
-        {/* 분석 중: 검사 버튼 바로 아래에 진행 표시 (스피너, D1) */}
-        {loading && (
-          <div
-            role="status"
-            aria-live="polite"
-            className="flex items-center justify-center gap-2 text-sm text-graphite"
-          >
+          {loading && (
             <span
               aria-hidden
-              className="size-4 animate-spin rounded-full border-2 border-rule border-t-ink"
+              className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
             />
-            {t('inspecting')}
-          </div>
-        )}
+          )}
+          {loading ? t('inspecting') : t('inspect')}
+        </button>
       </div>
 
       {/* 에러 메시지 (스크린리더 즉시 알림) */}
