@@ -98,6 +98,17 @@ export const messages = {
     solutions: '문제 해결 방법',
     summary: '요약',
     goSolutions: '문제 해결 방법 보기',
+    tabAnalysis: '검사 결과 및 대응 방안',
+    tabCompare: '대응 적용 이미지 비교',
+    beforeLabel: 'Before',
+    afterLabel: 'After',
+    originalSimLabel: '원본 시뮬레이션',
+    improvedLabel: '대응 적용 이미지',
+    improvedSimLabel: '대응 적용 시뮬레이션',
+    compareCaption:
+      '오른쪽은 추천 색상을 적용한 결과입니다. 아래쪽은 각각 색각이상 시뮬레이션을 적용한 화면으로, 오른쪽 아래는 대응 이미지에 시뮬레이션을 적용한 결과입니다.',
+    altImproved: '추천 색상을 적용한 대응 이미지',
+    altImprovedSim: '대응 이미지에 색각이상 시뮬레이션을 적용한 화면',
     copy: '복사',
     copied: '복사됨',
     siteInfo: '사이트 설명 · 약관',
@@ -125,8 +136,16 @@ export const messages = {
     largeText: '큰 텍스트',
     devSummary: '전체 {total}개 · ✓ PASS {pass} · ⚠ WARNING {warning} · ✕ FAIL {fail}',
     imgSummary: '발견된 문제 {issues}개 · 주요 색상 {colors}개',
-    fixFirst: '우선 수정: ',
-    fixFirstReason: '가장 심각한 문제부터 고치면 효과가 커요.',
+    // ---- 코드 모드 요약 (항목별 구조, 값은 동적) ----
+    sumTotal: '전체 검사 요소',
+    sumPass: 'PASS(통과)',
+    sumWarn: 'WARNING(주의)',
+    sumFail: 'FAIL(개선 필요)',
+    sumPriorityEl: '우선 확인할 요소',
+    sumNextStepCode: '문제가 발견된 요소부터 확인하고, 추천 색상으로 변경해 보세요.',
+    sumAllPassCode: '이번 검사에서 기준을 충족하지 못한 요소는 발견되지 않았어요. 현재 색상 구성을 유지해도 괜찮아요.',
+    sumWarnOnlyCode: '기준을 완전히 충족하지는 못했지만, 심각한 문제는 없어요. 주의 요소를 한번 확인해 보세요.',
+    sumEmptyCode: '검사된 요소가 없어요. 코드를 다시 확인해 주세요.',
     recommendEasyHint: '이 색으로 바꾸면 두 색이 더 잘 구분돼요.',
     gradeStrong: '✓ 강력 추천',
     gradeRecommended: '✓ 추천',
@@ -218,6 +237,7 @@ export const messages = {
     // ---- 약관 페이지 ----
     termsIntro:
       'CVDS는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.',
+    termsUpdated: '최종 업데이트: 2026년 11월 15일',
     termsAnalysisTitle: '분석 방식',
     termsAnalysisBody:
       '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 OKLab ΔE(Ottosson 2020)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 색이 겹쳐 보이는 정도는 시뮬레이션 후의 색 거리로 판정하며, 추천 색상은 대비와 구분 가능성을 다시 검증한 뒤에만 제안합니다.',
@@ -227,6 +247,65 @@ export const messages = {
     termsLimitTitle: '한계',
     termsLimitBody:
       '이미지 분석은 압축과 안티앨리어싱의 영향을 받으며, 실제 CSS 값이 아닌 화면에 보이는 색을 기준으로 합니다. 동적으로 생성되는 UI는 정확히 분석하지 못할 수 있습니다.',
+    // ---- 정보 팝오버(ⓘ) 및 개선된 요약 (개발자 모드 이미지 결과) ----
+    infoLabel: '정보',
+    imgResultIntro:
+      '선택한 색각이상 유형을 기준으로 검사한 결과, 주의가 필요한 색상 조합 {count}개가 발견되었습니다. 아래에서 문제가 발견된 색상과 더 잘 구분되는 추천 색상을 확인해 보세요.',
+    imgResultIntroOk:
+      '선택한 색각이상 유형을 기준으로 검사한 결과, 주의가 필요한 색상 조합이 발견되지 않았습니다.',
+    popPaletteTitle: '주요 색상',
+    popPaletteBody:
+      '이미지는 수많은 픽셀로 이루어져 있습니다. 이 검사에서는 이미지를 대표하는 16색으로 줄인 뒤, 비슷한 색을 묶어 화면에서 비중이 큰 색을 최대 8개까지 추출하여 분석합니다. 화면에 표시된 색상이 검사에 사용된 주요 색상이며, 옆의 백분율은 해당 색이 이미지에서 차지하는 비율입니다.',
+    popIssuesTitle: '발견된 문제',
+    popIssuesTarget: '검사 대상',
+    popIssuesTargetBody:
+      '이미지에서 추출한 주요 색상을 대상으로 검사합니다. 가장 비중이 큰 색을 배경으로 간주하고, 나머지 주요 색과의 명암 대비를 검사합니다. 또한 모든 주요 색 쌍에 대해 색각이상 환경에서의 구분 가능성을 검사합니다.',
+    popIssuesContrastTitle: '명암 대비 검사',
+    popIssuesContrastBody:
+      '두 색의 밝기 차이가 충분한지 확인합니다. 밝기 차이가 작으면 글자나 주요 요소가 배경에 묻혀 보이지 않을 수 있습니다.',
+    popIssuesDistanceTitle: '색상 거리 검사',
+    popIssuesDistanceBody:
+      '선택한 색각이상 유형에서 두 색이 얼마나 잘 구분되는지 확인합니다. 시뮬레이션을 적용한 뒤에도 두 색이 비슷하게 보이면 구분이 어려울 수 있습니다.',
+    popIssuesOverallTitle: '종합 판정',
+    popIssuesOverallBody:
+      '각 색상 조합은 명암 대비 검사 또는 색상 거리 검사 중 해당하는 항목으로 판정됩니다. 검사 결과를 종합하여 전체 판정(PASS / WARNING / FAIL)을 산출합니다.',
+    popVerdictMeaningTitle: '판정 결과의 의미',
+    popPassDesc: 'PASS(통과): 현재 검사 기준을 충족합니다. 색상을 변경할 필요가 없습니다.',
+    popWarnDesc: 'WARNING(주의): 색상 구분이 어려울 가능성이 있습니다. 변경을 고려해 보세요.',
+    popFailDesc: 'FAIL(미통과): 검사 기준을 충족하지 못했습니다. 색상 개선을 권장합니다.',
+    popRecommendTitle: '추천 색상',
+    popRecommendBody:
+      '문제가 발견된 색상의 색조는 유지한 채 밝기를 0.02 단위로 조정하여 여러 후보 색상을 생성합니다. 각 후보를 배경색과의 명암 대비 및 색각이상 시뮬레이션 후 구분 가능성으로 다시 검사하고, 두 기준을 모두 만족하는 색상만 추천합니다. 원래 색에 가장 가까운 순으로 최대 3개를 제시합니다.',
+    popRecommendEasy: '추천 색상으로 변경하면 글자나 주요 요소를 더 쉽게 구분할 수 있습니다.',
+    popSolutionsTitle: '문제 해결 방법',
+    popSolColorTitle: '추천 색상 코드 사용',
+    popSolColorBody:
+      '문제가 발견된 색상 대신 사용할 수 있는 추천 색상 코드를 제공합니다. 코드를 복사해 디자인이나 개발에 적용해 보세요.',
+    popSolIconTitle: '아이콘·기호 함께 사용',
+    popSolIconBody:
+      '색상만으로 정보를 구분하기 어렵다면 아이콘, 기호, 문자 등을 함께 사용해 보세요. 색상을 구별하기 어려운 사용자도 정보를 이해하는 데 도움이 됩니다.',
+    // ---- 개선된 최종 요약 (개발자 모드 이미지 결과) ----
+    summaryTitle: '검사 결과 요약',
+    sumIssues: '발견된 문제',
+    sumColors: '분석한 주요 색상',
+    sumPriority: '우선 확인할 색상 조합',
+    sumNext: '다음으로 할 일',
+    sumNextBody:
+      '문제가 발견된 색상부터 확인하고, 추천 색상으로 변경하거나 아이콘·기호를 함께 활용해 보세요.',
+    sumOk:
+      '선택한 색각이상 유형을 기준으로 검사한 결과, 주의가 필요한 색상 조합이 발견되지 않았습니다.',
+    copyHex: '색상 코드 복사',
+    recommendEasyHintSimple:
+      '추천 색상으로 변경하면 글자나 주요 요소를 더 쉽게 구분할 수 있습니다.',
+    // ---- 코드 모드 ⓘ 정보 팝오버 ----
+    popCodeFindingsTitle: '결과 내용',
+    popCodeMethodTitle: '어떻게 검사하나요?',
+    popCodeMethodBody:
+      '입력한 HTML·CSS 코드를 스크립트가 제거된 안전한 iframe에 렌더링하여 실제 화면으로 구성한 뒤, 각 글자 요소에 적용된 글자색과 배경색의 밝기 차이를 명암 대비 기준으로 검사합니다. 일반 텍스트는 4.5:1, 큰 텍스트(24px 이상 또는 18.66px 이상 굵게)는 3:1 기준을 적용합니다.',
+    popCodeVerdictTitle: '검사 결과는 무엇을 의미하나요?',
+    popCodePassDesc: 'PASS(통과): 해당 텍스트가 일반 텍스트 기준(4.5:1)을 충족합니다. 색상을 변경할 필요가 없습니다.',
+    popCodeWarnDesc: 'WARNING(주의): 큰 텍스트 기준(3:1)은 통과했으나 일반 텍스트 기준(4.5:1)에는 미달합니다. 글자가 잘 보이는지 추가 확인이 필요합니다.',
+    popCodeFailDesc: 'FAIL(미통과): 큰 텍스트 기준(3:1)에도 미달합니다. 색상 개선을 권장합니다.',
     // ---- 모달 ----
     modalOk: '확인',
   },
@@ -325,6 +404,17 @@ export const messages = {
     solutions: 'How to fix',
     summary: 'Summary',
     goSolutions: 'See how to fix',
+    tabAnalysis: 'Findings & fixes',
+    tabCompare: 'Before / after comparison',
+    beforeLabel: 'Before',
+    afterLabel: 'After',
+    originalSimLabel: 'Original simulation',
+    improvedLabel: 'Improved image',
+    improvedSimLabel: 'Improved simulation',
+    compareCaption:
+      'The right column shows the result with recommended colors applied. The bottom row applies the color vision deficiency simulation to each; the bottom-right is the simulation applied to the improved image.',
+    altImproved: 'Improved image with recommended colors applied',
+    altImprovedSim: 'Color vision simulation applied to the improved image',
     copy: 'Copy',
     copied: 'Copied',
     siteInfo: 'About · Terms',
@@ -352,8 +442,16 @@ export const messages = {
     largeText: 'large text',
     devSummary: 'Total {total} · ✓ PASS {pass} · ⚠ WARNING {warning} · ✕ FAIL {fail}',
     imgSummary: 'Issues found {issues} · Main colors {colors}',
-    fixFirst: 'Fix first: ',
-    fixFirstReason: 'Fixing the most severe issue first gives the biggest improvement.',
+    // ---- Code mode summary (itemized structure, values are dynamic) ----
+    sumTotal: 'Total elements',
+    sumPass: 'PASS',
+    sumWarn: 'WARNING',
+    sumFail: 'FAIL (needs improvement)',
+    sumPriorityEl: 'Check this first',
+    sumNextStepCode: 'Start with the elements that failed and try the suggested colors.',
+    sumAllPassCode: 'No elements fell below the criteria in this check. Your current color setup is fine to keep.',
+    sumWarnOnlyCode: 'Not everything met the criteria, but there are no severe issues. Take a look at the warning items.',
+    sumEmptyCode: 'No elements were checked. Please review your code.',
     recommendEasyHint: 'Switching to this color makes the two colors easier to tell apart.',
     gradeStrong: '✓ Strongly recommended',
     gradeRecommended: '✓ Recommended',
@@ -446,6 +544,7 @@ export const messages = {
     // ---- Terms page ----
     termsIntro:
       'CVDS is a school team project that analyzes whether web screen colors stay distinguishable for users with color vision deficiency, and suggests improvements.',
+    termsUpdated: 'Last updated: November 15, 2026',
     termsAnalysisTitle: 'Analysis method',
     termsAnalysisBody:
       'Color vision deficiency simulation uses the Machado (2009) model, color distance uses OKLab ΔE (Ottosson 2020), and contrast verdicts follow the WCAG 2 AA criteria. How much colors overlap is judged from the color distance after simulation, and suggested colors are offered only after re-verifying contrast and distinguishability.',
@@ -455,6 +554,65 @@ export const messages = {
     termsLimitTitle: 'Limitations',
     termsLimitBody:
       'Image analysis is affected by compression and anti-aliasing, and is based on colors as they appear on screen rather than actual CSS values. Dynamically generated UI may not be analyzed accurately.',
+    // ---- Info popover (ⓘ) and improved summary (developer mode image results) ----
+    infoLabel: 'Info',
+    imgResultIntro:
+      'Based on the selected color vision deficiency type, {count} color combination(s) needing attention were found. See below for the affected colors and recommended alternatives that are easier to distinguish.',
+    imgResultIntroOk:
+      'Based on the selected color vision deficiency type, no color combinations needing attention were found.',
+    popPaletteTitle: 'Main colors',
+    popPaletteBody:
+      'An image consists of many pixels. This check reduces the image to 16 representative colors, merges similar ones, and extracts up to 8 colors with the largest share for analysis. The colors shown are the main colors used in the check, and the percentage beside each is how much of the image it occupies.',
+    popIssuesTitle: 'Issues found',
+    popIssuesTarget: 'What is checked',
+    popIssuesTargetBody:
+      'The check targets the main colors extracted from the image. The most common color is treated as the background, and its contrast with the other main colors is checked. In addition, distinguishability under the selected color vision deficiency is checked for every pair of main colors.',
+    popIssuesContrastTitle: 'Contrast check',
+    popIssuesContrastBody:
+      'It checks whether two colors differ enough in lightness. If the lightness difference is small, text or key elements may blend into the background.',
+    popIssuesDistanceTitle: 'Color distance check',
+    popIssuesDistanceBody:
+      'It checks how well two colors can be distinguished under the selected color vision deficiency type. If two colors still look similar after simulation, they may be hard to tell apart.',
+    popIssuesOverallTitle: 'Overall verdict',
+    popIssuesOverallBody:
+      'Each color combination is verdicted by the applicable check — contrast or color distance. The results are combined into an overall verdict (PASS / WARNING / FAIL).',
+    popVerdictMeaningTitle: 'What the verdict means',
+    popPassDesc: 'PASS: The current check criteria are met. No color change is needed.',
+    popWarnDesc: 'WARNING: Colors may be hard to distinguish. Consider changing them.',
+    popFailDesc: 'FAIL: The check criteria are not met. Improving the colors is recommended.',
+    popRecommendTitle: 'Suggested colors',
+    popRecommendBody:
+      'While keeping the hue of the problematic color, lightness is adjusted in 0.02 steps to generate multiple candidate colors. Each candidate is re-checked for contrast against the background and for distinguishability after color vision deficiency simulation; only colors passing both are suggested. Up to 3 are presented, ordered by closeness to the original color.',
+    popRecommendEasy: 'Switching to a suggested color makes text or key elements easier to distinguish.',
+    popSolutionsTitle: 'How to fix',
+    popSolColorTitle: 'Use a suggested color code',
+    popSolColorBody:
+      'A suggested color code is provided as a replacement for the problematic color. Copy the code and apply it in your design or development.',
+    popSolIconTitle: 'Use icons and symbols too',
+    popSolIconBody:
+      'If it is hard to distinguish information by color alone, try using icons, symbols, or text as well. This helps users who have trouble telling colors apart understand the information.',
+    // ---- Improved final summary (developer mode image results) ----
+    summaryTitle: 'Inspection summary',
+    sumIssues: 'Issues found',
+    sumColors: 'Main colors analyzed',
+    sumPriority: 'Check these combinations first',
+    sumNext: 'Next step',
+    sumNextBody:
+      'Start from the colors with issues, and switch to suggested colors or use icons and symbols alongside them.',
+    sumOk:
+      'Based on the selected color vision deficiency type, no color combinations needing attention were found.',
+    copyHex: 'Copy color code',
+    recommendEasyHintSimple:
+      'Switching to a suggested color makes text or key elements easier to distinguish.',
+    // ---- Code mode ⓘ info popover ----
+    popCodeFindingsTitle: 'Findings',
+    popCodeMethodTitle: 'How is it checked?',
+    popCodeMethodBody:
+      'The entered HTML/CSS code is rendered in a sandboxed iframe with scripts removed to build the actual screen, then the lightness difference between the text color and background color applied to each text element is checked against the contrast criteria. Normal text uses a 4.5:1 criterion; large text (24px or larger, or 18.66px or larger bold) uses 3:1.',
+    popCodeVerdictTitle: 'What does the verdict mean?',
+    popCodePassDesc: 'PASS: The text meets the normal-text criterion (4.5:1). No color change is needed.',
+    popCodeWarnDesc: 'WARNING: The text passes the large-text criterion (3:1) but not the normal-text criterion (4.5:1). Additional check is needed on whether the text is clearly visible.',
+    popCodeFailDesc: 'FAIL: The text falls below even the large-text criterion (3:1). Improving the colors is recommended.',
     // ---- Modal ----
     modalOk: 'OK',
   },

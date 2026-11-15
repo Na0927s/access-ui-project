@@ -10,10 +10,11 @@ import base64
 from io import BytesIO
 from itertools import combinations
 
+import numpy as np
 from PIL import Image
 
 from .. import config
-from .color import delta_e
+from .color import delta_e, hex_to_oklab, hex_to_rgb, linear_to_oklab, srgb_to_linear
 from .cvd import simulate_hex, simulate_image
 from .palette import extract_palette, flatten_on_white, resize_max_side
 from .recommend import recommend
@@ -54,6 +55,40 @@ def _image_to_data_url(img: Image.Image) -> str:
     buf = BytesIO()
     img.save(buf, format="PNG", optimize=True)
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+
+
+def _apply_replacements(img: Image.Image, replacements: dict[str, str]) -> Image.Image:
+    """Apply recommended color replacements to image pixels (in-memory, no disk write).
+
+    (한국어) 추천 색상 매핑을 이미지 픽셀에 적용해 "대응 적용 이미지"를 생성.
+    - replacements: {원본 HEX: 추천 HEX} — 문제가 발견된 색상만 포함.
+    - 각 픽셀이 매핑의 원본 색과 OKLab ΔE < APPLY_REPLACE_DISTANCE 이내면 추천 색으로 교체.
+      그 외 픽셀(안티앨리어싱·그라데이션·문제 없는 색)은 원본 유지 → 부작용 최소화.
+    """
+    if not replacements:
+        return img
+    # (한국어) 원본 색들을 한 번에 OKLab 배열로 변환해 벡터화된 거리 계산에 사용
+    src_hexes = list(replacements.keys())
+    src_oklab = np.array([hex_to_oklab(h) for h in src_hexes])        # (N, 3)
+    dst_rgb = {h: hex_to_rgb(replacements[h]) for h in src_hexes}     # 원본 → 추천 RGB
+    arr = np.asarray(img.convert("RGB"), dtype=np.float64) / 255.0    # (H, W, 3) sRGB 0~1
+    pix_oklab = linear_to_oklab(srgb_to_linear(arr))                  # (H, W, 3) OKLab
+    # 각 픽셀과 모든 원본 색의 거리 → 최소 거리가 임계값 이내인 픽셀만 교체
+    # (H, W, N) 거리 배열: 픽셀별로 각 원본 색까지의 OKLab ΔE
+    dists = np.linalg.norm(pix_oklab[..., None, :] - src_oklab, axis=-1)
+    nearest_idx = np.argmin(dists, axis=-1)          # (H, W) 가장 가까운 원본 색 인덱스
+    nearest_dist = np.min(dists, axis=-1)            # (H, W) 그때의 거리
+    out = arr.copy()
+    # 임계값 이내 픽셀의 위치만 추출
+    mask = nearest_dist < config.APPLY_REPLACE_DISTANCE
+    if not mask.any():
+        return img
+    # 교체할 픽셀에 대해, 가장 가까운 원본 색의 추천 RGB를 적용
+    rows, cols = np.where(mask)
+    for r, c in zip(rows, cols):
+        src_h = src_hexes[nearest_idx[r, c]]
+        out[r, c] = np.array(dst_rgb[src_h], dtype=np.float64) / 255.0
+    return Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGB")
 
 
 def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str = "ko") -> dict:
@@ -155,6 +190,24 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
     }
     if mode == "developer":
         response["recommendations"] = recommendations
+        # 대응 적용 이미지 비교용: 추천 색상을 이미지에 적용한 결과와 그 시뮬레이션 생성.
+        # recommendations의 순서는 issues와 동일(각 이슈의 첫 후보를 적용 색으로 사용).
+        # 같은 색이 여러 이슈에 걸쳐 다른 추천으로 나올 수 있음 — 첫 번째(더 심각한 이슈)를 유지.
+        replacements: dict[str, str] = {}
+        for rec in recommendations:
+            # CONDITIONAL이 아닌 첫 후보 우선, 없으면 첫 후보. 후보가 없으면 건너뜀.
+            cands = rec.get("candidates") or []
+            if not cands:
+                continue
+            fix = next((c for c in cands if c["grade"] != "CONDITIONAL"), cands[0])
+            # setdefault: 같은 current 색이 이미 있으면 덮어쓰지 않음 (첫 이슈 우선)
+            replacements.setdefault(rec["current"], fix["hex"])
+        if replacements:
+            base = resize_max_side(img, config.SIMULATION_MAX_SIDE)
+            improved = _apply_replacements(base, replacements)
+            improved_sim = simulate_image(improved, cvd_type)
+            response["improved_image"] = _image_to_data_url(improved)
+            response["improved_simulated_image"] = _image_to_data_url(improved_sim)
     return response
 
 
@@ -197,11 +250,11 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
                 # 두 옵션(글자색 변경 vs 배경색 변경) 중 변경 폭이 작은 쪽으로 CSS 수정안 생성
                 _, prop, fix = min(options)
                 css_fix = f"{el['selector']} {{ {prop}: {fix}; }}"
-            need = texts.NEED_LARGE[lang] if large else "4.5:1"   # 이 요소가 만족해야 하는 기준
+            # problem 문구에서 대비율 숫자·기준 수치를 숨김(간소화). ratio 계산·판정은 위에서 유지.
             boxes.append({
                 "selector": el["selector"],
                 "check_type": "CONTRAST",
-                "problem": texts.DEV_CONTRAST_PROBLEM[lang].format(ratio=f"{ratio:.2f}", need=need),
+                "problem": texts.DEV_CONTRAST_PROBLEM[lang],
                 "css_fix": css_fix,                       # 바로 복사해 쓸 수 있는 CSS 한 줄
                 "non_color_fix": texts.DEV_CONTRAST_TIP[lang],  # 색 외 개선 팁
             })

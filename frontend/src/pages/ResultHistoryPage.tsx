@@ -3,6 +3,7 @@
 // 날짜별 필터링, 항목 클릭 시 상세 결과 확대 표시.
 import { useEffect, useMemo, useState } from 'react'
 import type { DeveloperAnalysis, ImageAnalysis } from '../api/types'
+import CodeResultDetail from '../components/CodeResultDetail'
 import ResultSummary from '../components/ResultSummary'
 import VerdictBadge from '../components/VerdictBadge'
 import { useT } from '../i18n/useT'
@@ -118,7 +119,7 @@ export default function ResultHistoryPage() {
               </li>
             ))}
           </ul>
-          {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 결과 메시지 표시 */}
+          {/* 펼쳐진 기록의 상세 보기: 이미지 분석이면 전체 요약, 코드 분석이면 상세(표+해결카드) 표시 */}
           {open &&
             ('simulated_image' in open.data ? (
               <ResultSummary
@@ -126,12 +127,7 @@ export default function ResultHistoryPage() {
                 mode={open.mode === 'user' ? 'user' : 'developer'}
               />
             ) : (
-              <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
-                <div className="flex flex-wrap items-center gap-2 text-sm font-medium">
-                  <VerdictBadge verdict={(open.data as DeveloperAnalysis).verdict} />
-                  <span>{(open.data as DeveloperAnalysis).result_message}</span>
-                </div>
-              </div>
+              <CodeResultDetail data={open.data as DeveloperAnalysis} />
             ))}
         </>
       )}

@@ -26,7 +26,7 @@ export default function AboutPage() {
   ]
 
   return (
-    <article className="mx-auto flex max-w-2xl flex-col gap-6 py-8 leading-relaxed md:py-10">
+    <article className="mx-auto flex max-w-2xl flex-col gap-6 leading-relaxed">
       <div className="flex items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">{t('aboutLink')}</h1>
         {/* 약관은 별도 페이지로 */}

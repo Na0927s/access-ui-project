@@ -53,6 +53,13 @@ async def analyze_image_endpoint(
     # lang을 키에 포함해 언어별 문구가 섞이지 않게 함 (ko 캐시를 en 요청에 반환 방지).
     img_hash = image_hash(data)
     cached = get_cached(db, img_hash, cvd_type, mode, lang)
+    # 스키마 무효화 가드: 응답 스키마가 바뀌었을 때 구버전 캐시를 자동으로 무시.
+    # 개발자 모드에서 추천이 있는데 improved_image가 없으면 구버전 캐시 → 재분석.
+    if cached is not None and mode == "developer":
+        has_recs = bool(cached.get("recommendations"))
+        has_improved = "improved_image" in cached
+        if has_recs and not has_improved:
+            cached = None  # 구버전 캐시 무시 → 아래에서 새로 분석
     if cached is not None:
         # 캐시 적중 시에도, 로그인 사용자면 히스토리에 기록 (사용자가 같은 이미지를
         # 여러 번 검사한 이력을 보존하기 위함)

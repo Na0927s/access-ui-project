@@ -32,8 +32,9 @@ RESULT_MESSAGES = {
     },
 }
 
-# 저대비(대비율 미달) 이슈 문구 — 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 기술적으로.
+# 저대비(대비율 미달) 이슈 문구 — 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 객관적으로.
 # 사용자 모드는 색 칩이 옆에 표시되므로 "이 두 색"으로 지칭. 행동을 구체적으로 안내.
+# 개발자 모드는 대비율 숫자를 노출하지 않는다(내부 계산은 유지, UI에서만 숨김).
 LOW_CONTRAST_ISSUE = {
     "user": {
         "ko": "이 두 색의 밝고 어두움 차이가 충분하지 않아, 글자가 배경에 묻혀 잘 안 보일 수 있어요. "
@@ -42,8 +43,8 @@ LOW_CONTRAST_ISSUE = {
               "Try making the text darker or changing the background.",
     },
     "developer": {
-        "ko": "{fg}와 {bg}의 대비율이 {ratio}:1로 일반 텍스트 기준(4.5:1)에 미달합니다.",
-        "en": "The contrast between {fg} and {bg} is {ratio}:1, below the normal-text criterion (4.5:1).",
+        "ko": "{fg}와 {bg}의 밝기 차이가 충분하지 않아 글자가 배경에 묻혀 보일 수 있습니다.",
+        "en": "The lightness difference between {fg} and {bg} is insufficient, so text may blend into the background.",
     },
 }
 
@@ -80,14 +81,13 @@ DEV_RESULT = {
     },
 }
 
-# 개발자 모드 문제 카드: 대비율 미달 문제 문구 — {ratio}=대비율, {need}=적용 기준
+# 개발자 모드 문제 카드: 대비율 미달 문제 문구.
+# 대비율 숫자·기준 수치는 UI에서 숨기고(간소화), 쉬운 문장으로만 설명.
+# 내부 계산(ratio)과 판정은 그대로 유지 — 여기서는 문구만 단순화.
 DEV_CONTRAST_PROBLEM = {
-    "ko": "텍스트 대비율 {ratio}:1로 기준({need})에 미달합니다.",
-    "en": "The text contrast ratio {ratio}:1 falls below the criterion ({need}).",
+    "ko": "글자색과 배경색의 밝기 차이가 충분하지 않아 글자가 배경에 묻혀 보일 수 있습니다.",
+    "en": "The lightness difference between the text and background is insufficient, so text may blend into the background.",
 }
-
-# 큰 텍스트 요소에게 안내할 적용 기준 문구
-NEED_LARGE = {"ko": "3:1(큰 텍스트)", "en": "3:1 large text"}
 
 # 개발자 모드 문제 카드: 색 변경 외 추가 개선 팁 (대비율 미달용)
 DEV_CONTRAST_TIP = {

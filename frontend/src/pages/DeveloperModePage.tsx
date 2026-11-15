@@ -7,8 +7,9 @@ import { Link } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis, SolutionBox } from '../api/types'
 import ColorChip from '../components/ColorChip'
-import ContrastExample from '../components/ContrastExample'
 import CvdSelector from '../components/CvdSelector'
+import ImprovedCompare from '../components/ImprovedCompare'
+import InfoPopover from '../components/InfoPopover'
 import ResultCompare from '../components/ResultCompare'
 import ResultSummary from '../components/ResultSummary'
 import SolutionCards from '../components/SolutionCards'
@@ -54,6 +55,7 @@ export default function DeveloperModePage() {
   const [error, setError] = useState<string | null>(null)
   const [imageResult, setImageResult] = useState<ImageAnalysis | null>(null) // 이미지 분석 결과
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
+  const [resultTab, setResultTab] = useState<'analysis' | 'compare'>('analysis') // 결과 화면 탭
   const solutionsRef = useRef<HTMLElement>(null) // "문제 해결 방법 보기" 버튼의 스크롤 이동 대상
   const token = useAuthStore((s) => s.token)
   const user = useAuthStore((s) => s.currentUser)
@@ -87,6 +89,7 @@ export default function DeveloperModePage() {
         const data = await analyzeImage(file, cvd, 'developer', lang, token)
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
+        setResultTab('analysis') // 결과 탭을 첫 탭으로 초기화
         if (user)
           addResult({
             fileName: file.name,
@@ -121,6 +124,15 @@ export default function DeveloperModePage() {
   // 표시할 해결 카드: 코드 결과가 있으면 그것을, 아니면 이미지 결과를 카드로 변환
   const boxes = codeResult?.solution_boxes ?? (imageResult ? imageIssuesToBoxes(imageResult) : [])
   const hasResult = Boolean(codeResult || imageResult)
+  // 이미지 결과의 우선 확인 색상 조합: 심각도(HIGH=FAIL) 우선 정렬 후 첫 조합.
+  // 표시 순서만 변경하고 판정값·알고리즘은 변경하지 않음.
+  const SEV_RANK = { HIGH: 2, MEDIUM: 1, LOW: 0 } as const
+  const imagePriority =
+    imageResult && imageResult.issues.length > 0
+      ? [...imageResult.issues].sort(
+          (a, b) => SEV_RANK[b.severity] - SEV_RANK[a.severity],
+        )[0]
+      : undefined
 
   return (
     <div className="flex flex-col gap-8">
@@ -230,15 +242,61 @@ export default function DeveloperModePage() {
         </p>
       )}
 
-      {/* [이미지 방식] 결과: 원본/시뮬레이션 비교 + 결과 요약(추천 포함) */}
+      {/* [이미지 방식] 결과: 두 개 탭 — 검사 결과 및 대응 방안 / 대응 적용 이미지 비교 */}
       {imageResult && preview && (
         <div className="flex flex-col gap-6">
-          <ResultCompare
-            original={preview}
-            simulated={imageResult.simulated_image}
-            cvdType={imageResult.cvd_type}
-          />
-          <ResultSummary data={imageResult} mode="developer" />
+          {/* 대응 이미지가 있을 때만 비교 탭 노출 (추천이 없으면 두 번째 탭 숨김) */}
+          {imageResult.improved_image && imageResult.improved_simulated_image ? (
+            <div className="flex flex-col gap-3">
+              <h2 className="text-lg font-bold">{t('resultContent')}</h2>
+              <div role="tablist" aria-label={t('resultContent')} className="flex gap-2">
+                {(
+                  [
+                    { key: 'analysis', label: t('tabAnalysis') },
+                    { key: 'compare', label: t('tabCompare') },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    role="tab"
+                    type="button"
+                    aria-selected={resultTab === tab.key}
+                    onClick={() => setResultTab(tab.key)}
+                    className={`flex-1 rounded-xl border px-5 py-3 text-sm font-semibold transition-colors ${
+                      resultTab === tab.key
+                        ? 'border-2 border-ink bg-ink text-white'
+                        : 'border-rule bg-white text-graphite hover:bg-paper'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          {/* 탭1: 검사 결과 및 대응 방안 — 원본/시뮬레이션 비교 + 결과 요약(추천 포함) */}
+          {resultTab === 'analysis' && (
+            <>
+              <ResultCompare
+                original={preview}
+                simulated={imageResult.simulated_image}
+                cvdType={imageResult.cvd_type}
+              />
+              <ResultSummary data={imageResult} mode="developer" />
+            </>
+          )}
+          {/* 탭2: 대응 적용 이미지 비교 — Before/After 2×2 그리드 */}
+          {resultTab === 'compare' &&
+            imageResult.improved_image &&
+            imageResult.improved_simulated_image && (
+              <ImprovedCompare
+                original={preview}
+                simulated={imageResult.simulated_image}
+                improved={imageResult.improved_image}
+                improvedSimulated={imageResult.improved_simulated_image}
+                cvdType={imageResult.cvd_type}
+              />
+            )}
         </div>
       )}
 
@@ -247,6 +305,15 @@ export default function DeveloperModePage() {
         <section aria-labelledby="detail" className="rounded-lg border border-rule bg-white p-5">
           <h2 id="detail" className="mb-3 text-lg font-bold">
             {t('resultContent')}
+            {/* 코드 모드 검사 방법·판정 의미 설명 (객관적 톤, 팝오버) */}
+            <InfoPopover label={t('resultContent')}>
+              <p className="mb-1 font-semibold">{t('popCodeMethodTitle')}</p>
+              <p className="mb-2 text-graphite">{t('popCodeMethodBody')}</p>
+              <p className="mb-1 font-semibold">{t('popCodeVerdictTitle')}</p>
+              <p className="text-graphite">{t('popCodePassDesc')}</p>
+              <p className="text-graphite">{t('popCodeWarnDesc')}</p>
+              <p className="text-graphite">{t('popCodeFailDesc')}</p>
+            </InfoPopover>
           </h2>
           <p className="mb-3 flex flex-wrap items-center gap-2 text-sm font-medium">
             <VerdictBadge verdict={codeResult.verdict} />
@@ -254,10 +321,6 @@ export default function DeveloperModePage() {
               {t('resultLabel')}: {codeResult.result_message}
             </span>
           </p>
-          {/* 대비율이 뭔지 실제 예시로 보여주는 안내 — 숫자가 익숙하지 않은 사용자용 (접기/펼침) */}
-          <div className="mb-3">
-            <ContrastExample />
-          </div>
           {/* overflow-x-auto: 테이블이 화면보다 넓으면 가로 스크롤로 처리 */}
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -266,7 +329,6 @@ export default function DeveloperModePage() {
                   <th className="py-2">{t('selector')}</th>
                   <th>{t('textColor')}</th>
                   <th>{t('bgColor')}</th>
-                  <th>{t('ratio')}</th>
                   <th>{t('verdictCol')}</th>
                 </tr>
               </thead>
@@ -286,7 +348,6 @@ export default function DeveloperModePage() {
                     <td>
                       <ColorChip hex={r.background} />
                     </td>
-                    <td className="tabular-nums">{r.ratio.toFixed(2)}:1</td>
                     <td>
                       <VerdictBadge verdict={r.verdict} />
                     </td>
@@ -317,37 +378,88 @@ export default function DeveloperModePage() {
           >
             <h2 id="solutions" className="text-lg font-bold">
               {t('solutions')}
+              {/* 이미지·코드 모드 모두에 ⓘ 표시 (추천 색상·아이콘 함께 사용 안내) */}
+              {(imageResult || codeResult) && (
+                <InfoPopover label={t('solutions')}>
+                  <p className="mb-1 font-semibold">{t('popSolColorTitle')}</p>
+                  <p className="mb-2 text-graphite">{t('popSolColorBody')}</p>
+                  <p className="mb-1 font-semibold">{t('popSolIconTitle')}</p>
+                  <p className="text-graphite">{t('popSolIconBody')}</p>
+                </InfoPopover>
+              )}
             </h2>
             <SolutionCards boxes={boxes} />
-            {/* 요약: 통계 문구 (점수는 표시하지 않음) */}
+            {/* 요약: 코드 모드는 기존 통계 문구 유지, 이미지 모드는 동적 구조로 재구성 (점수는 표시하지 않음) */}
             <div className="rounded-xl border border-rule bg-white p-5 shadow-sm">
-              <h2 className="mb-3 text-lg font-bold">{t('summary')}</h2>
+              <h2 className="mb-3 text-lg font-bold">{t('summaryTitle')}</h2>
               {codeResult ? (
-                <p className="text-sm">
-                  {t('devSummary')
-                    .replace('{total}', String(codeResult.summary.total))
-                    .replace('{pass}', String(codeResult.summary.pass))
-                    .replace('{warning}', String(codeResult.summary.warning))
-                    .replace('{fail}', String(codeResult.summary.fail))}
-                </p>
+                <div className="flex flex-col gap-1.5 text-sm">
+                  {codeResult.summary.total === 0 ? (
+                    // 검사 결과 없음 (0개로 오해되지 않도록 별도 안내)
+                    <p className="text-graphite">{t('sumEmptyCode')}</p>
+                  ) : codeResult.summary.fail === 0 &&
+                    codeResult.summary.warning === 0 ? (
+                    // 모든 요소 PASS
+                    <p className="text-graphite">{t('sumAllPassCode')}</p>
+                  ) : (
+                    <>
+                      {/* 항목별 통계 — 값은 실제 검사 결과 */}
+                      <p>
+                        {t('sumTotal')}: {codeResult.summary.total}개
+                      </p>
+                      <p>
+                        {t('sumPass')}: {codeResult.summary.pass}개
+                      </p>
+                      <p>
+                        {t('sumWarn')}: {codeResult.summary.warning}개
+                      </p>
+                      <p>
+                        {t('sumFail')}: {codeResult.summary.fail}개
+                      </p>
+                      {/* 우선 확인할 요소: FAIL 우선, 없으면 WARNING 첫 해결 카드 selector */}
+                      {boxes.length > 0 && (
+                        <p className="mt-1 flex flex-wrap items-center gap-1.5">
+                          {t('sumPriorityEl')}:
+                          <code className="rounded bg-paper px-1.5 py-0.5">
+                            {boxes[0].selector}
+                          </code>
+                        </p>
+                      )}
+                      {/* FAIL 없이 WARNING만 있을 때 별도 안내, 아니면 기본 다음 단계 */}
+                      <p className="text-graphite">
+                        {codeResult.summary.fail === 0
+                          ? t('sumWarnOnlyCode')
+                          : `${t('sumNext')}: ${t('sumNextStepCode')}`}
+                      </p>
+                    </>
+                  )}
+                </div>
               ) : (
                 imageResult && (
-                  <p className="text-sm">
-                    {t('imgSummary')
-                      .replace('{issues}', String(imageResult.issues.length))
-                      .replace('{colors}', String(imageResult.palette.length))}
-                  </p>
+                  <div className="flex flex-col gap-1.5 text-sm">
+                    <p>
+                      {t('sumIssues')}: {imageResult.issues.length}개
+                    </p>
+                    <p>
+                      {t('sumColors')}: {imageResult.palette.length}개
+                    </p>
+                    {/* 우선 확인할 색상 조합: FAIL(HIGH) 우선 정렬 후 첫 조합. 문제 없으면 미표시. */}
+                    {imagePriority && (
+                      <p className="flex flex-wrap items-center gap-1.5">
+                        {t('sumPriority')}:
+                        {imagePriority.colors.map((c) => (
+                          <ColorChip key={c} hex={c} />
+                        ))}
+                      </p>
+                    )}
+                    {/* 다음으로 할 일 안내. 문제가 없으면 별도 안내. */}
+                    <p className="text-graphite">
+                      {imageResult.issues.length > 0
+                        ? `${t('sumNext')}: ${t('sumNextBody')}`
+                        : t('sumOk')}
+                    </p>
+                  </div>
                 )
-              )}
-              {/* 우선 수정 대상: 첫 번째 해결 카드의 대상 + 왜 먼저 고치는지 이유 */}
-              {boxes.length > 0 && (
-                <div className="mt-2 flex flex-col gap-1 text-sm">
-                  <p>
-                    {t('fixFirst')}
-                    <code className="rounded bg-paper px-1.5 py-0.5">{boxes[0].selector}</code>
-                  </p>
-                  <p className="text-graphite">{t('fixFirstReason')}</p>
-                </div>
               )}
             </div>
           </section>
