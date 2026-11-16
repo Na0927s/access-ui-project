@@ -20,7 +20,6 @@ export const messages = {
     homeFeature3Desc: '대비와 구분 가능성을 다시 검증한 색만 제안',
     aboutLink: '사이트 설명',
     termsLink: '이용약관',
-    aboutToggle: '프로젝트 더 알아보기',
     aboutTabSite: '우리 사이트는?',
     aboutTabCvd: '색각이상이 뭔가요?',
     cvdOverviewTitle: '색각이상이란?',
@@ -86,7 +85,6 @@ export const messages = {
     verdictPassDesc: '선택한 색각이상에서도 색들이 잘 구분돼요. 큰 문제는 없습니다.',
     verdictWarnDesc: '일부 색이 겹쳐 보일 수 있어요. 아래에서 어떤 색인지 확인해 보세요.',
     verdictFailDesc: '여러 색이 잘 구분되지 않을 수 있어요. 아래 안내를 따라 바꿔보는 걸 권해요.',
-    score: '접근성 점수',
     issues: '발견된 문제',
     noIssues: '발견된 주요 문제가 없습니다.',
     recommend: '추천 색상',
@@ -97,7 +95,6 @@ export const messages = {
     codeFileName: 'HTML/CSS 코드',
     solutions: '문제 해결 방법',
     summary: '요약',
-    goSolutions: '문제 해결 방법 보기',
     tabAnalysis: '검사 결과 및 대응 방안',
     tabCompare: '대응 적용 이미지 비교',
     beforeLabel: 'Before',
@@ -134,8 +131,6 @@ export const messages = {
     ratio: '대비율',
     verdictCol: '판정',
     largeText: '큰 텍스트',
-    devSummary: '전체 {total}개 · ✓ PASS {pass} · ⚠ WARNING {warning} · ✕ FAIL {fail}',
-    imgSummary: '발견된 문제 {issues}개 · 주요 색상 {colors}개',
     // ---- 코드 모드 요약 (항목별 구조, 값은 동적) ----
     sumTotal: '전체 검사 요소',
     sumPass: 'PASS(통과)',
@@ -146,7 +141,6 @@ export const messages = {
     sumAllPassCode: '이번 검사에서 기준을 충족하지 못한 요소는 발견되지 않았어요. 현재 색상 구성을 유지해도 괜찮아요.',
     sumWarnOnlyCode: '기준을 완전히 충족하지는 못했지만, 심각한 문제는 없어요. 주의 요소를 한번 확인해 보세요.',
     sumEmptyCode: '검사된 요소가 없어요. 코드를 다시 확인해 주세요.',
-    recommendEasyHint: '이 색으로 바꾸면 두 색이 더 잘 구분돼요.',
     gradeStrong: '✓ 강력 추천',
     gradeRecommended: '✓ 추천',
     gradeConditional: '△ 조건부 추천',
@@ -154,7 +148,6 @@ export const messages = {
     aiExplain: 'AI 설명',
     plainExplain: '요약 설명',
     checkContrast: '색상 대비',
-    checkLightness: '명암 대비',
     checkColorOnly: '색상 의존',
     // ---- 대비율 안내 예시 (개발자 모드) ----
     contrastExampleTitle: '대비율이 뭔가요? (눌러서 예시 보기)',
@@ -237,7 +230,6 @@ export const messages = {
     modeUserLabel: '사용자 모드',
     modeDevImageLabel: '개발자 · 이미지',
     modeDevCodeLabel: '개발자 · 코드',
-    scoreShort: '점수',
     deleteItem: '삭제',
     // ---- 약관 페이지 ----
     termsIntro:
@@ -262,7 +254,6 @@ export const messages = {
     popPaletteBody:
       '이미지는 수많은 픽셀로 이루어져 있습니다. 이 검사에서는 이미지를 대표하는 16색으로 줄인 뒤, 비슷한 색을 묶어 화면에서 비중이 큰 색을 최대 8개까지 추출하여 분석합니다. 화면에 표시된 색상이 검사에 사용된 주요 색상이며, 옆의 백분율은 해당 색이 이미지에서 차지하는 비율입니다.',
     popIssuesTitle: '발견된 문제',
-    popIssuesTarget: '검사 대상',
     popIssuesTargetBody:
       '이미지에서 추출한 주요 색상을 대상으로 검사합니다. 가장 비중이 큰 색을 배경으로 간주하고, 나머지 주요 색과의 명암 대비를 검사합니다. 또한 모든 주요 색 쌍에 대해 색각이상 환경에서의 구분 가능성을 검사합니다.',
     popIssuesContrastTitle: '명암 대비 검사',
@@ -282,7 +273,6 @@ export const messages = {
     popRecommendBody:
       '문제가 발견된 색상의 색조는 유지한 채 밝기를 0.02 단위로 조정하여 여러 후보 색상을 생성합니다. 각 후보를 배경색과의 명암 대비 및 색각이상 시뮬레이션 후 구분 가능성으로 다시 검사하고, 두 기준을 모두 만족하는 색상만 추천합니다. 원래 색에 가장 가까운 순으로 최대 3개를 제시합니다.',
     popRecommendEasy: '추천 색상으로 변경하면 글자나 주요 요소를 더 쉽게 구분할 수 있습니다.',
-    popSolutionsTitle: '문제 해결 방법',
     popSolColorTitle: '추천 색상 코드 사용',
     popSolColorBody:
       '문제가 발견된 색상 대신 사용할 수 있는 추천 색상 코드를 제공합니다. 코드를 복사해 디자인이나 개발에 적용해 보세요.',
@@ -303,7 +293,6 @@ export const messages = {
     recommendEasyHintSimple:
       '추천 색상으로 변경하면 글자나 주요 요소를 더 쉽게 구분할 수 있습니다.',
     // ---- 코드 모드 ⓘ 정보 팝오버 ----
-    popCodeFindingsTitle: '결과 내용',
     popCodeMethodTitle: '어떻게 검사하나요?',
     popCodeMethodBody:
       '입력한 HTML·CSS 코드를 스크립트가 제거된 안전한 iframe에 렌더링하여 실제 화면으로 구성한 뒤, 각 글자 요소에 적용된 글자색과 배경색의 밝기 차이를 명암 대비 기준으로 검사합니다. 일반 텍스트는 4.5:1, 큰 텍스트(24px 이상 또는 18.66px 이상 굵게)는 3:1 기준을 적용합니다.',
@@ -313,6 +302,7 @@ export const messages = {
     popCodeFailDesc: 'FAIL(미통과): 큰 텍스트 기준(3:1)에도 미달합니다. 색상 개선을 권장합니다.',
     // ---- 모달 ----
     modalOk: '확인',
+    close: '닫기',
   },
   en: {
     title: 'Color vision deficiency simulator',
@@ -331,7 +321,6 @@ export const messages = {
     homeFeature3Desc: 'Only colors that re-pass contrast and distinguishability',
     aboutLink: 'About',
     termsLink: 'Terms',
-    aboutToggle: 'Learn more about the project',
     aboutTabSite: 'About this service',
     aboutTabCvd: 'What is color vision deficiency?',
     cvdOverviewTitle: 'What is color vision deficiency?',
@@ -397,7 +386,6 @@ export const messages = {
     verdictPassDesc: 'Colors stay well distinguishable under the selected deficiency. No major issues.',
     verdictWarnDesc: 'Some colors may overlap. See below for which ones.',
     verdictFailDesc: 'Multiple colors may be hard to tell apart. Following the guidance below is recommended.',
-    score: 'Accessibility score',
     issues: 'Issues found',
     noIssues: 'No major issues found.',
     recommend: 'Suggested colors',
@@ -408,7 +396,6 @@ export const messages = {
     codeFileName: 'HTML/CSS code',
     solutions: 'How to fix',
     summary: 'Summary',
-    goSolutions: 'See how to fix',
     tabAnalysis: 'Findings & fixes',
     tabCompare: 'Before / after comparison',
     beforeLabel: 'Before',
@@ -445,8 +432,6 @@ export const messages = {
     ratio: 'Contrast',
     verdictCol: 'Verdict',
     largeText: 'large text',
-    devSummary: 'Total {total} · ✓ PASS {pass} · ⚠ WARNING {warning} · ✕ FAIL {fail}',
-    imgSummary: 'Issues found {issues} · Main colors {colors}',
     // ---- Code mode summary (itemized structure, values are dynamic) ----
     sumTotal: 'Total elements',
     sumPass: 'PASS',
@@ -457,7 +442,6 @@ export const messages = {
     sumAllPassCode: 'No elements fell below the criteria in this check. Your current color setup is fine to keep.',
     sumWarnOnlyCode: 'Not everything met the criteria, but there are no severe issues. Take a look at the warning items.',
     sumEmptyCode: 'No elements were checked. Please review your code.',
-    recommendEasyHint: 'Switching to this color makes the two colors easier to tell apart.',
     gradeStrong: '✓ Strongly recommended',
     gradeRecommended: '✓ Recommended',
     gradeConditional: '△ Conditional',
@@ -465,7 +449,6 @@ export const messages = {
     aiExplain: 'AI explanation',
     plainExplain: 'Summary',
     checkContrast: 'Contrast',
-    checkLightness: 'Lightness',
     checkColorOnly: 'Color-only',
     // ---- Contrast ratio explainer example (developer mode) ----
     contrastExampleTitle: 'What is the ratio? (click for example)',
@@ -549,7 +532,6 @@ export const messages = {
     modeUserLabel: 'User mode',
     modeDevImageLabel: 'Developer · image',
     modeDevCodeLabel: 'Developer · code',
-    scoreShort: 'Score',
     deleteItem: 'Delete',
     // ---- Terms page ----
     termsIntro:
@@ -574,7 +556,6 @@ export const messages = {
     popPaletteBody:
       'An image consists of many pixels. This check reduces the image to 16 representative colors, merges similar ones, and extracts up to 8 colors with the largest share for analysis. The colors shown are the main colors used in the check, and the percentage beside each is how much of the image it occupies.',
     popIssuesTitle: 'Issues found',
-    popIssuesTarget: 'What is checked',
     popIssuesTargetBody:
       'The check targets the main colors extracted from the image. The most common color is treated as the background, and its contrast with the other main colors is checked. In addition, distinguishability under the selected color vision deficiency is checked for every pair of main colors.',
     popIssuesContrastTitle: 'Contrast check',
@@ -594,7 +575,6 @@ export const messages = {
     popRecommendBody:
       'While keeping the hue of the problematic color, lightness is adjusted in 0.02 steps to generate multiple candidate colors. Each candidate is re-checked for contrast against the background and for distinguishability after color vision deficiency simulation; only colors passing both are suggested. Up to 3 are presented, ordered by closeness to the original color.',
     popRecommendEasy: 'Switching to a suggested color makes text or key elements easier to distinguish.',
-    popSolutionsTitle: 'How to fix',
     popSolColorTitle: 'Use a suggested color code',
     popSolColorBody:
       'A suggested color code is provided as a replacement for the problematic color. Copy the code and apply it in your design or development.',
@@ -615,7 +595,6 @@ export const messages = {
     recommendEasyHintSimple:
       'Switching to a suggested color makes text or key elements easier to distinguish.',
     // ---- Code mode ⓘ info popover ----
-    popCodeFindingsTitle: 'Findings',
     popCodeMethodTitle: 'How is it checked?',
     popCodeMethodBody:
       'The entered HTML/CSS code is rendered in a sandboxed iframe with scripts removed to build the actual screen, then the lightness difference between the text color and background color applied to each text element is checked against the contrast criteria. Normal text uses a 4.5:1 criterion; large text (24px or larger, or 18.66px or larger bold) uses 3:1.',
@@ -625,6 +604,7 @@ export const messages = {
     popCodeFailDesc: 'FAIL: The text falls below even the large-text criterion (3:1). Improving the colors is recommended.',
     // ---- Modal ----
     modalOk: 'OK',
+    close: 'Close',
   },
 } as const
 

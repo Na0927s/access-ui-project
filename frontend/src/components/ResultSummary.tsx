@@ -28,13 +28,8 @@ export default function ResultSummary({
   // 상세 영역(주요 색상/문제/추천) 펼침 여부.
   // collapsible 모드에서는 첫 검사 직후 펼쳐진 상태로 보이도록 기본 true.
   // (문제 해결 방법은 별도 영역으로 기본 접힘 상태 — 결과는 먼저 보여주는 게 자연스러움)
+  // data가 바뀌면 컴포넌트를 remount해 상태를 초기화 (A3) — 호출부에서 key prop 사용.
   const [open, setOpen] = useState(true)
-
-  // 분석 결과가 바뀌면 펼침 상태를 초기화 (A3).
-  // 결과 내역에서 다른 기록을 열거나 새 검사를 했을 때 이전 펼침 상태가 이월되는 것을 방지.
-  useEffect(() => {
-    setOpen(true)
-  }, [data])
 
   // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
   // AbortController로 진행 중인 이전 요청을 취소해 경쟁(race)과 불필요한 네트워크 호출을 방지.
@@ -247,7 +242,11 @@ export default function ResultSummary({
           AI 응답이 있으면 그것을, 없으면 백엔드 검사 결과 기반 안내 문구를 보여준다.
           개발자 모드는 항상 표시, 사용자 모드는 AI 응답이 있을 때만 표시. — 항상 보임 */}
       {(ai || mode === 'developer') && (
-        <div className="rounded-lg border border-rule p-4 text-sm leading-relaxed">
+        <div
+          className="rounded-lg border border-rule p-4 text-sm leading-relaxed"
+          aria-live="polite"
+          aria-busy={ai === null && mode === 'developer'}
+        >
           <p className="mb-1 text-xs font-semibold text-graphite">
             {ai?.source === 'ai' ? t('aiExplain') : t('plainExplain')}
           </p>

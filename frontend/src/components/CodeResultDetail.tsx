@@ -24,16 +24,20 @@ export default function CodeResultDetail({ data }: { data: DeveloperAnalysis }) 
     return (
       <>
         <p>
-          {t('sumTotal')}: {data.summary.total}개
+          {t('sumTotal')}: {data.summary.total}
+          {t('countUnit')}
         </p>
         <p>
-          {t('sumPass')}: {data.summary.pass}개
+          {t('sumPass')}: {data.summary.pass}
+          {t('countUnit')}
         </p>
         <p>
-          {t('sumWarn')}: {data.summary.warning}개
+          {t('sumWarn')}: {data.summary.warning}
+          {t('countUnit')}
         </p>
         <p>
-          {t('sumFail')}: {data.summary.fail}개
+          {t('sumFail')}: {data.summary.fail}
+          {t('countUnit')}
         </p>
         {boxes.length > 0 && (
           <p className="mt-1 flex flex-wrap items-center gap-1.5">

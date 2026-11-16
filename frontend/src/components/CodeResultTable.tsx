@@ -34,9 +34,9 @@ export default function CodeResultTable({ results }: { results: ElementResult[] 
             <table className="w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-rule/60 text-graphite">
-                  <th className="px-3 py-2">{t('selector')}</th>
-                  <th className="px-3">{t('textColor')}</th>
-                  <th className="px-3">{t('bgColor')}</th>
+                  <th scope="col" className="px-3 py-2">{t('selector')}</th>
+                  <th scope="col" className="px-3">{t('textColor')}</th>
+                  <th scope="col" className="px-3">{t('bgColor')}</th>
                 </tr>
               </thead>
               <tbody>

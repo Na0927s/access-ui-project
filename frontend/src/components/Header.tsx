@@ -2,7 +2,7 @@
 // 데스크톱(md+): 로고 + 가로 메뉴 + 언어 + 계정 메뉴 한 줄 배치.
 // 모바일(<md): 로고 + 햄버거 버튼만 표시, 클릭 시 세로 드롭다운으로 메뉴·언어·계정 펼침.
 // 사용자/개발자 모드 전환은 헤더가 아닌 페이지 내 버튼으로 유지.
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useT } from '../i18n/useT'
 import { useAuthStore } from '../stores/authStore'
@@ -15,6 +15,32 @@ export default function Header() {
   const logout = useAuthStore((s) => s.logout)
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = useState(false) // 모바일 드롭다운 열림 여부
+  // 데스크톱 "마이페이지" 드롭다운 — hover와 키보드 토글 모두로 열림.
+  // JS 제어로 aria-expanded/aria-haspopup, Esc 닫기, 외부 클릭 닫기, 포커스 복귀 지원.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuBtnRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!menuOpen) return
+    const onPointer = (e: PointerEvent) => {
+      const target = e.target as Node
+      if (!menuBtnRef.current?.contains(target) && !menuRef.current?.contains(target)) {
+        setMenuOpen(false)
+      }
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setMenuOpen(false)
+        menuBtnRef.current?.focus()
+      }
+    }
+    window.addEventListener('pointerdown', onPointer)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      window.removeEventListener('pointerdown', onPointer)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [menuOpen])
 
   // 사람 모양 SVG 아이콘 (프로필 공통)
   const personIcon = (
@@ -47,7 +73,7 @@ export default function Header() {
               </span>
               <span
                 aria-hidden
-                className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-max rounded-md border border-rule bg-white px-3 py-2 text-xs shadow-md group-hover:block"
+                className="pointer-events-none absolute left-0 top-full z-20 mt-1 hidden min-w-max rounded-md border border-rule bg-white px-3 py-2 text-xs shadow-md group-hover:block group-focus-within:block"
               >
                 <span className="block font-semibold text-ink">{t('titleFull')}</span>
                 <span className="block text-graphite">{t('title')}</span>
@@ -72,28 +98,47 @@ export default function Header() {
                 {t('termsLink')}
               </Link>
               {user && (
-                <div className="group relative">
+                <div
+                  className="relative"
+                  // 마우스 hover로도 열리도록 유지 (키보드 토글과 병행)
+                  onMouseEnter={() => setMenuOpen(true)}
+                  onMouseLeave={() => setMenuOpen(false)}
+                >
                   <button
+                    ref={menuBtnRef}
                     type="button"
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((v) => !v)}
                     className="flex items-center gap-1 rounded-md px-2 py-1 font-medium text-graphite transition-colors hover:text-ink"
                   >
                     {t('myPage')}
                     <span aria-hidden className="text-xs">▾</span>
                   </button>
-                  <div className="absolute left-0 top-full z-30 hidden min-w-max flex-col border-l-2 border-ink bg-white py-2 group-hover:flex group-focus-within:flex">
-                    <Link
-                      to="/mypage/info"
-                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
+                  {menuOpen && (
+                    <div
+                      ref={menuRef}
+                      role="menu"
+                      className="absolute left-0 top-full z-30 flex min-w-max flex-col border-l-2 border-ink bg-white py-2"
                     >
-                      {t('myInfo')}
-                    </Link>
-                    <Link
-                      to="/mypage/results"
-                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
-                    >
-                      {t('myResults')}
-                    </Link>
-                  </div>
+                      <Link
+                        to="/mypage/info"
+                        role="menuitem"
+                        onClick={() => setMenuOpen(false)}
+                        className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
+                      >
+                        {t('myInfo')}
+                      </Link>
+                      <Link
+                        to="/mypage/results"
+                        role="menuitem"
+                        onClick={() => setMenuOpen(false)}
+                        className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
+                      >
+                        {t('myResults')}
+                      </Link>
+                    </div>
+                  )}
                 </div>
               )}
             </nav>

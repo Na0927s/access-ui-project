@@ -30,11 +30,12 @@ export default function ResultHistoryPage() {
   const [deleteError, setDeleteError] = useState(false) // 서버 삭제 실패 표시 (D3)
   // 이미지 모드 상세의 문제 해결 방법 영역 펼침 여부 (검사 화면과 동일: 기본 접힘)
   const [solutionsOpen, setSolutionsOpen] = useState(false)
-
-  // 다른 기록을 열면 문제 해결 방법 영역을 접힘 상태로 초기화 (검사 화면과 동일)
-  useEffect(() => {
+  // 기록을 열 때 문제 해결 방법 영역을 접힘 상태로 초기화 (검사 화면과 동일).
+  // openId 변경은 사용자 클릭에서만 발생하므로 핸들러에서 함께 처리 (effect 불필요).
+  const toggleOpen = (id: string) => {
+    setOpenId(id === openId ? null : id)
     setSolutionsOpen(false)
-  }, [openId])
+  }
 
   // 로그인 사용자면 백엔드에서 히스토리 로드
   useEffect(() => {
@@ -89,6 +90,7 @@ export default function ResultHistoryPage() {
         // 기록 없음: 안내 문구 표시
         <div
           className="min-h-48 rounded-lg border border-dashed border-graphite"
+          role="region"
           aria-label={t('emptyResults')}
         >
           <p className="p-6 text-graphite">{t('emptyResultsMsg')}</p>
@@ -101,10 +103,11 @@ export default function ResultHistoryPage() {
               <span role="alert">✕ {t('deleteFailed')}</span>
               <button
                 type="button"
+                aria-label={t('close')}
                 onClick={() => setDeleteError(false)}
                 className="shrink-0 text-red-800 underline underline-offset-2 hover:opacity-70"
               >
-                ✕
+                <span aria-hidden>✕</span>
               </button>
             </div>
           )}
@@ -133,7 +136,7 @@ export default function ResultHistoryPage() {
                 <button
                   type="button"
                   aria-expanded={openId === r.id}
-                  onClick={() => setOpenId(r.id === openId ? null : r.id)}
+                  onClick={() => toggleOpen(r.id)}
                   className="flex items-start gap-2 text-left"
                 >
                   <span aria-hidden className="pt-0.5 text-graphite">
@@ -180,8 +183,14 @@ export default function ResultHistoryPage() {
                     : undefined
                 return (
                   <section className="flex flex-col gap-6">
-                    {/* 검사 화면 결과 영역: ResultSummary(collapsible) — 판정/요약설명/결과내용 */}
-                    <ResultSummary data={img} mode={isDev ? 'developer' : 'user'} collapsible />
+                    {/* 검사 화면 결과 영역: ResultSummary(collapsible) — 판정/요약설명/결과내용.
+                        key로 기록 ID를 줘 다른 기록을 열 때 컴포넌트를 remount → 펼침 상태 초기화 (A3). */}
+                    <ResultSummary
+                      key={open.id}
+                      data={img}
+                      mode={isDev ? 'developer' : 'user'}
+                      collapsible
+                    />
                     {/* 문제 해결 방법 + 요약 — 개발자 모드만 (규칙 7) */}
                     {isDev && (
                       <>
@@ -222,10 +231,12 @@ export default function ResultHistoryPage() {
                           <h2 className="mb-3 text-lg font-bold">{t('summaryTitle')}</h2>
                           <div className="flex flex-col gap-1.5 text-sm">
                             <p>
-                              {t('sumIssues')}: {img.issues.length}개
+                              {t('sumIssues')}: {img.issues.length}
+                              {t('countUnit')}
                             </p>
                             <p>
-                              {t('sumColors')}: {img.palette.length}개
+                              {t('sumColors')}: {img.palette.length}
+                              {t('countUnit')}
                             </p>
                             {imagePriority && (
                               <p className="flex flex-wrap items-center gap-1.5">

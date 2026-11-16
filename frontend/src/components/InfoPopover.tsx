@@ -67,7 +67,6 @@ export default function InfoPopover({
       window.removeEventListener('pointerdown', handlePointer)
       window.removeEventListener('keydown', handleKey)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, narrow])
 
   const toggle = () => {
