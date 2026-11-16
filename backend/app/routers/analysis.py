@@ -12,7 +12,11 @@ from sqlalchemy.orm import Session
 from .. import config
 from ..database import get_db
 from ..errors import api_error
-from ..services.analyzer import analyze_image, load_image
+from ..services.analyzer import (
+    _analyze_image_core,
+    _localize_image_result,
+    load_image,
+)
 from ..services.persistence import get_cached, image_hash, save_result, set_cached
 from ..routers.auth import current_user_id
 
@@ -48,24 +52,33 @@ async def analyze_image_endpoint(
     if len(data) > config.MAX_UPLOAD_BYTES:
         raise api_error("FILE_TOO_LARGE")
 
-    # 캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드 + 언어가 있으면 재분석 없이 반환
-    # (한국어) 캐시는 로그인 여부와 무관하게 속도 향상 목적으로 적용.
-    # lang을 키에 포함해 언어별 문구가 섞이지 않게 함 (ko 캐시를 en 요청에 반환 방지).
+    # 캐시 조회(방안 A'): 코어(lang 무관)만 캐싱한다. 같은 이미지 해시 + 색약 유형 + 모드가
+    # 있으면 시뮬레이션·수치·판정·추천 후보(코어)를 재사용하고, 응답 시점에 lang별 문구만 적용.
+    # (한국어) lang은 키에 넣지 않는다 — 언어 전환 시 코어 재계산(무거운 연산)을 건너뛰어
+    # 2배 지연을 회피한다. ko 코어를 en 요청에 써도 문구는 en으로 덧씌워 한글이 노출되지 않음.
     img_hash = image_hash(data)
-    cached = get_cached(db, img_hash, cvd_type, mode, lang)
-    # 스키마 무효화 가드: 응답 스키마가 바뀌었을 때 구버전 캐시를 자동으로 무시.
-    # 개발자 모드에서 추천이 있는데 improved_image가 없으면 구버전 캐시 → 재분석.
-    if cached is not None and mode == "developer":
-        has_recs = bool(cached.get("recommendations"))
-        has_improved = "improved_image" in cached
-        if has_recs and not has_improved:
-            cached = None  # 구버전 캐시 무시 → 아래에서 새로 분석
-    if cached is not None:
+    core = get_cached(db, img_hash, cvd_type, mode)
+    # 스키마 무효화 가드: 코어 스키마가 바뀌었을 때 구버전 캐시를 자동으로 무시.
+    # (한국어) 코어에 issues 항목이 message가 아닌 fg/bg 등 참조 데이터를 가지면 신버전.
+    # 구버전(이미 localized된 message를 캐시에 저장)이면 재분석.
+    if core is not None:
+        issues = core.get("issues") or []
+        stale = any("message" in i and "fg" not in i and "a" not in i for i in issues) and bool(issues)
+        # 개발자 모드에서 추천이 있는데 improved_image가 없으면 구버전 캐시 → 재분석.
+        if mode == "developer":
+            has_recs = bool(core.get("recommendations"))
+            has_improved = "improved_image" in core
+            if has_recs and not has_improved:
+                stale = True
+        if stale:
+            core = None
+    if core is not None:
+        result = _localize_image_result(core, cvd_type, mode, lang)
         # 캐시 적중 시에도, 로그인 사용자면 히스토리에 기록 (사용자가 같은 이미지를
         # 여러 번 검사한 이력을 보존하기 위함)
         if user_id is not None:
-            save_result(db, user_id, mode, cvd_type, cached, input_meta=file.filename)
-        return cached
+            save_result(db, user_id, mode, cvd_type, result, input_meta=file.filename)
+        return result
 
     try:
         img = load_image(data)             # 형식 검증 + 메모리상 이미지 객체 생성
@@ -75,9 +88,10 @@ async def analyze_image_endpoint(
         raise api_error("INVALID_IMAGE") from e   # 깨졌거나 열 수 없는 파일
 
     try:
-        result = analyze_image(img, cvd_type, mode, lang)  # 분석 파이프라인 실행
-        # 캐시 저장 (비로그인 포함 — 다음 분석 속도 향상)
-        set_cached(db, img_hash, cvd_type, mode, lang, result)
+        core = _analyze_image_core(img, cvd_type, mode)   # lang 무관 코어 계산 (무거운 연산)
+        # 코어만 캐시 저장 (비로그인 포함 — 다음 분석 속도 향상, lang 무관)
+        set_cached(db, img_hash, cvd_type, mode, core)
+        result = _localize_image_result(core, cvd_type, mode, lang)  # lang별 문구 적용
         # 로그인 사용자면 히스토리에도 저장 (규칙 1: 비로그인은 저장 안 함)
         if user_id is not None:
             save_result(db, user_id, mode, cvd_type, result, input_meta=file.filename)

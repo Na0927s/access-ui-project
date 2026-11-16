@@ -73,15 +73,16 @@ def save_result(
     return True
 
 
-def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str, lang: str) -> dict | None:
-    """캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드 + 언어의 결과가 있으면 반환, 없으면 None.
+def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str) -> dict | None:
+    """캐시 조회: 같은 이미지 해시 + 색약 유형 + 모드의 코어 결과가 있으면 반환, 없으면 None.
 
-    mode·lang을 키에 포함하는 이유: 모드마다 결과 구조(recommendations 포함 여부)가 다르고,
-    언어마다 결과 문구(result_message, issues 메시지 등)가 다르므로, 한쪽 결과로 다른 쪽을
-    덮어쓰거나 반환하면 안 됨 (예: ko 캐시를 en 요청에 반환하면 한글이 노출됨).
+    (한국어) 방안 A' — 캐시는 lang 무관 코어(시뮬레이션·수치·판정·추천 후보)만 저장한다.
+    lang은 키에 포함하지 않는다: 언어 의존 문구(issues 메시지, result_message, 추천 reason)는
+    코어에서 분리해 응답 시점에 적용하므로, ko로 분석한 코어를 en 요청에 재사용해도
+    한글이 노출되지 않는다. 언어 전환 시 코어 재계산(시뮬레이션 등 무거운 연산)을 건너뛴다.
     """
     row = db.query(AnalysisCache).filter_by(
-        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang
+        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode
     ).first()
     if not row:
         return None
@@ -92,18 +93,18 @@ def get_cached(db: Session, image_hash_value: str, cvd_type: str, mode: str, lan
 
 
 def set_cached(
-    db: Session, image_hash_value: str, cvd_type: str, mode: str, lang: str, result: dict
+    db: Session, image_hash_value: str, cvd_type: str, mode: str, result: dict
 ) -> None:
-    """캐시 저장: 같은 조합이 있으면 갱신, 없으면 새로 삽입 (upsert)."""
+    """캐시 저장: 같은 조합이 있으면 갱신, 없으면 새로 삽입 (upsert). lang 무관 코어만 저장."""
     row = db.query(AnalysisCache).filter_by(
-        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang
+        image_hash=image_hash_value, cvd_type=cvd_type, mode=mode
     ).first()
     payload = json.dumps(result, ensure_ascii=False)
     if row:
         row.result_json = payload
     else:
         db.add(AnalysisCache(
-            image_hash=image_hash_value, cvd_type=cvd_type, mode=mode, lang=lang,
+            image_hash=image_hash_value, cvd_type=cvd_type, mode=mode,
             result_json=payload,
         ))
     db.commit()

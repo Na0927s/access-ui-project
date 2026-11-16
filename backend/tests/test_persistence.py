@@ -122,63 +122,66 @@ def test_save_result_defaults_verdict_to_pass(db):
     assert row.verdict == "PASS"
 
 
-# --- get_cached / set_cached ---
+# --- get_cached / set_cached (방안 A': lang 무관 코어 캐싱) ---
 
 def test_cache_set_then_get(db):
     # 저장한 캐시를 동일 키로 조회할 수 있어야 함
     result = {"score": 42, "verdict": "PASS"}
-    set_cached(db, "hash1", "deutan", "user", "ko", result)
-    got = get_cached(db, "hash1", "deutan", "user", "ko")
+    set_cached(db, "hash1", "deutan", "user", result)
+    got = get_cached(db, "hash1", "deutan", "user")
     assert got == result
 
 
 def test_cache_miss_returns_none(db):
     # 없는 키는 None
-    assert get_cached(db, "nope", "deutan", "user", "ko") is None
+    assert get_cached(db, "nope", "deutan", "user") is None
 
 
 def test_cache_upsert_overwrites(db):
     # 같은 키 재저장은 새 행이 아닌 갱신(upsert)
-    set_cached(db, "hash1", "deutan", "user", "ko", {"score": 1})
-    set_cached(db, "hash1", "deutan", "user", "ko", {"score": 2})
+    set_cached(db, "hash1", "deutan", "user", {"score": 1})
+    set_cached(db, "hash1", "deutan", "user", {"score": 2})
     assert db.query(AnalysisCache).count() == 1
-    assert get_cached(db, "hash1", "deutan", "user", "ko")["score"] == 2
+    assert get_cached(db, "hash1", "deutan", "user")["score"] == 2
 
 
 def test_cache_key_separates_by_cvd(db):
     # 같은 해시라도 색약 유형이 다르면 별도 캐시
-    set_cached(db, "hash1", "deutan", "user", "ko", {"score": 1})
-    set_cached(db, "hash1", "protan", "user", "ko", {"score": 2})
+    set_cached(db, "hash1", "deutan", "user", {"score": 1})
+    set_cached(db, "hash1", "protan", "user", {"score": 2})
     assert db.query(AnalysisCache).count() == 2
-    assert get_cached(db, "hash1", "deutan", "user", "ko")["score"] == 1
-    assert get_cached(db, "hash1", "protan", "user", "ko")["score"] == 2
+    assert get_cached(db, "hash1", "deutan", "user")["score"] == 1
+    assert get_cached(db, "hash1", "protan", "user")["score"] == 2
 
 
 def test_cache_key_separates_by_mode(db):
     # 같은 해시·색약이어도 모드가 다르면 별도 캐시 (user/developer 결과 구조가 다름)
-    set_cached(db, "hash1", "deutan", "user", "ko", {"score": 1})
-    set_cached(db, "hash1", "deutan", "developer", "ko", {"score": 2})
+    set_cached(db, "hash1", "deutan", "user", {"score": 1})
+    set_cached(db, "hash1", "deutan", "developer", {"score": 2})
     assert db.query(AnalysisCache).count() == 2
-    assert get_cached(db, "hash1", "deutan", "user", "ko")["score"] == 1
-    assert get_cached(db, "hash1", "deutan", "developer", "ko")["score"] == 2
+    assert get_cached(db, "hash1", "deutan", "user")["score"] == 1
+    assert get_cached(db, "hash1", "deutan", "developer")["score"] == 2
 
 
-def test_cache_key_separates_by_lang(db):
-    # 같은 해시·색약·모드여도 언어가 다르면 별도 캐시 (ko 문구를 en 요청에 반환 방지)
-    set_cached(db, "hash1", "deutan", "user", "ko", {"score": 1, "result_message": "한글"})
-    set_cached(db, "hash1", "deutan", "user", "en", {"score": 1, "result_message": "English"})
-    assert db.query(AnalysisCache).count() == 2
-    assert get_cached(db, "hash1", "deutan", "user", "ko")["result_message"] == "한글"
-    assert get_cached(db, "hash1", "deutan", "user", "en")["result_message"] == "English"
+def test_cache_is_lang_agnostic(db):
+    # 방안 A': 캐시 키에 lang이 없다 — 같은 해시·색약·모드면 언어와 무관하게 한 줄.
+    # (한국어) 코어는 lang 무관이고 문구는 응답 시점에 적용하므로, ko로 저장한 코어를
+    # en 요청에 재사용한다. 언어 전환 시 코어 재계산(시뮬레이션 등)을 건너뛴다.
+    set_cached(db, "hash1", "deutan", "user", {"verdict": "FAIL", "core": True})
+    # 같은 키로 다시 저장해도 갱신(1행) — lang별 별도 행이 생기지 않는다.
+    set_cached(db, "hash1", "deutan", "user", {"verdict": "FAIL", "core": True})
+    assert db.query(AnalysisCache).count() == 1
+    # 조회 시 lang 인자가 없다 — 언어와 무관하게 같은 코어 반환.
+    assert get_cached(db, "hash1", "deutan", "user")["core"] is True
 
 
 def test_cache_returns_none_on_corrupt_json(db):
     # result_json이 깨진 경우 None (예외 전파 대신 안전한 fallback)
     uid = _make_user(db)  # 사용자 필요 없지만 세션 초기화용
-    cache_row = AnalysisCache(image_hash="bad", cvd_type="deutan", mode="user", lang="ko", result_json="{not json")
+    cache_row = AnalysisCache(image_hash="bad", cvd_type="deutan", mode="user", result_json="{not json")
     db.add(cache_row)
     db.commit()
-    assert get_cached(db, "bad", "deutan", "user", "ko") is None
+    assert get_cached(db, "bad", "deutan", "user") is None
 
 
 # --- serialize_history_item ---

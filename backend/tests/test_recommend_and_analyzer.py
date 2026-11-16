@@ -7,7 +7,7 @@ from PIL import Image, ImageDraw
 
 from app.services import texts
 from app.services.analyzer import analyze_elements, analyze_image, confusion_verdict
-from app.services.recommend import recommend, verify
+from app.services.recommend import localize_recommendation, recommend, verify
 from app.services.wcag import contrast_ratio
 
 
@@ -109,12 +109,18 @@ def test_analyze_elements_english_output():
 
 
 def test_recommend_english_output():
-    # 영어 모드: 추천 색상의 이유 설명과 비색상 팁이 영어로 나와야 함
-    rec = recommend("#FF5252", "#FFFFFF", "deutan", "en")
+    # 영어 모드: 추천 코어에 localize_recommendation을 적용하면 이유 설명·비색상 팁이 영어로.
+    # (방안 A') recommend() 자체는 lang 무관 코어만 반환. 문구(reason, non_color_tips)는
+    # localize_recommendation이 lang별로 덧붙인다 — 코어 재계산 없이 언어 전환.
+    rec = recommend("#FF5252", "#FFFFFF", "deutan")
     assert rec["candidates"]
-    for c in rec["candidates"]:
+    # 코어에는 reason/non_color_tips가 없어야 한다 (lang 무관).
+    assert "reason" not in rec["candidates"][0]
+    assert "non_color_tips" not in rec
+    localized = localize_recommendation(rec, "en")
+    for c in localized["candidates"]:
         assert not _has_hangul(c["reason"])
-    for tip in rec["non_color_tips"]:
+    for tip in localized["non_color_tips"]:
         assert not _has_hangul(tip)
 
 

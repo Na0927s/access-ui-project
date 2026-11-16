@@ -29,12 +29,14 @@ def grade_of(ratio: float) -> str | None:
     return None
 
 
-def verify(candidate: str, against: str, cvd_type: str, lang: str = "ko") -> dict | None:
+def verify(candidate: str, against: str, cvd_type: str) -> dict | None:
     """Re-verification. Returns candidate info if it passes, else None.
 
     (한국어) 후보 색 재검증. 통과하면 정보 dict, 실패하면 None을 반환.
     1) 상대 색과의 WCAG 대비율이 최소 3:1은 넘는가
     2) 색각이상 시뮬레이션을 적용해도 상대 색과 OKLab ΔE(CONFUSION_WARN) 이상으로 구분되는가
+
+    lang 의존 문구(reason)는 여기서 넣지 않고 localizer에서 덧붙인다 (언어 전환 시 재계산 회피).
     """
     ratio = contrast_ratio(candidate, against)
     grade = grade_of(ratio)
@@ -48,13 +50,16 @@ def verify(candidate: str, against: str, cvd_type: str, lang: str = "ko") -> dic
         "hex": candidate,
         "ratio": round(ratio, 2),
         "grade": grade,
-        "reason": texts.GRADE_REASON[grade][lang],
+        # reason은 lang 의존이므로 core에 넣지 않음. localizer가 채운다.
         "distance_simulated": round(sim_dist, 3),
     }
 
 
-def recommend(current: str, against: str, cvd_type: str, lang: str = "ko", limit: int = 3) -> dict:
-    """(한국어) 현재 색(current)을 상대 색(against)과 구분되도록 바꿔줄 후보를 찾는다."""
+def recommend(current: str, against: str, cvd_type: str, limit: int = 3) -> dict:
+    """(한국어) 현재 색(current)을 상대 색(against)과 구분되도록 바꿔줄 후보를 찾는다.
+
+    lang 의존 문구(reason, non_color_tips)는 localizer에서 덧붙인다 (언어 전환 시 재계산 회피).
+    """
     base = hex_to_oklab(current)   # 현재 색을 OKLab 좌표로 변환 (L, a, b). L은 0~1 범위.
     seen: set[str] = set()          # 이미 시도한 후보 색 중복 방지
     passed: list[dict] = []         # 재검증을 통과한 후보 목록
@@ -68,7 +73,7 @@ def recommend(current: str, against: str, cvd_type: str, lang: str = "ko", limit
             if cand in seen or cand == current.upper():
                 continue
             seen.add(cand)
-            info = verify(cand, against, cvd_type, lang)   # 후보마다 재검증 수행
+            info = verify(cand, against, cvd_type)   # 후보마다 재검증 수행
             if info:
                 info["distance_from_current"] = round(delta_e(cand, current), 3)  # 원래 색과의 변경량
                 passed.append(info)
@@ -86,6 +91,21 @@ def recommend(current: str, against: str, cvd_type: str, lang: str = "ko", limit
     return {
         "current": current.upper(),
         "against": against.upper(),
-        "candidates": picked[:limit],                      # 최대 3개까지 반환
-        "non_color_tips": [tip[lang] for tip in texts.NON_COLOR_TIPS],  # 색 외 개선 팁 (아이콘·라벨 등)
+        "candidates": picked[:limit],                      # 최대 3개까지 반환 (reason은 localizer가 채움)
+        # non_color_tips는 lang 의존이므로 core에 넣지 않음. localizer가 채운다.
     }
+
+
+def localize_recommendation(rec: dict, lang: str = "ko") -> dict:
+    """(한국어) lang 무관 추천 코어에 lang 의존 문구(reason, non_color_tips)를 덧붙여 응답용으로 반환.
+
+    코어는 캐시되고 언어 전환 시 이 함수만 다시 실행되므로, 추천 색 후보 재계산 없이
+    문구만 즉시 전환된다 (방안 A' — 언어 전환 2배 지연 회피).
+    """
+    out = dict(rec)
+    out["candidates"] = [
+        {**c, "reason": texts.GRADE_REASON[c["grade"]][lang]}
+        for c in rec.get("candidates", [])
+    ]
+    out["non_color_tips"] = [tip[lang] for tip in texts.NON_COLOR_TIPS]
+    return out
