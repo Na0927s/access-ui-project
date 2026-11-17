@@ -22,27 +22,70 @@ function RequireLogin({ children }: { children: ReactNode }) {
   return user ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+// 홈 이외 페이지용 폭 제한 래퍼 — 홈은 전체 폭 띠를 쓰므로 main에 폭 제한을 두지 않고,
+// 각 페이지 안쪽에서 기존과 동일한 폭·패딩을 유지하도록 감싼다.
+function PageWrap({ children }: { children: ReactNode }) {
+  return <div className="mx-auto w-full max-w-6xl px-4 py-8">{children}</div>
+}
+
 export default function App() {
   return (
     // min-h-screen + flex-col: 푸터가 화면 하단에 붙도록 하는 세로 레이아웃
     <div className="flex min-h-screen flex-col">
       <Header />
-      {/* 본문: 최대 폭 제한 + 중앙 정렬. id="main"은 "본문 바로가기" 링크의 이동 지점.
-          py-8: 헤더 하단 선·푸터 상단 선과 본문 첫 텍스트 사이 여백 확보 */}
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+      {/* 본문: 홈은 전체 폭(섹션마다 안쪽에서 폭 제한), 다른 페이지는 PageWrap으로 폭 제한.
+          id="main"은 "본문 바로가기" 링크의 이동 지점. */}
+      <main id="main" className="w-full flex-1">
         <Routes>
           <Route path="/" element={<MainPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/user" element={<UserModePage />} />
-          <Route path="/developer" element={<DeveloperModePage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/login" element={<LoginPage />} />
+          <Route
+            path="/about"
+            element={
+              <PageWrap>
+                <AboutPage />
+              </PageWrap>
+            }
+          />
+          <Route
+            path="/user"
+            element={
+              <PageWrap>
+                <UserModePage />
+              </PageWrap>
+            }
+          />
+          <Route
+            path="/developer"
+            element={
+              <PageWrap>
+                <DeveloperModePage />
+              </PageWrap>
+            }
+          />
+          <Route
+            path="/signup"
+            element={
+              <PageWrap>
+                <SignupPage />
+              </PageWrap>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <PageWrap>
+                <LoginPage />
+              </PageWrap>
+            }
+          />
           {/* 마이페이지 두 개는 RequireLogin으로 감싸 로그인 필수로 만듦 */}
           <Route
             path="/mypage/info"
             element={
               <RequireLogin>
-                <MyInfoPage />
+                <PageWrap>
+                  <MyInfoPage />
+                </PageWrap>
               </RequireLogin>
             }
           />
@@ -50,11 +93,20 @@ export default function App() {
             path="/mypage/results"
             element={
               <RequireLogin>
-                <ResultHistoryPage />
+                <PageWrap>
+                  <ResultHistoryPage />
+                </PageWrap>
               </RequireLogin>
             }
           />
-          <Route path="/terms" element={<TermsPage />} />
+          <Route
+            path="/terms"
+            element={
+              <PageWrap>
+                <TermsPage />
+              </PageWrap>
+            }
+          />
           {/* 정의되지 않은 모든 경로는 홈으로 리다이렉트 */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

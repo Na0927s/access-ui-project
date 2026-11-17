@@ -9,6 +9,7 @@ export default function TermsPage() {
     { title: t('termsAnalysisTitle'), body: t('termsAnalysisBody') },
     { title: t('termsPagePrivacyTitle'), body: t('termsPagePrivacyBody') },
     { title: t('termsLimitTitle'), body: t('termsLimitBody') },
+    { title: t('termsAspireTitle'), body: t('termsAspireBody') },
   ]
   return (
     <article className="mx-auto flex max-w-2xl flex-col gap-5 leading-relaxed">

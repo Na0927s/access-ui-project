@@ -64,12 +64,6 @@ async def analyze_image_endpoint(
     if core is not None:
         issues = core.get("issues") or []
         stale = any("message" in i and "fg" not in i and "a" not in i for i in issues) and bool(issues)
-        # 개발자 모드에서 추천이 있는데 improved_image가 없으면 구버전 캐시 → 재분석.
-        if mode == "developer":
-            has_recs = bool(core.get("recommendations"))
-            has_improved = "improved_image" in core
-            if has_recs and not has_improved:
-                stale = True
         if stale:
             core = None
     if core is not None:

@@ -3,13 +3,12 @@
 // 방식2: HTML/CSS 코드 입력 → 브라우저에서 색상 추출 → 백엔드 코드 분석
 // 두 방식 모두 결과에 "문제 해결 방법" 카드와 "요약" 영역을 표시 (개발자 모드 전용 기능)
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import CodeResultTable from '../components/CodeResultTable'
 import ColorChip from '../components/ColorChip'
 import CvdSelector from '../components/CvdSelector'
-import ImprovedCompare from '../components/ImprovedCompare'
 import InfoPopover from '../components/InfoPopover'
 import ResultCompare from '../components/ResultCompare'
 import ResultSummary from '../components/ResultSummary'
@@ -27,12 +26,16 @@ import { imageIssuesToBoxes } from '../utils/imageIssuesToBoxes'
 type Method = 'image' | 'code' // 현재 선택된 입력 방식 (탭)
 // 탭 목록 상수 — useRovingTabs에 안정적 참조로 전달하기 위해 컴포넌트 밖에 선언.
 const METHODS: readonly Method[] = ['image', 'code']
-const RESULT_TABS = ['analysis', 'compare'] as const
 
 export default function DeveloperModePage() {
   const t = useT()
   const lang = useUiStore((s) => s.lang)
-  const [method, setMethod] = useState<Method>('image') // 현재 탭 (이미지/코드)
+  // 진입 쿼리 ?method=code 가 있으면 코드 탭부터 시작 (메인 "개발자 · 코드로 검사" 버튼 진입점).
+  // 기본은 이미지 탭. 진입 시 한 번만 반영(lazy initializer).
+  const [searchParams] = useSearchParams()
+  const [method, setMethod] = useState<Method>(
+    () => (searchParams.get('method') === 'code' ? 'code' : 'image'),
+  )
   const [cvd, setCvd] = useState<CvdType | null>(null) // 선택한 색약 유형
   const [file, setFile] = useState<File | null>(null) // [이미지 방식] 업로드 파일
   const [preview, setPreview] = useState<string | null>(null) // [이미지 방식] 미리보기 URL
@@ -42,7 +45,6 @@ export default function DeveloperModePage() {
   const [error, setError] = useState<string | null>(null)
   const [imageResult, setImageResult] = useState<ImageAnalysis | null>(null) // 이미지 분석 결과
   const [codeResult, setCodeResult] = useState<DeveloperAnalysis | null>(null) // 코드 분석 결과
-  const [resultTab, setResultTab] = useState<'analysis' | 'compare'>('analysis') // 결과 화면 탭
   const [solutionsOpen, setSolutionsOpen] = useState(false) // 문제 해결 방법 영역 펼침 여부
   // 코드 모드 결과 내용(표) 펼침 여부.
   // 첫 검사 직후 펼친 상태로 보이도록 기본 true (문제 해결 방법은 접힘).
@@ -64,16 +66,6 @@ export default function DeveloperModePage() {
     setCodeResult(null)
   }, [])
   const inputTabs = useRovingTabs<Method>(METHODS, method, selectMethod)
-
-  // 결과 탭(이미지 모드) — 비교 탭이 있을 때만 2개 탭.
-  const resultUid = useId()
-  const resultPanelId = (k: (typeof RESULT_TABS)[number]) => `${resultUid}-result-panel-${k}`
-  const resultTabId = (k: (typeof RESULT_TABS)[number]) => `${resultUid}-result-tab-${k}`
-  const resultTabs = useRovingTabs<(typeof RESULT_TABS)[number]>(
-    RESULT_TABS,
-    resultTab,
-    setResultTab,
-  )
 
   // 미리보기 URL 메모리 해제
   useEffect(
@@ -103,7 +95,6 @@ export default function DeveloperModePage() {
         const data = await analyzeImage(file, cvd, 'developer', lang, token)
         setImageResult(data)
         setCodeResult(null) // 반대쪽 탭의 이전 결과는 지움
-        setResultTab('analysis') // 결과 탭을 첫 탭으로 초기화
         setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
         setCodeDetailOpen(true) // 결과 내용은 펼침, 문제 해결 방법은 접힘
         setInspectSeq((n) => n + 1) // 회차 증가 → ResultSummary remount (A3)
@@ -123,7 +114,6 @@ export default function DeveloperModePage() {
         const data = await analyzeElements(elements, cvd, lang, token)
         setCodeResult(data)
         setImageResult(null)
-        setResultTab('analysis') // 결과 탭을 분석 탭으로 초기화 (코드 모드는 탭이 없지만 상태 일관성 유지)
         setSolutionsOpen(false) // 접기 상태도 새 결과에 맞춰 초기화 (A1)
         setCodeDetailOpen(true) // 결과 내용은 펼침, 문제 해결 방법은 접힘
         if (user)
@@ -193,10 +183,6 @@ export default function DeveloperModePage() {
   // 표시할 해결 카드: 코드 결과가 있으면 그것을, 아니면 이미지 결과를 카드로 변환
   const boxes = codeResult?.solution_boxes ?? (imageResult ? imageIssuesToBoxes(imageResult) : [])
   const hasResult = Boolean(codeResult || imageResult)
-  // 이미지 결과에 대응 이미지+시뮬레이션이 모두 있으면 비교 탭 노출.
-  const hasCompare = Boolean(
-    imageResult?.improved_image && imageResult?.improved_simulated_image,
-  )
   // 이미지 결과의 우선 확인 색상 조합: 심각도(HIGH=FAIL) 우선 정렬 후 첫 조합.
   // 표시 순서만 변경하고 판정값·알고리즘은 변경하지 않음.
   const SEV_RANK = { HIGH: 2, MEDIUM: 1, LOW: 0 } as const
@@ -323,72 +309,19 @@ export default function DeveloperModePage() {
         </p>
       )}
 
-      {/* [이미지 방식] 결과: 두 개 탭 — 검사 결과 및 대응 방안 / 대응 적용 이미지 비교.
-          aria-live로 스크린리더에게 결과가 표시되었음을 알림.
-          대응 이미지가 있을 때만 비교 탭 노출 (WAI-ARIA Tabs 패턴). */}
+      {/* [이미지 방식] 결과: 원본/시뮬레이션 비교 + 상세(주요 색상/문제/추천).
+          aria-live로 스크린리더에게 결과가 표시되었음을 알림. */}
       {imageResult && preview && (
         <div className="flex flex-col gap-6" aria-live="polite">
-          {hasCompare && (
-            <div className="flex flex-col gap-3">
-              <h2 className="text-lg font-bold">{t('resultContent')}</h2>
-              <div role="tablist" aria-label={t('resultContent')} className="flex gap-2">
-                {RESULT_TABS.map((key) => (
-                  <button
-                    key={key}
-                    type="button"
-                    {...resultTabs.getTabButtonProps(
-                      key,
-                      resultTabId(key),
-                      resultPanelId(key),
-                    )}
-                    onClick={() => setResultTab(key)}
-                    className={`flex-1 rounded-xl border-2 px-5 py-3 text-sm font-semibold transition-colors ${
-                      resultTab === key
-                        ? 'border-ink bg-ink text-white'
-                        : 'border-rule bg-white text-graphite hover:bg-paper'
-                    }`}
-                  >
-                    {key === 'analysis' ? t('tabAnalysis') : t('tabCompare')}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {/* 활성 탭의 내용을 tabpanel로 렌더. 비교 탭이 없으면 탭 없이 analysis 내용만. */}
-          {resultTab === 'analysis' && (
-            <div
-              role={hasCompare ? 'tabpanel' : undefined}
-              id={hasCompare ? resultPanelId('analysis') : undefined}
-              aria-labelledby={hasCompare ? resultTabId('analysis') : undefined}
-              tabIndex={hasCompare ? 0 : undefined}
-            >
-              <ResultCompare
-                original={preview}
-                simulated={imageResult.simulated_image}
-                cvdType={imageResult.cvd_type}
-              />
-              {/* collapsible: 상세 영역(주요 색상/문제/추천)을 접었다 펼침, 판정·요약은 항상 보임.
-                  key로 회차를 줘 새 검사마다 remount → 펼침 상태 초기화 (A3). */}
-              <ResultSummary key={inspectSeq} data={imageResult} mode="developer" collapsible />
-            </div>
-          )}
-          {/* 탭2: 대응 적용 이미지 비교 — Before/After 2×2 그리드 */}
-          {resultTab === 'compare' && hasCompare && (
-            <div
-              role="tabpanel"
-              id={resultPanelId('compare')}
-              aria-labelledby={resultTabId('compare')}
-              tabIndex={0}
-            >
-              <ImprovedCompare
-                original={preview}
-                simulated={imageResult.simulated_image}
-                improved={imageResult.improved_image!}
-                improvedSimulated={imageResult.improved_simulated_image!}
-                cvdType={imageResult.cvd_type}
-              />
-            </div>
-          )}
+          <h2 className="text-lg font-bold">{t('resultContent')}</h2>
+          <ResultCompare
+            original={preview}
+            simulated={imageResult.simulated_image}
+            cvdType={imageResult.cvd_type}
+          />
+          {/* collapsible: 상세 영역(주요 색상/문제/추천)을 접었다 펼침, 판정·요약은 항상 보임.
+              key로 회차를 줘 새 검사마다 remount → 펼침 상태 초기화 (A3). */}
+          <ResultSummary key={inspectSeq} data={imageResult} mode="developer" collapsible />
         </div>
       )}
 
@@ -402,14 +335,14 @@ export default function DeveloperModePage() {
         >
           <h2 id="detail" className="mb-3 text-lg font-bold">
             {t('resultContent')}
-            {/* 코드 모드 검사 방법·판정 의미 설명 (객관적 톤, 팝오버) */}
+            {/* 코드 모드 검사 방법 + 판정(PASS/WARNING/FAIL) 의미 설명 (객관적·쉬운 말, 팝오버) */}
             <InfoPopover label={t('resultContent')}>
               <p className="mb-1 font-semibold">{t('popCodeMethodTitle')}</p>
               <p className="mb-2 text-graphite">{t('popCodeMethodBody')}</p>
               <p className="mb-1 font-semibold">{t('popCodeVerdictTitle')}</p>
-              <p className="text-graphite">{t('popCodePassDesc')}</p>
-              <p className="text-graphite">{t('popCodeWarnDesc')}</p>
-              <p className="text-graphite">{t('popCodeFailDesc')}</p>
+              <p className="text-graphite">PASS: {t('popCodePassDesc')}</p>
+              <p className="text-graphite">WARNING: {t('popCodeWarnDesc')}</p>
+              <p className="text-graphite">FAIL: {t('popCodeFailDesc')}</p>
             </InfoPopover>
           </h2>
           {/* 판정 + 결과 메시지 — 항상 보임 */}
@@ -442,10 +375,8 @@ export default function DeveloperModePage() {
         </section>
       )}
 
-      {/* 두 방식 공통: 문제 해결 방법 + 요약 (개발자 모드 전용 영역).
-          #1: "대응 적용 이미지 비교" 탭에서는 숨기고 "검사 결과 및 대응 방안" 탭에서만 표시.
-          코드 모드는 탭이 없으므로 항상 표시. */}
-      {hasResult && (codeResult || resultTab === 'analysis') && (
+      {/* 두 방식 공통: 문제 해결 방법 + 요약 (개발자 모드 전용 영역). */}
+      {hasResult && (
         <>
           <section aria-labelledby="solutions" className="flex flex-col gap-6">
             {/* 문제 해결 방법: 제목을 박스 안에 배치 (결과 내용과 동일한 패턴).
