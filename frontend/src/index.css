@@ -12,15 +12,16 @@
   --color-paper: #ffffff; /* 캔버스 배경 — 순백 */
   --color-ink: #0a0a0a; /* 주 텍스트·버튼 — 순흑 */
   --color-graphite: #6b6b6b; /* 보조 텍스트 — 중간 회색 (기업 톤) */
-  --color-rule: #d4d4d4; /* 테두리·구분선 — 연한 회색 (기업 사이트 톤) */
+  --color-rule: #6b6b6b; /* 테두리·구분선 — 보조 텍스트와 동일 회색 (분홍 틴트 제거 + 대비 확보) */
   --color-rule-strong: #0a0a0a; /* 강조 구분선 — 검정 (섹션 분리용) */
   --color-focus: #1d4ed8; /* 키보드 포커스 링 색 (대비 확보용 파랑 — 기능적 색, 접근성) */
 
   /* 입체감용 그림자 — 2단 레이어드(근접+확산)로 자연스러운 떠있음 표현.
-     모두 블랙 투명도 기반(순수 회색, 색 없음). */
-  --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.05), 0 2px 6px -2px rgb(0 0 0 / 0.06);
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 8px 20px -8px rgb(0 0 0 / 0.12);
-  --shadow-lift: 0 4px 10px -2px rgb(0 0 0 / 0.10), 0 18px 40px -12px rgb(0 0 0 / 0.20);
+     모두 블랙 투명도 기반(순수 회색, 색 없음).
+     투명도를 살짝 올려 밝은 회색 대역에서 분홍 틴트 인지를 줄임. */
+  --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.08), 0 2px 6px -2px rgb(0 0 0 / 0.09);
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.10), 0 8px 20px -8px rgb(0 0 0 / 0.15);
+  --shadow-lift: 0 4px 10px -2px rgb(0 0 0 / 0.14), 0 18px 40px -12px rgb(0 0 0 / 0.24);
   /* inset 하이라이트 — 카드 상단에 빛이 닿는 느낌 (입체감) */
   --shadow-inset-line: inset 0 1px 0 0 rgb(255 255 255 / 0.9);
   /* 조명 효과용 — 호버 시 카드 위에서 흰 빛이 퍼짐 (블랙/화이트 투명도만) */
@@ -58,4 +59,26 @@ body {
 :focus-visible {
   outline: 3px solid var(--color-focus);
   outline-offset: 2px;
+}
+
+/* 얇은 스크롤바 — 코드 블록 등 좁은 영역의 가로 스크롤바가 화면 축소 시 두꺼워 보이는
+   현상 방지. 두께를 고정해 뷰포트 크기와 무관하게 일관되게 표시.
+   (한국어) Windows 오버레이 스크롤바가 좁은 화면에서 비대해지는 걸 막기 위한 고정 두께. */
+.thin-scroll {
+  scrollbar-width: thin; /* Firefox */
+  scrollbar-color: var(--color-rule) transparent;
+}
+.thin-scroll::-webkit-scrollbar {
+  height: 6px; /* 가로 스크롤바 고정 두께 */
+  width: 6px; /* 세로 스크롤바 고정 두께 */
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-rule);
+  border-radius: 9999px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-graphite);
 }

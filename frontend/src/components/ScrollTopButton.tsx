@@ -23,6 +23,9 @@ export default function ScrollTopButton() {
       type="button"
       aria-label={t('toTop')}
       title={t('toTop')}
+      // 숨김 상태에서는 키보드 포커스·스크린리더 접근 차단 (보이지 않는 버튼에 포커스 방지)
+      tabIndex={visible ? 0 : -1}
+      aria-hidden={!visible}
       onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
       className={`fixed right-5 bottom-5 grid size-12 place-items-center rounded-full border-2 border-ink bg-white text-xl shadow transition-opacity duration-200 ${
         visible ? 'opacity-100' : 'pointer-events-none opacity-0'

@@ -1,6 +1,8 @@
 // (한국어 요약) 분석 결과 요약 뷰 — 이미지 분석(사용자/개발자 모드 공용)의 결과 내용 영역.
-// 종합 판정 → (사용자) 쉬운 설명 / (개발자) AI 설명 → 주요 색상 → 발견된 문제(이슈별 설명 포함)
+// 종합 판정 → (통합) 요약 설명 → 주요 색상 → 발견된 문제(이슈별 설명 포함)
 // → (개발자 모드) 추천 색상 순으로 표시. 점수는 더 이상 표시하지 않는다.
+// collapsible=true면 상세 영역(주요 색상/문제/추천)을 접었다 펼칠 수 있고,
+// 판정 + 요약 설명 상자는 항상 보이도록 둔다 (개발자 모드 검사 화면).
 import { useEffect, useState } from 'react'
 import { explain, type Explanation } from '../api/client'
 import type { ImageAnalysis } from '../api/types'
@@ -13,14 +15,21 @@ import VerdictBadge from './VerdictBadge'
 export default function ResultSummary({
   data,
   mode,
+  collapsible = false,
 }: {
   data: ImageAnalysis
   mode: 'user' | 'developer'
+  collapsible?: boolean
 }) {
   const t = useT()
   const lang = useUiStore((s) => s.lang)
   const [ai, setAi] = useState<Explanation | null>(null) // AI/요약 설명 응답
   const [copiedHex, setCopiedHex] = useState<string | null>(null) // 추천 색상 HEX 복사 표시
+  // 상세 영역(주요 색상/문제/추천) 펼침 여부.
+  // collapsible 모드에서는 첫 검사 직후 펼쳐진 상태로 보이도록 기본 true.
+  // (문제 해결 방법은 별도 영역으로 기본 접힘 상태 — 결과는 먼저 보여주는 게 자연스러움)
+  // data가 바뀌면 컴포넌트를 remount해 상태를 초기화 (A3) — 호출부에서 key prop 사용.
+  const [open, setOpen] = useState(true)
 
   // 분석 결과나 언어가 바뀔 때마다 AI 설명 요청을 다시 보냄.
   // AbortController로 진행 중인 이전 요청을 취소해 경쟁(race)과 불필요한 네트워크 호출을 방지.
@@ -48,56 +57,10 @@ export default function ResultSummary({
     CONDITIONAL: t('gradeConditional'),
   } as const
 
-  return (
-    // aria-labelledby로 섹션 제목과 연결 — 스크린리더가 영역 이름을 읽음
-    <section
-      aria-labelledby="result-content"
-      className="flex flex-col gap-6 rounded-xl border border-rule bg-white p-6 shadow-sm"
-    >
-      <h2 id="result-content" className="text-lg font-bold">
-        {t('resultContent')}
-      </h2>
-      {/* 종합 판정 + 짧은 의미 + 설명 (PASS/WARNING/FAIL이 무슨 뜻인지 바로 알 수 있게) */}
-      <div className="flex flex-col gap-1.5 rounded-lg bg-paper p-3 text-sm">
-        <div className="flex flex-wrap items-center gap-2 font-medium">
-          <VerdictBadge verdict={data.verdict} />
-          {/* 판정의 짧은 의미 (일반인도 바로 이해하도록) */}
-          <span className="font-semibold">
-            {data.verdict === 'PASS'
-              ? t('verdictPassShort')
-              : data.verdict === 'WARNING'
-                ? t('verdictWarnShort')
-                : t('verdictFailShort')}
-          </span>
-        </div>
-        <p className="text-graphite">
-          {data.verdict === 'PASS'
-            ? t('verdictPassDesc')
-            : data.verdict === 'WARNING'
-              ? t('verdictWarnDesc')
-              : t('verdictFailDesc')}
-        </p>
-      </div>
-
-      {/* 검사 결과 요약 문구 — 개발자 모드에서만 표시 (N은 실제 검사 결과) */}
-      {mode === 'developer' && (
-        <p className="rounded-lg bg-paper p-3 text-sm leading-relaxed">
-          {data.issues.length > 0
-            ? t('imgResultIntro', { count: data.issues.length })
-            : t('imgResultIntroOk')}
-        </p>
-      )}
-
-      {/* AI 설명(또는 AI 없을 때 백엔드 템플릿 요약) — 출처를 라벨로 구분해 표시 */}
-      {ai && (
-        <div className="rounded-lg border border-rule p-4 text-sm leading-relaxed">
-          <p className="mb-1 text-xs font-semibold text-graphite">
-            {ai.source === 'ai' ? t('aiExplain') : t('plainExplain')}
-          </p>
-          <p>{ai.summary}</p>
-        </div>
-      )}
-
+  // 상세 영역: 주요 색상 / 발견된 문제 / 추천 색상.
+  // collapsible에서는 이 블록이 접히고, 그렇지 않으면 그대로 펼쳐 보인다.
+  const details = (
+    <>
       {/* 주요 색상 팔레트: 색 견본 + HEX + 화면 차지 비율(%) */}
       <div>
         <h3 className="mb-2.5 font-semibold">
@@ -240,6 +203,89 @@ export default function ResultSummary({
             ))}
           </ul>
         </div>
+      )}
+    </>
+  )
+
+  return (
+    // aria-labelledby로 섹션 제목과 연결 — 스크린리더가 영역 이름을 읽음
+    <section
+      aria-labelledby="result-content"
+      className="flex flex-col gap-6 rounded-xl border border-rule bg-white p-6 shadow-sm"
+    >
+      <h2 id="result-content" className="text-lg font-bold">
+        {t('resultContent')}
+      </h2>
+      {/* 종합 판정 + 짧은 의미 + 설명 (PASS/WARNING/FAIL이 무슨 뜻인지 바로 알 수 있게) — 항상 보임 */}
+      <div className="flex flex-col gap-1.5 rounded-lg bg-paper p-3 text-sm">
+        <div className="flex flex-wrap items-center gap-2 font-medium">
+          <VerdictBadge verdict={data.verdict} />
+          {/* 판정의 짧은 의미 (일반인도 바로 이해하도록) */}
+          <span className="font-semibold">
+            {data.verdict === 'PASS'
+              ? t('verdictPassShort')
+              : data.verdict === 'WARNING'
+                ? t('verdictWarnShort')
+                : t('verdictFailShort')}
+          </span>
+        </div>
+        <p className="text-graphite">
+          {data.verdict === 'PASS'
+            ? t('verdictPassDesc')
+            : data.verdict === 'WARNING'
+              ? t('verdictWarnDesc')
+              : t('verdictFailDesc')}
+        </p>
+      </div>
+
+      {/* 요약 상자: AI 설명과 이전 안내 문구(imgResultIntro)를 하나로 통합해 표시.
+          AI 응답이 있으면 그것을, 없으면 백엔드 검사 결과 기반 안내 문구를 보여준다.
+          개발자 모드는 항상 표시, 사용자 모드는 AI 응답이 있을 때만 표시. — 항상 보임 */}
+      {(ai || mode === 'developer') && (
+        <div
+          className="rounded-lg border border-rule p-4 text-sm leading-relaxed"
+          aria-live="polite"
+          aria-busy={ai === null && mode === 'developer'}
+        >
+          <p className="mb-1 text-xs font-semibold text-graphite">
+            {ai?.source === 'ai' ? t('aiExplain') : t('plainExplain')}
+          </p>
+          <p>
+            {ai
+              ? ai.summary
+              : data.issues.length > 0
+                ? t('imgResultIntro', { count: data.issues.length })
+                : t('imgResultIntroOk')}
+          </p>
+        </div>
+      )}
+
+      {/* 상세 영역(주요 색상/문제/추천): collapsible이면 접었다 펼침, 아니면 그대로 펼침.
+          collapsible 헤더는 코드 모드(CodeResultDetail)와 동일한 "제목 + 펼쳐보기/접기" 패턴. */}
+      {collapsible ? (
+        <div className="rounded-lg border border-rule">
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+            className="flex w-full items-center justify-between gap-2 rounded-lg px-4 py-3 text-left transition-colors hover:bg-paper"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold">
+              {t('resultContent')}
+              <span className="font-medium text-graphite">
+                {open ? t('btnCollapse') : t('btnExpand')}
+              </span>
+            </span>
+            <span aria-hidden className="text-graphite">
+              {open ? '▲' : '▼'}
+            </span>
+          </button>
+          {open && (
+            <div className="flex flex-col gap-6 border-t border-rule p-4">{details}</div>
+          )}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">{details}</div>
       )}
     </section>
   )

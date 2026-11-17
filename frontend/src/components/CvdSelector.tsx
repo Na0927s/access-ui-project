@@ -35,7 +35,7 @@ export default function CvdSelector({
             // label로 감싸 텍스트를 클릭해도 선택되게 함. 선택됨 = 굵은 테두리 2px + 굵은 글씨
             <label
               key={type}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-paper ${
+              className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-paper has-focus-visible:outline has-focus-visible:outline-3 has-focus-visible:outline-offset-2 has-focus-visible:outline-[var(--color-focus)] ${
                 selected ? 'border-2 border-ink font-semibold' : 'border-rule'
               }`}
             >

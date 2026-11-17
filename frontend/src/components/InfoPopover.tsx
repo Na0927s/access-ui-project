@@ -67,7 +67,6 @@ export default function InfoPopover({
       window.removeEventListener('pointerdown', handlePointer)
       window.removeEventListener('keydown', handleKey)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, narrow])
 
   const toggle = () => {
@@ -83,7 +82,11 @@ export default function InfoPopover({
         aria-expanded={open}
         aria-controls={panelId}
         aria-label={`${label} ${t('infoLabel')}`}
-        onClick={toggle}
+        onClick={(e) => {
+          // 부모 접기/펼치기 버튼까지 클릭이 전파되어 함께 토글되는 것을 방지
+          e.stopPropagation()
+          toggle()
+        }}
         className="ml-1 inline-flex size-4.5 items-center justify-center rounded-full border border-graphite/60 text-[0.7rem] font-bold leading-none text-graphite transition-colors hover:border-ink hover:text-ink"
         style={{ width: '1.15rem', height: '1.15rem' }}
       >

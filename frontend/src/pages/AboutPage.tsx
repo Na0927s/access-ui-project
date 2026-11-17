@@ -1,13 +1,22 @@
 // (한국어 요약) 사이트 설명 페이지 — 탭으로 "우리 사이트는?" / "색각이상이 뭔가요?" 두 영역을 전환.
 // 홈의 "사이트 설명" 버튼으로 들어옴. 약관(/terms)은 별도 페이지(버튼)로 이동.
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { CvdType } from '../api/types'
+import { useRovingTabs } from '../hooks/useRovingTabs'
 import { useT } from '../i18n/useT'
+
+// 탭 목록 상수 — useRovingTabs에 안정적 참조로 전달.
+const ABOUT_TABS = ['site', 'cvd'] as const
 
 export default function AboutPage() {
   const t = useT()
-  const [tab, setTab] = useState<'site' | 'cvd'>('site') // 현재 탭
+  const [tab, setTab] = useState<(typeof ABOUT_TABS)[number]>('site') // 현재 탭
+  // WAI-ARIA Tabs 패턴 (roving tabindex + 화살표 키 + tabpanel).
+  const uid = useId()
+  const panelId = (k: (typeof ABOUT_TABS)[number]) => `${uid}-panel-${k}`
+  const tabId = (k: (typeof ABOUT_TABS)[number]) => `${uid}-tab-${k}`
+  const tabs = useRovingTabs<(typeof ABOUT_TABS)[number]>(ABOUT_TABS, tab, setTab)
 
   // "우리 사이트는?" 탭 항목
   const siteSections = [
@@ -38,18 +47,17 @@ export default function AboutPage() {
         </Link>
       </div>
 
-      {/* 탭: 우리 사이트는? / 색각이상이 뭔가요? */}
+      {/* 탭: 우리 사이트는? / 색각이상이 뭔가요? — WAI-ARIA Tabs (roving tabindex + 화살표 키). */}
       <div role="tablist" aria-label={t('aboutLink')} className="flex gap-2">
-        {(['site', 'cvd'] as const).map((tb) => (
+        {ABOUT_TABS.map((tb) => (
           <button
             key={tb}
-            role="tab"
             type="button"
-            aria-selected={tab === tb}
+            {...tabs.getTabButtonProps(tb, tabId(tb), panelId(tb))}
             onClick={() => setTab(tb)}
-            className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
+            className={`rounded-lg border-2 px-4 py-2 text-sm transition-colors ${
               tab === tb
-                ? 'border-2 border-ink bg-ink font-semibold text-white'
+                ? 'border-ink bg-ink font-semibold text-white'
                 : 'border-rule bg-white hover:bg-paper'
             }`}
           >
@@ -58,41 +66,52 @@ export default function AboutPage() {
         ))}
       </div>
 
-      {/* 탭 내용 */}
-      {tab === 'site' ? (
-        <div className="flex flex-col gap-5 rounded-2xl border border-rule bg-white p-6 text-sm shadow-sm md:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wide text-graphite">
-            {t('aboutProject')}
-          </p>
-          {siteSections.map((s) => (
-            <div key={s.title} className="flex flex-col gap-1.5">
-              <h2 className="text-base font-semibold">{s.title}</h2>
-              <p className="text-graphite">{s.body}</p>
+      {/* 탭 내용 — 두 panel을 모두 렌더하고 hidden으로 토글 (aria-controls가 항상 유효). */}
+      <div
+        role="tabpanel"
+        id={panelId('site')}
+        aria-labelledby={tabId('site')}
+        tabIndex={0}
+        hidden={tab !== 'site'}
+        className="flex flex-col gap-5 rounded-2xl border border-rule bg-white p-6 text-sm shadow-sm md:p-8"
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-graphite">
+          {t('aboutProject')}
+        </p>
+        {siteSections.map((s) => (
+          <div key={s.title} className="flex flex-col gap-1.5">
+            <h2 className="text-base font-semibold">{s.title}</h2>
+            <p className="text-graphite">{s.body}</p>
+          </div>
+        ))}
+      </div>
+      <div
+        role="tabpanel"
+        id={panelId('cvd')}
+        aria-labelledby={tabId('cvd')}
+        tabIndex={0}
+        hidden={tab !== 'cvd'}
+        className="flex flex-col gap-5 rounded-2xl border border-rule bg-white p-6 text-sm shadow-sm md:p-8"
+      >
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-base font-semibold">{t('cvdOverviewTitle')}</h2>
+          <p className="text-graphite">{t('cvdOverviewBody')}</p>
+        </div>
+        {/* 세 가지 색각이상 유형 */}
+        <div className="flex flex-col gap-3">
+          {cvdTypes.map((c) => (
+            <div key={c.key} className="rounded-lg bg-paper p-3">
+              <p className="font-semibold">{c.name}</p>
+              <p className="mt-0.5 text-graphite">{c.desc}</p>
             </div>
           ))}
         </div>
-      ) : (
-        <div className="flex flex-col gap-5 rounded-2xl border border-rule bg-white p-6 text-sm shadow-sm md:p-8">
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-base font-semibold">{t('cvdOverviewTitle')}</h2>
-            <p className="text-graphite">{t('cvdOverviewBody')}</p>
-          </div>
-          {/* 세 가지 색각이상 유형 */}
-          <div className="flex flex-col gap-3">
-            {cvdTypes.map((c) => (
-              <div key={c.key} className="rounded-lg bg-paper p-3">
-                <p className="font-semibold">{c.name}</p>
-                <p className="mt-0.5 text-graphite">{c.desc}</p>
-              </div>
-            ))}
-          </div>
-          {/* 정도 차이 / 전경도 비유 */}
-          <div className="flex flex-col gap-1.5">
-            <h2 className="text-base font-semibold">{t('cvdSeverityTitle')}</h2>
-            <p className="text-graphite">{t('cvdSeverityBody')}</p>
-          </div>
+        {/* 정도 차이 / 전경도 비유 */}
+        <div className="flex flex-col gap-1.5">
+          <h2 className="text-base font-semibold">{t('cvdSeverityTitle')}</h2>
+          <p className="text-graphite">{t('cvdSeverityBody')}</p>
         </div>
-      )}
+      </div>
 
       {/* 검사하러 가기 */}
       <div className="flex flex-wrap gap-3 pb-8 md:pb-10">

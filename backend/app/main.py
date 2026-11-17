@@ -24,15 +24,15 @@ app = FastAPI(title="ColorLens API", version="0.1.0")
 # (한국어) 운영 환경에서는 Alembic 같은 마이그레이션 도구를 쓰는 것이 권장되지만,
 # 학교 프로젝트에서는 create_all()로 충분.
 #
-# 스키마 변경 호환: 기존 analysis_cache 테이블에 lang 컬럼이 없으면(=구 스키마) 캐시
-# 테이블만 drop 후 재생성한다. 캐시는 속도 향상용 휘발 데이터라 손실 OK이며,
-# 계정(users)·히스토리(analysis_results)는 별개 테이블이라 보존된다.
+# 스키마 변경 호환(방안 A'): 기존 analysis_cache 테이블에 lang 컬럼이 있으면(=구 스키마,
+# lang을 캐시 키에 포함하던 시절) 캐시 테이블만 drop 후 재생성한다. 캐시는 속도 향상용
+# 휘발 데이터라 손실 OK이며, 계정(users)·히스토리(analysis_results)는 별개 테이블이라 보존된다.
 from sqlalchemy import inspect as sa_inspect
 
 _insp = sa_inspect(engine)
 if _insp.has_table("analysis_cache"):
     _cols = {c["name"] for c in _insp.get_columns("analysis_cache")}
-    if "lang" not in _cols:
+    if "lang" in _cols:
         AnalysisCache.__table__.drop(engine)
 Base.metadata.create_all(bind=engine)
 

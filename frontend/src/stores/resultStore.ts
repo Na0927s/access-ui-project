@@ -21,6 +21,7 @@ export interface AnalysisRecord {
 interface ResultState {
   results: AnalysisRecord[] // 최신 순 결과 목록
   loading: boolean // 서버 로드 중 여부
+  loadError: boolean // 서버 로드 실패 여부 (빈 상태와 구분, D2)
   add: (r: Omit<AnalysisRecord, 'id' | 'createdAt'>) => void // 새 결과를 맨 앞에 추가
   remove: (id: string) => Promise<void> // 특정 결과 삭제 (메모리만, DB 삭제는 별도)
   clear: () => void // 전체 삭제 (로그아웃 시 호출)
@@ -51,6 +52,7 @@ function toRecord(item: HistoryItem): AnalysisRecord {
 export const useResultStore = create<ResultState>((set) => ({
   results: [],
   loading: false,
+  loadError: false,
   // 새 기록에 id와 생성 시각을 자동으로 부여해 목록 맨 앞(unshift)에 추가
   // (로그인 사용자의 경우 백엔드에 이미 저장되어 있으므로, add는 비로그인 메모리 결과용)
   add: (r) =>
@@ -66,14 +68,14 @@ export const useResultStore = create<ResultState>((set) => ({
   },
   clear: () => set({ results: [] }),
   loadFromServer: async (token) => {
-    set({ loading: true })
+    set({ loading: true, loadError: false })
     try {
       const items = await getHistory(token)
       // 최신순 정렬은 백엔드가 이미 수행
-      set({ results: items.map(toRecord), loading: false })
+      set({ results: items.map(toRecord), loading: false, loadError: false })
     } catch {
-      set({ loading: false })
-      // 실패 시 빈 목록 유지 (에러는 호출 측에서 처리)
+      // 실패 시 빈 목록 유지하되 loadError=true로 설정해 화면에서 에러 안내 (D2)
+      set({ loading: false, loadError: true })
     }
   },
 }))

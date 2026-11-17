@@ -1,6 +1,6 @@
 // (한국어 요약) 모달(팝업) 컴포넌트 — 네이티브 <dialog> 요소를 사용.
 // 네이티브 dialog는 ESC 닫기, 포커스 트랩(모달 밖으로 포커스 이동 방지)을 브라우저가 자동 처리
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { useT } from '../i18n/useT'
 
 export default function Modal({
@@ -17,6 +17,8 @@ export default function Modal({
 }) {
   const t = useT()
   const ref = useRef<HTMLDialogElement>(null)
+  // useId로 고유 ID 생성 — 동시 다중 모달 시 ID 충돌 방지
+  const titleId = useId()
   // 마운트되자마자 모달을 열고, 닫히면(onClose 이벤트) 부모가 넘긴 onClose 콜백 실행
   useEffect(() => {
     ref.current?.showModal()
@@ -26,10 +28,10 @@ export default function Modal({
     <dialog
       ref={ref}
       onClose={onClose}
-      aria-labelledby="modal-title"
+      aria-labelledby={titleId}
       className="m-auto rounded-lg p-6 backdrop:bg-black/40"
     >
-      <h2 id="modal-title" className="mb-3 text-lg font-bold">
+      <h2 id={titleId} className="mb-3 text-lg font-bold">
         {title}
       </h2>
       {children}

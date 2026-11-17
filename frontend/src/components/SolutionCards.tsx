@@ -36,7 +36,7 @@ export default function SolutionCards({ boxes }: { boxes: SolutionBox[] }) {
   if (boxes.length === 0)
     return (
       <p className="rounded-lg border border-rule bg-white p-4 text-sm">
-        ✓ {t('noFixNeeded')}
+        <span aria-hidden>✓</span> {t('noFixNeeded')}
       </p>
     )
 
@@ -65,13 +65,19 @@ export default function SolutionCards({ boxes }: { boxes: SolutionBox[] }) {
             {b.css_fix && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-stretch gap-2">
-                  <pre className="flex-1 overflow-x-auto rounded-lg bg-paper p-2.5 text-xs">{b.css_fix}</pre>
+                  <pre className="thin-scroll flex-1 overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-paper p-2.5 text-xs">{b.css_fix}</pre>
                   <button
                     type="button"
                     className="shrink-0 rounded-lg border border-ink px-3 text-xs font-medium transition-colors hover:bg-ink hover:text-white"
                     onClick={() => navigator.clipboard.writeText(b.css_fix!).then(() => setCopied(i))}
                   >
-                    {copied === i ? `✓ ${t('copied')}` : t('copy')}
+                    {copied === i ? (
+                      <>
+                        <span aria-hidden>✓</span> {t('copied')}
+                      </>
+                    ) : (
+                      t('copy')
+                    )}
                   </button>
                 </div>
                 {/* 코드에 포함된 모든 색상 코드를 색 견본으로 나열 (원본→추천 등) */}

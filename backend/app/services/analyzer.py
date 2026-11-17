@@ -17,7 +17,7 @@ from .. import config
 from .color import delta_e, hex_to_oklab, hex_to_rgb, linear_to_oklab, srgb_to_linear
 from .cvd import simulate_hex, simulate_image
 from .palette import extract_palette, flatten_on_white, resize_max_side
-from .recommend import recommend
+from .recommend import localize_recommendation, recommend
 from .scoring import calculate_score, score_to_verdict
 from . import texts
 from .wcag import contrast_ratio, is_large_text, judge
@@ -91,10 +91,13 @@ def _apply_replacements(img: Image.Image, replacements: dict[str, str]) -> Image
     return Image.fromarray(np.round(out * 255.0).astype(np.uint8), "RGB")
 
 
-def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str = "ko") -> dict:
-    """(한국어) 이미지 분석 전체 파이프라인. 사용자 모드와 개발자 모드가 같은 로직을 공유하되,
-    추천 색상(recommendations)은 개발자 모드에서만 결과에 포함한다."""
-    label = texts.CVD_LABELS[cvd_type][lang]  # 응답 메시지에 쓸 색약 유형 이름
+def _analyze_image_core(img: Image.Image, cvd_type: str, mode: str = "user") -> dict:
+    """(한국어) 이미지 분석의 lang 무관 코어. 시뮬레이션·수치·판정·추천 후보(코어)까지만 계산.
+
+    언어 의존 문구(issues 메시지, result_message, 추천 reason, non_color_tips)는
+    _localize_image_result에서 덧붙인다. 코어는 lang과 무관해 캐시 키에서 lang을 빼고,
+    언어 전환 시 코어 재사용 + 문구만 재적용해 2배 지연을 회피한다 (방안 A').
+    """
     width, height = img.size
 
     sim = simulate_image(resize_max_side(img, config.SIMULATION_MAX_SIDE), cvd_type)  # 색약 시뮬레이션 이미지
@@ -129,45 +132,38 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
             "verdict": verdict,
         })
 
-    # 문제가 있는 항목만 이슈로 만들고, 개발자 모드라면 추천 색상도 함께 생성
+    # 문제가 있는 항목만 이슈로 만들고, 개발자 모드라면 추천 색상도 함께 생성.
+    # 이슈 메시지(message)는 lang 의존이므로 코어에는 넣지 않고 문구 적용에 필요한
+    # 참조 데이터(fg/bg/ratio, a/b, type, mode)만 남긴다 → _localize_image_result가 채움.
     issues, recommendations, next_id = [], [], 1
     for p in contrast_pairs:
         if p["verdict"] == "PASS":
             continue
         # 대비율 미달 이슈 (FAIL이면 심각도 HIGH, WARNING이면 MEDIUM)
-        # 문구는 모드별: 사용자는 쉽게(HEX/비율 없음), 개발자는 기술적으로.
-        if mode == "user":
-            lc_msg = texts.LOW_CONTRAST_ISSUE["user"][lang]
-        else:
-            lc_msg = texts.LOW_CONTRAST_ISSUE["developer"][lang].format(
-                fg=p["fg"], bg=p["bg"], ratio=f"{p['ratio']:.2f}")
         issues.append({
             "id": next_id, "type": "LOW_CONTRAST",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["fg"], p["bg"]],
-            "message": lc_msg,
+            # 문구 적용용 참조 데이터 (lang 무관)
+            "fg": p["fg"], "bg": p["bg"], "ratio": p["ratio"],
         })
         next_id += 1
-        if mode == "developer":   # 추천 색상은 개발자 모드에서만 제공
-            recommendations.append(recommend(p["fg"], p["bg"], cvd_type, lang))
+        if mode == "developer":   # 추천 색상은 개발자 모드에서만 제공 (코어: reason 없음)
+            recommendations.append(recommend(p["fg"], p["bg"], cvd_type))
     for p in confusable_pairs:
         if p["verdict"] == "PASS":
             continue
-        # 색상 혼동 이슈 (시뮬레이션 후 구분 어려움). 문구는 모드별.
-        if mode == "user":
-            cc_msg = texts.COLOR_CONFUSION_ISSUE["user"][lang].format(label=label)
-        else:
-            cc_msg = texts.COLOR_CONFUSION_ISSUE["developer"][lang].format(
-                label=label, a=p["a"], b=p["b"])
+        # 색상 혼동 이슈 (시뮬레이션 후 구분 어려움).
         issues.append({
             "id": next_id, "type": "COLOR_CONFUSION",
             "severity": "HIGH" if p["verdict"] == "FAIL" else "MEDIUM",
             "colors": [p["a"], p["b"]],
-            "message": cc_msg,
+            # 문구 적용용 참조 데이터 (label은 localizer가 CVD_LABELS[lang]으로 채움)
+            "a": p["a"], "b": p["b"],
         })
         next_id += 1
         if mode == "developer":
-            recommendations.append(recommend(p["a"], p["b"], cvd_type, lang))
+            recommendations.append(recommend(p["a"], p["b"], cvd_type))
 
     # 접근성 점수는 내부 판정 산출용으로만 사용하고 응답에는 노출하지 않는다.
     # (한국어) 점수는 전체 판정(verdict)을 구하기 위해서만 계산 — 사용자에게는 판정만 전달.
@@ -177,19 +173,18 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
     )
     # 전체 판정은 점수 구간 기반 (90↑ PASS, 70~89 WARNING, <70 FAIL).
     verdict = score_to_verdict(score)
-    response = {
+    core: dict = {
         "cvd_type": cvd_type,
         "width": width, "height": height,
         "simulated_image": _image_to_data_url(sim),   # 시뮬레이션 결과 (base64 data URL)
         "palette": palette,                           # 주요 색상 목록
         "contrast_pairs": contrast_pairs,             # 대비 검사 결과
         "confusable_pairs": confusable_pairs,         # 색상 혼동 검사 결과
-        "issues": issues,                             # 발견된 문제 목록
+        "issues": issues,                             # 발견된 문제 (message는 localizer가 채움)
         "verdict": verdict,
-        "result_message": texts.RESULT_MESSAGES[verdict][lang],
     }
     if mode == "developer":
-        response["recommendations"] = recommendations
+        core["recommendations"] = recommendations     # 코어 (reason 없음)
         # 대응 적용 이미지 비교용: 추천 색상을 이미지에 적용한 결과와 그 시뮬레이션 생성.
         # recommendations의 순서는 issues와 동일(각 이슈의 첫 후보를 적용 색으로 사용).
         # 같은 색이 여러 이슈에 걸쳐 다른 추천으로 나올 수 있음 — 첫 번째(더 심각한 이슈)를 유지.
@@ -206,13 +201,62 @@ def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str
             base = resize_max_side(img, config.SIMULATION_MAX_SIDE)
             improved = _apply_replacements(base, replacements)
             improved_sim = simulate_image(improved, cvd_type)
-            response["improved_image"] = _image_to_data_url(improved)
-            response["improved_simulated_image"] = _image_to_data_url(improved_sim)
+            core["improved_image"] = _image_to_data_url(improved)
+            core["improved_simulated_image"] = _image_to_data_url(improved_sim)
+    return core
+
+
+def _localize_image_result(core: dict, cvd_type: str, mode: str, lang: str = "ko") -> dict:
+    """(한국어) lang 무관 코어에 lang 의존 문구를 덧붙여 응답을 완성.
+
+    - issues[].message: LOW_CONTRAST / COLOR_CONFUSION, 모드별·언어별 템플릿으로 조립.
+    - result_message: RESULT_MESSAGES[verdict][lang].
+    - recommendations: 각 후보에 reason, rec에 non_color_tips 추가 (localize_recommendation).
+    코어는 그대로 두고 복사본에 문구를 얹어 반환한다 (코어 재사용 보존).
+    """
+    label = texts.CVD_LABELS[cvd_type][lang]  # 응답 메시지에 쓸 색약 유형 이름
+    response = dict(core)
+    localized_issues = []
+    for issue in core.get("issues", []):
+        item = {k: v for k, v in issue.items() if k not in ("fg", "bg", "ratio", "a", "b")}
+        if issue["type"] == "LOW_CONTRAST":
+            if mode == "user":
+                msg = texts.LOW_CONTRAST_ISSUE["user"][lang]
+            else:
+                msg = texts.LOW_CONTRAST_ISSUE["developer"][lang].format(
+                    fg=issue["fg"], bg=issue["bg"], ratio=f"{issue['ratio']:.2f}")
+        else:  # COLOR_CONFUSION
+            if mode == "user":
+                msg = texts.COLOR_CONFUSION_ISSUE["user"][lang].format(label=label)
+            else:
+                msg = texts.COLOR_CONFUSION_ISSUE["developer"][lang].format(
+                    label=label, a=issue["a"], b=issue["b"])
+        item["message"] = msg
+        localized_issues.append(item)
+    response["issues"] = localized_issues
+    response["result_message"] = texts.RESULT_MESSAGES[core["verdict"]][lang]
+    if mode == "developer" and "recommendations" in core:
+        response["recommendations"] = [
+            localize_recommendation(rec, lang) for rec in core["recommendations"]
+        ]
     return response
 
 
-def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> dict:
-    """(한국어) 개발자 모드 코드 분석: 요소별 대비 검사 + 문제 해결 방법 카드 생성."""
+def analyze_image(img: Image.Image, cvd_type: str, mode: str = "user", lang: str = "ko") -> dict:
+    """(한국어) 이미지 분석 전체 파이프라인. 사용자 모드와 개발자 모드가 같은 로직을 공유하되,
+    추천 색상(recommendations)은 개발자 모드에서만 결과에 포함한다.
+
+    코어(_analyze_image_core, lang 무관) 계산 후 문구(_localize_image_result)를 적용해 반환.
+    라우터는 코어만 캐싱하고 언어별로 문구를 재적용한다 (방안 A')."""
+    core = _analyze_image_core(img, cvd_type, mode)
+    return _localize_image_result(core, cvd_type, mode, lang)
+
+
+def _analyze_elements_core(elements: list[dict], cvd_type: str) -> dict:
+    """(한국어) 코드 분석의 lang 무관 코어. 요소별 대비 검사 + 해결 카드(css_fix까지)까지만 계산.
+
+    problem/non_color_fix/result_message는 lang 의존이라 _localize_elements_result가 채운다.
+    """
     results, boxes = [], []
     for el in elements:
         # 요소의 글자색/배경색 대비율 계산 후 세 가지 기준으로 판정
@@ -239,7 +283,7 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
             options = []
             for prop, cur, other in (("color", el["color"], el["background"]),
                                      ("background-color", el["background"], el["color"])):
-                rec = recommend(cur, other, cvd_type, lang)
+                rec = recommend(cur, other, cvd_type)   # 코어 (reason 없음)
                 ok = [c for c in rec["candidates"] if c["grade"] in allowed]
                 if ok:
                     # 원래 색에서 가장 적게 변하는 후보를 선택
@@ -250,13 +294,11 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
                 # 두 옵션(글자색 변경 vs 배경색 변경) 중 변경 폭이 작은 쪽으로 CSS 수정안 생성
                 _, prop, fix = min(options)
                 css_fix = f"{el['selector']} {{ {prop}: {fix}; }}"
-            # problem 문구에서 대비율 숫자·기준 수치를 숨김(간소화). ratio 계산·판정은 위에서 유지.
+            # problem/non_color_fix는 lang 의존 → 코어에는 넣지 않음. localizer가 채운다.
             boxes.append({
                 "selector": el["selector"],
                 "check_type": "CONTRAST",
-                "problem": texts.DEV_CONTRAST_PROBLEM[lang],
                 "css_fix": css_fix,                       # 바로 복사해 쓸 수 있는 CSS 한 줄
-                "non_color_fix": texts.DEV_CONTRAST_TIP[lang],  # 색 외 개선 팁
             })
         # 명암 대비(LIGHTNESS) 보조 검사는 제거되었다 — 색상 대비(CONTRAST)와 색 추천만 제공.
 
@@ -266,21 +308,47 @@ def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> d
     failed = verdicts.count("FAIL") + verdicts.count("WARNING")
     score = calculate_score(verdicts, [])
     verdict = score_to_verdict(score)
-    result_message = (
-        texts.DEV_RESULT[verdict][lang]
-        if verdict == "PASS"
-        else texts.DEV_RESULT[verdict][lang].format(failed=failed)
-    )
     return {
         "results": results,                  # 요소별 상세 결과 (테이블에 표시됨)
-        "solution_boxes": boxes,             # 문제 해결 방법 카드 목록
+        "solution_boxes": boxes,             # 문제 해결 카드 (problem/non_color_fix는 localizer가 채움)
         "verdict": verdict,
-        "result_message": result_message,
+        "failed": failed,                    # result_message 조립용 (lang 의존 문구에만 사용)
         "summary": {                         # 통계 요약 (전체/PASS/WARNING/FAIL 개수)
             "total": len(results), "pass": verdicts.count("PASS"),
             "warning": verdicts.count("WARNING"), "fail": verdicts.count("FAIL"),
         },
     }
+
+
+def _localize_elements_result(core: dict, lang: str = "ko") -> dict:
+    """(한국어) 코드 분석 코어에 lang 의존 문구(problem, non_color_fix, result_message)를 덧붙여 완성."""
+    response = dict(core)
+    response["solution_boxes"] = [
+        {
+            **box,
+            "problem": texts.DEV_CONTRAST_PROBLEM[lang],
+            "non_color_fix": texts.DEV_CONTRAST_TIP[lang],  # 색 외 개선 팁
+        }
+        for box in core.get("solution_boxes", [])
+    ]
+    verdict = core["verdict"]
+    failed = core.get("failed", 0)
+    response["result_message"] = (
+        texts.DEV_RESULT[verdict][lang]
+        if verdict == "PASS"
+        else texts.DEV_RESULT[verdict][lang].format(failed=failed)
+    )
+    # failed는 메시지 조립용 내부값 → 응답에서는 노출하지 않음 (summary에 이미 개수 있음)
+    response.pop("failed", None)
+    return response
+
+
+def analyze_elements(elements: list[dict], cvd_type: str, lang: str = "ko") -> dict:
+    """(한국어) 개발자 모드 코드 분석: 요소별 대비 검사 + 문제 해결 방법 카드 생성.
+
+    코어(_analyze_elements_core, lang 무관) 계산 후 문구(_localize_elements_result)를 적용해 반환."""
+    core = _analyze_elements_core(elements, cvd_type)
+    return _localize_elements_result(core, lang)
 
 
 def load_image(data: bytes) -> Image.Image:
@@ -301,4 +369,8 @@ def load_image(data: bytes) -> Image.Image:
     return img
 
 
-__all__ = ["analyze_image", "analyze_elements", "load_image", "flatten_on_white"]
+__all__ = [
+    "analyze_image", "analyze_elements", "load_image", "flatten_on_white",
+    "_analyze_image_core", "_localize_image_result",
+    "_analyze_elements_core", "_localize_elements_result",
+]

@@ -83,15 +83,16 @@ class AnalysisCache(Base):
     image_hash: Mapped[str] = mapped_column(String(64), nullable=False, index=True)  # SHA-256 hex
     cvd_type: Mapped[str] = mapped_column(String(16), nullable=False)
     mode: Mapped[str] = mapped_column(String(16), nullable=False)        # "user" | "developer" — 캐시 키에 포함
-    lang: Mapped[str] = mapped_column(String(4), nullable=False, default="ko")   # "ko" | "en" — 응답 언어별 캐시
+    # lang은 캐시 키에서 제거 (방안 A'): 코어는 lang 무관, 문구는 응답 시점에 적용.
     result_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(UTC), nullable=False)
 
-    # (image_hash, cvd_type, mode, lang) 복합 유니크 — 같은 조합은 한 줄만 유지.
-    # mode·lang이 키에 포함되어야 모드·언어별 결과가 서로 덮어쓰이지 않음
-    # (언어마다 결과 문구가 다르므로 ko 캐시를 en 요청에 반환하면 안 됨).
+    # (image_hash, cvd_type, mode) 복합 유니크 — 같은 조합은 한 줄만 유지.
+    # mode가 키에 포함되어야 모드별 결과(user/developer 구조 다름)가 서로 덮어쓰이지 않음.
+    # lang은 빠졌다: 언어 의존 문구를 코어에서 분리해 응답 시점에 적용하므로
+    # ko로 분석한 코어를 en 요청에 재사용해도 한글이 노출되지 않는다.
     __table_args__ = (
-        Index("ix_cache_hash_cvd_mode_lang", "image_hash", "cvd_type", "mode", "lang", unique=True),
+        Index("ix_cache_hash_cvd_mode", "image_hash", "cvd_type", "mode", unique=True),
     )
 
     def __repr__(self) -> str:

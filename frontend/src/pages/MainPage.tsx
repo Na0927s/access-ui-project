@@ -58,7 +58,7 @@ export default function MainPage() {
           <Link
             key={c.to}
             to={c.to}
-            className="group relative flex items-start gap-5 overflow-hidden rounded-2xl border border-rule bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-ink hover:bg-ink hover:text-white hover:shadow-lift md:p-8 [box-shadow:var(--shadow-card),var(--shadow-inset-line)]"
+            className="group relative flex items-start gap-5 overflow-hidden rounded-2xl border border-rule bg-white p-7 transition-[transform,box-shadow,background-color,border-color,color] duration-300 hover:-translate-y-1 hover:border-ink hover:bg-ink hover:text-white hover:shadow-lift md:p-8 [box-shadow:var(--shadow-card),var(--shadow-inset-line)]"
           >
             {/* 호버 시 조명(스포트라이트) 효과 — 좌상에서 흰 빛이 퍼짐 (블랙/화이트 투명도만) */}
             <span
@@ -93,7 +93,7 @@ export default function MainPage() {
           {features.map((f, i) => (
             <div
               key={f.title}
-              className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl border border-rule bg-white p-6 transition-all duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-lift [box-shadow:var(--shadow-card),var(--shadow-inset-line)]"
+              className="group relative flex flex-col gap-2 overflow-hidden rounded-2xl border border-rule bg-white p-6 transition-[transform,box-shadow,border-color] duration-300 hover:-translate-y-1 hover:border-ink hover:shadow-lift [box-shadow:var(--shadow-card),var(--shadow-inset-line)]"
             >
               {/* 호버 시 조명 효과 — 상단 중앙에서 흰 빛이 퍼짐 */}
               <span

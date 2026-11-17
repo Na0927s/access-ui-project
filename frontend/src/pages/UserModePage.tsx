@@ -1,6 +1,6 @@
 // (한국어 요약) 사용자 모드 페이지 — 캡처 이미지 한 장으로 간단히 검사하는 화면.
 // 흐름: 이미지 업로드 → 색약 유형 선택 → 검사 버튼 → 원본/시뮬레이션 비교 + 결과 요약 표시
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { analyzeImage } from '../api/client'
 import type { CvdType, ImageAnalysis } from '../api/types'
@@ -42,7 +42,7 @@ export default function UserModePage() {
     setResult(null)
   }
 
-  // "검사" 버튼: 사전 검증 → 백엔드 이미지 분석 요청 → 결과 표시
+  // "검사" 버튼: 사전 검증 → 백엔드 이미지 분석 요청 → 결과 표시.
   const inspect = async () => {
     if (!file) return setError(t('errNoImage')) // 이미지 필수
     if (!cvd) return setError(t('errNoCvd')) // 색약 유형 필수
@@ -60,6 +60,34 @@ export default function UserModePage() {
       setLoading(false)
     }
   }
+
+  // 언어 전환 시 자동 재분석 (방안 A) — 결과가 있고 파일·색약 유형이 그대로 있을 때만.
+  // 직전 검사의 입력을 ref로 보관해 언어가 바뀐 시점의 최신 입력으로 재요청.
+  // ref 갱신은 effect 안에서 수행해 렌더 중 ref 쓰기(react-hooks/refs)를 피함.
+  const lastInputsRef = useRef<{ file: File; cvd: CvdType } | null>(null)
+  useEffect(() => {
+    // 직전 검사에 쓰인 입력이 있으면 갱신. 결과가 없으면 null.
+    lastInputsRef.current = result && file && cvd ? { file, cvd } : null
+  }, [result, file, cvd])
+  useEffect(() => {
+    const inputs = lastInputsRef.current
+    if (!inputs) return // 아직 검사한 적 없으면 재분석하지 않음
+    let cancelled = false
+    ;(async () => {
+      setLoading(true)
+      try {
+        const data = await analyzeImage(inputs.file, inputs.cvd, 'user', lang, token)
+        if (!cancelled) setResult(data)
+      } catch (e) {
+        if (!cancelled) setError((e as Error).message)
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [lang, token])
 
   return (
     <div className="flex flex-col gap-8">
@@ -90,8 +118,14 @@ export default function UserModePage() {
           onClick={inspect}
           disabled={loading}
           aria-busy={loading}
-          className="w-full rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink px-6 py-3.5 text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
+          {loading && (
+            <span
+              aria-hidden
+              className="size-4 animate-spin rounded-full border-2 border-white/40 border-t-white"
+            />
+          )}
           {loading ? t('inspecting') : t('inspect')}
         </button>
       </div>
@@ -103,9 +137,10 @@ export default function UserModePage() {
         </p>
       )}
 
-      {/* 분석 완료: 원본/시뮬레이션 비교만 표시 (상세 분석은 개발자 모드에서) */}
+      {/* 분석 완료: 원본/시뮬레이션 비교만 표시 (상세 분석은 개발자 모드에서).
+          aria-live로 스크린리더에게 결과가 표시되었음을 알림 (검사 버튼에 포커스하지 않은 사용자도 인지). */}
       {result && preview && (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6" aria-live="polite">
           <ResultCompare
             original={preview}
             simulated={result.simulated_image}
