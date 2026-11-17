@@ -38,7 +38,14 @@ def _fallback_explain(analysis: dict, lang: str) -> dict:
     return {
         "source": "fallback",
         "summary": summary,
-        "issues": [{"id": i["id"], "explanation": i["message"]} for i in issues],
+        # Defend against incomplete issue payloads (e.g. history rows or future
+        # schema changes) so the fallback itself never raises — rule 4: AI off
+        # path must always keep working. (한국어) id/message가 빠진 이슈가 들어와도
+        # fallback이 500으로 둔갑하지 않도록 방어.
+        "issues": [
+            {"id": i.get("id"), "explanation": i.get("message", "")}
+            for i in issues
+        ],
     }
 
 
