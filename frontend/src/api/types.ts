@@ -95,12 +95,6 @@ export interface ImageAnalysis {
   /** Developer mode only — user mode provides no fixes per the design doc.
    *  (한국어) 개발자 모드에서만 포함됨 (설계 문서상 사용자 모드는 해결책 제공 안 함) */
   recommendations?: Recommendation[]
-  /** Developer mode only — the image with recommended colors applied (data URL).
-   *  (한국어) 개발자 모드 전용: 추천 색상을 적용한 대응 이미지 (data URL) */
-  improved_image?: string
-  /** Developer mode only — CVD simulation of the improved image (data URL).
-   *  (한국어) 개발자 모드 전용: 대응 이미지에 시뮬레이션을 적용한 결과 (data URL) */
-  improved_simulated_image?: string
 }
 
 // 코드 분석 요청 시 보낼 요소 하나 (selector + 색 + 폰트 정보)
