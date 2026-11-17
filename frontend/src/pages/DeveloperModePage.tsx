@@ -3,7 +3,7 @@
 // 방식2: HTML/CSS 코드 입력 → 브라우저에서 색상 추출 → 백엔드 코드 분석
 // 두 방식 모두 결과에 "문제 해결 방법" 카드와 "요약" 영역을 표시 (개발자 모드 전용 기능)
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { analyzeElements, analyzeImage } from '../api/client'
 import type { CvdType, DeveloperAnalysis, ImageAnalysis } from '../api/types'
 import CodeResultTable from '../components/CodeResultTable'
@@ -30,7 +30,12 @@ const METHODS: readonly Method[] = ['image', 'code']
 export default function DeveloperModePage() {
   const t = useT()
   const lang = useUiStore((s) => s.lang)
-  const [method, setMethod] = useState<Method>('image') // 현재 탭 (이미지/코드)
+  // 진입 쿼리 ?method=code 가 있으면 코드 탭부터 시작 (메인 "개발자 · 코드로 검사" 버튼 진입점).
+  // 기본은 이미지 탭. 진입 시 한 번만 반영(lazy initializer).
+  const [searchParams] = useSearchParams()
+  const [method, setMethod] = useState<Method>(
+    () => (searchParams.get('method') === 'code' ? 'code' : 'image'),
+  )
   const [cvd, setCvd] = useState<CvdType | null>(null) // 선택한 색약 유형
   const [file, setFile] = useState<File | null>(null) // [이미지 방식] 업로드 파일
   const [preview, setPreview] = useState<string | null>(null) // [이미지 방식] 미리보기 URL
