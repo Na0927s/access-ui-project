@@ -324,9 +324,9 @@ export const messages = {
     popCodeMethodBody:
       '입력한 HTML·CSS 코드를 스크립트가 제거된 안전한 iframe에 렌더링하여 실제 화면으로 구성한 뒤, 각 글자 요소에 적용된 글자색과 배경색의 밝기 차이를 명암 대비 기준으로 검사합니다. 일반 텍스트는 4.5:1, 큰 텍스트(24px 이상 또는 18.66px 이상 굵게)는 3:1 기준을 적용합니다.',
     popCodeVerdictTitle: '검사 결과는 무엇을 의미하나요?',
-    popCodePassDesc: 'PASS(통과): 해당 텍스트가 일반 텍스트 기준(4.5:1)을 충족합니다. 색상을 변경할 필요가 없습니다.',
-    popCodeWarnDesc: 'WARNING(주의): 큰 텍스트 기준(3:1)은 통과했으나 일반 텍스트 기준(4.5:1)에는 미달합니다. 글자가 잘 보이는지 추가 확인이 필요합니다.',
-    popCodeFailDesc: 'FAIL(미통과): 큰 텍스트 기준(3:1)에도 미달합니다. 색상 개선을 권장합니다.',
+    popCodePassDesc: '글자가 배경과 잘 구분돼서 읽기 편해요. 색을 바꿀 필요가 없습니다.',
+    popCodeWarnDesc: '글자가 배경과 조금 덜 구분돼 흐릿하게 보일 수 있어요. 큰 글자라면 괜찮을 수 있으니 잘 보이는지 확인해 보세요.',
+    popCodeFailDesc: '글자가 배경과 잘 구분되지 않아 읽기 어려울 수 있어요. 색을 바꾸는 걸 권해요.',
     // ---- 모달 ----
     modalOk: '확인',
     close: '닫기',
@@ -653,9 +653,9 @@ export const messages = {
     popCodeMethodBody:
       'The entered HTML/CSS code is rendered in a sandboxed iframe with scripts removed to build the actual screen, then the lightness difference between the text color and background color applied to each text element is checked against the contrast criteria. Normal text uses a 4.5:1 criterion; large text (24px or larger, or 18.66px or larger bold) uses 3:1.',
     popCodeVerdictTitle: 'What does the verdict mean?',
-    popCodePassDesc: 'PASS: The text meets the normal-text criterion (4.5:1). No color change is needed.',
-    popCodeWarnDesc: 'WARNING: The text passes the large-text criterion (3:1) but not the normal-text criterion (4.5:1). Additional check is needed on whether the text is clearly visible.',
-    popCodeFailDesc: 'FAIL: The text falls below even the large-text criterion (3:1). Improving the colors is recommended.',
+    popCodePassDesc: 'The text stands out well from the background and is easy to read. No color change is needed.',
+    popCodeWarnDesc: 'The text is a little less distinct from the background and may look faint. It may be fine for large text, so check that it reads clearly.',
+    popCodeFailDesc: 'The text does not stand out enough from the background and may be hard to read. Changing the color is recommended.',
     // ---- Modal ----
     modalOk: 'OK',
     close: 'Close',

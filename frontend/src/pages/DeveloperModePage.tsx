@@ -335,14 +335,14 @@ export default function DeveloperModePage() {
         >
           <h2 id="detail" className="mb-3 text-lg font-bold">
             {t('resultContent')}
-            {/* 코드 모드 검사 방법·판정 의미 설명 (객관적 톤, 팝오버) */}
+            {/* 코드 모드 검사 방법 + 판정(PASS/WARNING/FAIL) 의미 설명 (객관적·쉬운 말, 팝오버) */}
             <InfoPopover label={t('resultContent')}>
               <p className="mb-1 font-semibold">{t('popCodeMethodTitle')}</p>
               <p className="mb-2 text-graphite">{t('popCodeMethodBody')}</p>
               <p className="mb-1 font-semibold">{t('popCodeVerdictTitle')}</p>
-              <p className="text-graphite">{t('popCodePassDesc')}</p>
-              <p className="text-graphite">{t('popCodeWarnDesc')}</p>
-              <p className="text-graphite">{t('popCodeFailDesc')}</p>
+              <p className="text-graphite">PASS: {t('popCodePassDesc')}</p>
+              <p className="text-graphite">WARNING: {t('popCodeWarnDesc')}</p>
+              <p className="text-graphite">FAIL: {t('popCodeFailDesc')}</p>
             </InfoPopover>
           </h2>
           {/* 판정 + 결과 메시지 — 항상 보임 */}

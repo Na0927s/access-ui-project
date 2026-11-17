@@ -5,7 +5,7 @@
 // 판정 + 요약 설명 상자는 항상 보이도록 둔다 (개발자 모드 검사 화면).
 import { useEffect, useState } from 'react'
 import { explain, type Explanation } from '../api/client'
-import type { ImageAnalysis } from '../api/types'
+import type { ImageAnalysis, Verdict } from '../api/types'
 import { useT } from '../i18n/useT'
 import { useUiStore } from '../stores/uiStore'
 import ColorChip from './ColorChip'
@@ -57,6 +57,38 @@ export default function ResultSummary({
     CONDITIONAL: t('gradeConditional'),
   } as const
 
+  // 발견된 문제(이슈)의 판정: 심각도 HIGH는 FAIL, 그 외는 WARNING.
+  // 이슈는 곧 '문제'이므로 PASS는 없음. 개발자 모드에선 FAIL→WARNING 순으로 묶어 표시.
+  const issueVerdict = (severity: string): Verdict =>
+    severity === 'HIGH' ? 'FAIL' : 'WARNING'
+
+  // 이슈 카드 하나를 그리는 공통 렌더 — 묶음(개발자)·평면(사용자) 모두에서 재사용.
+  // showBadge=false면 카드 안의 판정 배지를 생략 (묶음 머리가 대신 표시).
+  const renderIssueCard = (
+    issue: ImageAnalysis['issues'][number],
+    showBadge: boolean,
+  ) => {
+    const exp = explanationFor(issue.id)
+    return (
+      <li
+        key={issue.id}
+        className="flex flex-col gap-1.5 rounded-lg border border-rule p-3 text-sm"
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          {showBadge && <VerdictBadge verdict={issueVerdict(issue.severity)} />}
+          {issue.colors.map((c) => (
+            <ColorChip key={c} hex={c} />
+          ))}
+          <span>{issue.message}</span>
+        </div>
+        {/* 이슈별 쉬운 풀이 설명 (메시지와 중복되지 않을 때만) */}
+        {exp && exp !== issue.message && (
+          <p className="pl-1 text-graphite">→ {exp}</p>
+        )}
+      </li>
+    )
+  }
+
   // 상세 영역: 주요 색상 / 발견된 문제 / 추천 색상.
   // collapsible에서는 이 블록이 접히고, 그렇지 않으면 그대로 펼쳐 보인다.
   const details = (
@@ -105,30 +137,35 @@ export default function ResultSummary({
         </h3>
         {data.issues.length === 0 ? (
           <p className="rounded-lg bg-paper p-3 text-sm">✓ {t('noIssues')}</p>
-        ) : (
-          <ul className="flex flex-col gap-3">
-            {data.issues.map((issue) => {
-              const exp = explanationFor(issue.id)
+        ) : mode === 'developer' ? (
+          // 개발자 모드: 판정(FAIL → WARNING)별 묶음 표시.
+          // 각 묶음 머리에 판정 배지 + 개수, 카드 안의 배지는 생략(중복 방지).
+          <div className="flex flex-col gap-5">
+            {(['FAIL', 'WARNING'] as const).map((v) => {
+              const rows = data.issues.filter(
+                (i) => issueVerdict(i.severity) === v,
+              )
+              if (rows.length === 0) return null
               return (
-                <li
-                  key={issue.id}
-                  className="flex flex-col gap-1.5 rounded-lg border border-rule p-3 text-sm"
-                >
-                  <div className="flex flex-wrap items-center gap-2">
-                    {/* 심각도 HIGH는 FAIL 배지, 아니면 WARNING 배지로 표시 */}
-                    <VerdictBadge verdict={issue.severity === 'HIGH' ? 'FAIL' : 'WARNING'} />
-                    {issue.colors.map((c) => (
-                      <ColorChip key={c} hex={c} />
-                    ))}
-                    <span>{issue.message}</span>
+                <div key={v} className="rounded-lg border border-rule">
+                  <div className="flex flex-wrap items-center gap-2 border-b border-rule bg-paper px-3 py-2">
+                    <VerdictBadge verdict={v} />
+                    <span className="text-sm font-semibold text-graphite">
+                      {rows.length}
+                      {t('countUnit')}
+                    </span>
                   </div>
-                  {/* 이슈별 쉬운 풀이 설명 (메시지와 중복되지 않을 때만) */}
-                  {exp && exp !== issue.message && (
-                    <p className="pl-1 text-graphite">→ {exp}</p>
-                  )}
-                </li>
+                  <ul className="flex flex-col gap-3 p-3">
+                    {rows.map((issue) => renderIssueCard(issue, false))}
+                  </ul>
+                </div>
               )
             })}
+          </div>
+        ) : (
+          // 사용자 모드: 평면 나열 (각 카드에 판정 배지 표시)
+          <ul className="flex flex-col gap-3">
+            {data.issues.map((issue) => renderIssueCard(issue, true))}
           </ul>
         )}
       </div>
@@ -215,12 +252,22 @@ export default function ResultSummary({
     >
       <h2 id="result-content" className="text-lg font-bold">
         {t('resultContent')}
+        {/* 개발자 모드: 판정(PASS/WARNING/FAIL) 의미 설명 (객관적·쉬운 말, 팝오버).
+            사용자 모드는 아래 종합 판정 박스의 짧은 의미+설명으로 충분하므로 미표시 (규칙 7). */}
+        {mode === 'developer' && (
+          <InfoPopover label={t('resultContent')}>
+            <p className="mb-1 font-semibold">{t('popVerdictMeaningTitle')}</p>
+            <p className="text-graphite">PASS: {t('popPassDesc')}</p>
+            <p className="text-graphite">WARNING: {t('popWarnDesc')}</p>
+            <p className="text-graphite">FAIL: {t('popFailDesc')}</p>
+          </InfoPopover>
+        )}
       </h2>
       {/* 종합 판정 + 짧은 의미 + 설명 (PASS/WARNING/FAIL이 무슨 뜻인지 바로 알 수 있게) — 항상 보임 */}
       <div className="flex flex-col gap-1.5 rounded-lg bg-paper p-3 text-sm">
         <div className="flex flex-wrap items-center gap-2 font-medium">
           <VerdictBadge verdict={data.verdict} />
-          {/* 판정의 짧은 의미 (일반인도 바로 이해하도록) */}
+          {/* 판정의 짧은 의미 (일반인도 바로 이해하도록) — 배지와 같은 줄에 바로 표시 */}
           <span className="font-semibold">
             {data.verdict === 'PASS'
               ? t('verdictPassShort')
