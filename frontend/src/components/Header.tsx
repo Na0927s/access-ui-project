@@ -111,13 +111,13 @@ export default function Header() {
                   <div
                     ref={menuRef}
                     role="menu"
-                    className="absolute left-0 top-full z-30 mt-1 flex min-w-max flex-col border border-line bg-white py-1"
+                    className="absolute left-0 top-full z-30 flex min-w-max flex-col border border-line bg-white py-1"
                   >
                     <Link
                       to="/mypage/info"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
-                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
+                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:bg-mist hover:text-ink"
                     >
                       {t('myInfo')}
                     </Link>
@@ -125,7 +125,7 @@ export default function Header() {
                       to="/mypage/results"
                       role="menuitem"
                       onClick={() => setMenuOpen(false)}
-                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:text-ink"
+                      className="whitespace-nowrap px-4 py-1.5 text-sm font-medium text-graphite transition-colors hover:bg-mist hover:text-ink"
                     >
                       {t('myResults')}
                     </Link>
