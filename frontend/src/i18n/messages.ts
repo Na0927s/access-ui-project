@@ -24,29 +24,29 @@ export const messages = {
     aboutTabCvd: '색각이상이 뭔가요?',
     cvdOverviewTitle: '색각이상이란?',
     cvdOverviewBody:
-      '색각이상은 색을 구별하는 데 어려움이 있는 상태예요. 흔히 "색맹"이라고도 부르지만, 색을 아예 못 보는 게 아니라 특정 색을 다른 색과 헷갈리게 인식하는 경우가 대부분이에요. 빨강 계열이 어려운 적색맹, 초록 계열이 어려운 녹색맹, 파랑·노랑이 어려운 청황색맹이 대표적이에요.',
-    cvdSeverityTitle: '사람마다 정도가 달라요',
+      '색각이상은 색을 구별하는 데 어려움이 있는 상태입니다. 흔히 "색맹"이라고도 부르지만, 색을 아예 못 보거나 화면이 흑백으로 보이는 것은 아닙니다. 특정 색을 다른 색과 헷갈리게 인식하는 경우가 대부분입니다. 빨강 계열이 어려운 적색맹, 초록 계열이 어려운 녹색맹, 파랑·노랑이 어려운 청황색맹이 대표적입니다.',
+    cvdSeverityTitle: '사람마다 정도가 다릅니다',
     cvdSeverityBody:
-      '같은 적색맹이라도 약간 헷갈리는 사람부터 빨간색을 거의 못 보는 사람까지 차이가 커요. 그래서 저희는 가장 심한 경우(그 색을 거의 못 보는 사람)를 기준으로 검사해요. 가장 안 보이는 사람도 구별할 수 있다고 통과하면, 덜 심한 사람은 더 잘 보니까 당연히 통과하거든요. 반대로 가벼운 사람만 기준으로 잡으면 더 심한 사람이 빠지게 돼요.',
+      '같은 적색맹이라도 약간 헷갈리는 사람부터 빨간색을 거의 못 보는 사람까지 차이가 큽니다. 저희는 각 유형의 대표적인 조건으로 시뮬레이션합니다. 결과는 대표적인 조건에 대한 참고 자료입니다. 개인의 실제 시각을 완벽히 반영하지는 못한다는 점을 알아두시기 바랍니다.',
     aboutProject: '기업연계 프로젝트 30조',
     aboutWhyTitle: '왜 만들었나요?',
     aboutWhyBody:
-      '우리가 매일 보는 웹사이트는 색으로 많은 정보를 전달합니다. 하지만 색을 구별하기 어려운 사용자는 색만으로 전달된 정보를 놓칠 수 있어요. CVDS는 "내 화면이 모든 사용자에게 똑같이 보일까?"라는 질문에서 시작했습니다.',
+      '우리가 매일 보는 웹사이트는 색으로 많은 정보를 전달합니다. 하지만 색을 구별하기 어려운 사용자는 색만으로 전달된 정보를 놓치거나 필요한 기능을 찾기 어려울 수 있습니다. CVDS는 "내 화면이 모든 사용자에게 똑같이 보일까?"라는 질문에서 시작했습니다.',
     aboutWhatTitle: '무엇을 하나요?',
     aboutWhatBody:
-      '색각이상 환경에서 화면이 어떻게 보이는지 시뮬레이션으로 보여주고, 어떤 색이 겹쳐 보이는지 분석해 드려요.',
+      '색각이상 환경에서 화면이 어떻게 보이는지 시뮬레이션으로 보여주고, 어떤 색이 겹쳐 보일 수 있는지 찾아드립니다. 개발자 모드에서는 바꿔볼 수 있는 색도 제안합니다.',
     aboutModesTitle: '두 가지 모드',
     aboutModesBody:
-      '사용자 모드는 캡처 한 장으로 빠르게 확인하고, 개발자 모드는 이미지나 코드까지 넣어 상세한 분석과 대체 색상을 제안받을 수 있어요.',
+      '사용자 모드는 캡처 한 장으로 원본과 시뮬레이션 결과를 비교합니다. 개발자 모드는 이미지나 HTML·CSS 코드를 넣어 문제가 생긴 요소와 개선 색상·해결 방법을 확인할 수 있습니다.',
     aboutCriteriaTitle: '분석 기준',
     aboutCriteriaBody:
-      '적색맹·녹색맹·청황색맹 세 가지 대표적인 조건을 기준으로 합니다. 같은 유형이라도 개인차가 있어 모든 사용자의 시각을 완전히 재현하지는 못한다는 점은 참고로 알아주세요.',
-    aboutSeverityTitle: '가장 안 보이는 사람을 기준으로',
+      '적색맹·녹색맹·청황색맹 세 가지 대표적인 조건을 기준으로 분석합니다. 사람마다 색을 보는 정도가 달라서 모든 사용자의 시각을 완벽히 재현하지는 못합니다. 결과는 참고용으로 활용해 주시기 바랍니다.',
+    aboutSeverityTitle: '왜 대표적인 조건을 쓰나요?',
     aboutSeverityBody:
-      '색각이상도 사람마다 정도가 달라요 — 약간 헷갈리는 사람부터 그 색을 거의 못 보는 사람까지요. 저희는 가장 심한 경우, 즉 그 색을 거의 못 보는 사람을 기준으로 검사해요. 가장 안 보이는 사람도 구별할 수 있다고 통과하면, 덜 심한 사람은 더 잘 보니까 당연히 통과하거든요. 반대로 가벼운 사람만 기준으로 잡으면 더 심한 사람이 빠지게 돼서, 가장 안 보이는 사람을 기준으로 잡아 전부를 커버해요.',
+      '색각이상은 사람마다 정도가 다릅니다. 저희는 일관된 기준으로 분석하기 위해 각 유형의 대표적인 조건을 사용합니다. 이 조건이 모든 사용자에게 가장 불리한 상황은 아니지만, 동일한 기준으로 비교할 수 있습니다.',
     aboutGoalTitle: '목표',
     aboutGoalBody:
-      '단순히 색이 다르게 보인다는 걸 보여주는 것을 넘어, 실제로 색상 접근성 문제를 찾고 고치는 데 도움을 주는 것이 저희의 목표입니다.',
+      '색이 다르게 보인다는 걸 넘어, 색 때문에 중요한 정보를 놓치거나 기능을 쓰기 어려운 상황을 줄이는 데 도움을 드리고자 합니다. 완벽한 해결책은 아니지만, 작은 개선이 더 편리한 웹사이트로 이어지기를 바랍니다.',
     switchToDeveloper: '더 자세한 분석은 개발자 모드에서',
     switchToUser: '간단히 보려면 사용자 모드에서',
     teamLabel: '팀',
@@ -70,10 +70,10 @@ export const messages = {
     cvdLabel: '색약 유형',
     protan: '적색맹',
     deutan: '녹색맹',
-    tritan: '청색맹',
-    protanDesc: '빨간색이 다른 색과 잘 구별되지 않는 색각이상이에요. 빨강이 좀 더 어둡거나 초록과 비슷하게 보일 수 있어요.',
-    deutanDesc: '초록색이 다른 색과 잘 구별되지 않는 색각이상이에요. 초록이 빨강이나 회색처럼 보일 수 있어요.',
-    tritanDesc: '파란색과 노란색 구별이 어려운 색각이상이에요. 파랑이 초록처럼, 노랑이 분홍처럼 보일 수 있어요.',
+    tritan: '청황색맹',
+    protanDesc: '빨간색이 다른 색과 잘 구별되지 않는 색각이상입니다. 빨강이 좀 더 어둡거나 초록과 비슷하게 보일 수 있습니다.',
+    deutanDesc: '초록색이 다른 색과 잘 구별되지 않는 색각이상입니다. 초록이 빨강이나 회색처럼 보일 수 있습니다.',
+    tritanDesc: '파란색과 노란색 구별이 어려운 색각이상입니다. 파랑이 초록처럼, 노랑이 분홍처럼 보일 수 있습니다.',
     cvdInfoTitle: '이 색각이상이란?',
     original: '원본',
     result: '결과',
@@ -233,17 +233,20 @@ export const messages = {
     deleteItem: '삭제',
     // ---- 약관 페이지 ----
     termsIntro:
-      'CVDS는 웹 화면의 색상이 색각이상 사용자에게도 구분되는지 분석하고 개선 방법을 제안하는 학교 팀 프로젝트입니다.',
+      'CVDS는 웹 화면의 색이 색각이상 사용자에게도 잘 구별되는지 분석하고 개선 방법을 제안하는 기업연계 프로젝트 30조의 학교 팀 프로젝트입니다. 색 때문에 중요한 정보를 놓치거나 필요한 기능을 쓰기 어려운 상황을 줄이는 데 도움을 주고자 만들었습니다.',
     termsUpdated: '최종 업데이트: 2026년 11월 15일',
     termsAnalysisTitle: '분석 방식',
     termsAnalysisBody:
-      '색각이상 시뮬레이션은 Machado(2009) 모델을, 색상 거리는 OKLab ΔE(Ottosson 2020)을, 대비 판정은 WCAG 2 AA 기준을 사용합니다. 색이 겹쳐 보이는 정도는 시뮬레이션 후의 색 거리로 판정하며, 추천 색상은 대비와 구분 가능성을 다시 검증한 뒤에만 제안합니다.',
+      '색각이상 시뮬레이션은 Machado(2009) 모델을 사용합니다. 명암 대비는 WCAG 2 AA 기준으로 검사하고, 색이 겹쳐 보이는 정도는 OKLab 색 거리(ΔE)를 기준으로 판정합니다. 색 거리 판정은 이 프로젝트의 자체 기준이지 WCAG의 공식 색각이상 판정 기준은 아닙니다. 추천 색상은 대비와 구분 가능성을 다시 검증한 뒤에만 제안합니다. AI는 결과를 쉽게 설명하고 번역하는 역할만 하며, 수치 계산이나 판정은 하지 않습니다.',
     termsPagePrivacyTitle: '개인정보',
     termsPagePrivacyBody:
-      '로그인 사용자의 분석 결과는 서버 DB에 저장되어 히스토리로 활용됩니다. 비밀번호는 bcrypt 해시로만 저장됩니다. 비로그인 사용자의 분석 결과는 메모리에서만 처리되어 새로고침 시 사라집니다. 업로드한 이미지는 로그인 여부와 무관하게 분석 직후 서버에서 폐기됩니다. 인증 토큰은 서버 메모리에만 저장되어 서버 재시작 시 소멸합니다.',
-    termsLimitTitle: '한계',
+      '로그인 사용자의 분석 결과는 서버 DB에 저장되어 결과 내역으로 활용됩니다. 비밀번호는 bcrypt 해시로만 저장합니다. 비로그인 사용자의 분석 결과는 서버에 저장하지 않고 메모리에서만 처리하며, 화면을 새로고침하면 결과가 사라집니다. 업로드한 이미지는 로그인 여부와 상관없이 분석 후 서버에 남기지 않습니다. 인증 토큰은 서버 메모리에만 저장되어 서버를 재시작하면 로그아웃됩니다.',
+    termsLimitTitle: '분석의 한계',
     termsLimitBody:
-      '이미지 분석은 압축과 안티앨리어싱의 영향을 받으며, 실제 CSS 값이 아닌 화면에 보이는 색을 기준으로 합니다. 동적으로 생성되는 UI는 정확히 분석하지 못할 수 있습니다.',
+      '이미지 분석은 압축과, 화면에서 글자나 도형의 가장자리를 부드럽게 처리하는 방식(안티앨리어싱)의 영향을 받으며, 실제 CSS 값이 아닌 화면에 보이는 색을 기준으로 합니다. 동적으로 만들어지는 UI는 정확히 분석하지 못할 수 있습니다. 사람마다 색을 보는 정도가 달라 결과에 차이가 있을 수 있고, 색상만으로 정보의 의미나 기능을 모두 판단하기는 어렵습니다. 추천 색상이 모든 사용자에게 최적인 것은 아닙니다. 실제 사용자가 확인해 보는 것을 권장합니다. 색 변경 외에도 아이콘·텍스트 라벨을 함께 쓰거나 필요한 부분만 색을 조정하는 방법도 고려해 보시기 바랍니다. 부분 색 보정 필터는 이 사이트에서 제공하지 않는 기능입니다.',
+    termsAspireTitle: '우리가 추구하는 방향',
+    termsAspireBody:
+      '모든 색각이상자의 시각을 완벽히 재현하거나 모든 접근성 문제를 해결할 수는 없습니다. 하지만 색 때문에 정보를 놓치거나 기능을 쓰기 어려운 상황을 조금이라도 줄이는 데 도움을 주고 싶습니다. CVDS는 그런 문제를 발견하고 개선 방향을 찾는 시도입니다.',
     // ---- 정보 팝오버(ⓘ) 및 개선된 요약 (개발자 모드 이미지 결과) ----
     infoLabel: '정보',
     imgResultIntro:
@@ -325,29 +328,29 @@ export const messages = {
     aboutTabCvd: 'What is color vision deficiency?',
     cvdOverviewTitle: 'What is color vision deficiency?',
     cvdOverviewBody:
-      'Color vision deficiency is a condition where it is hard to tell certain colors apart. Often called "color blindness," most people with it do not see no color at all — rather, they confuse certain colors. Red-type (protanopia), green-type (deuteranopia), and blue-yellow-type (tritanopia) are the most common.',
+      'Color vision deficiency is a condition where it is hard to tell certain colors apart. It is often called "color blindness," but people with it do not lose color entirely, and the screen does not look black-and-white — rather, they confuse certain colors. Red-type (protanopia), green-type (deuteranopia), and blue-yellow-type (tritanopia) are the most common.',
     cvdSeverityTitle: 'It varies from person to person',
     cvdSeverityBody:
-      'Even within the same type, it ranges from slight confusion to barely seeing that color. So we check against the most severe case — someone who can barely see that color. If the most affected person can still tell colors apart, milder cases can too. Checking only against mild cases would leave severe cases out.',
+      'Even within the same type, it ranges from slight confusion to barely seeing that color. We simulate each type under a representative condition. The result is a reference for that condition, and it does not perfectly reflect any one person’s actual vision — please keep that in mind.',
     aboutProject: 'Industry-collaboration project, Team 30',
     aboutWhyTitle: 'Why we built it',
     aboutWhyBody:
-      'Websites we use every day convey a lot of information through color. But users who have trouble distinguishing colors can miss information carried by color alone. CVDS started from the question, "Does everyone see my screen the same way I do?"',
+      'Websites we use every day convey a lot of information through color. But users who have trouble distinguishing colors can miss information carried by color alone, or struggle to find the features they need. CVDS started from the question, "Does everyone see my screen the same way I do?"',
     aboutWhatTitle: 'What it does',
     aboutWhatBody:
-      'It simulates how your screen looks under color vision deficiency, and analyzes which colors may overlap and be hard to tell apart.',
+      'It simulates how your screen looks under color vision deficiency, and finds which colors may overlap and be hard to tell apart. In Developer mode it can also suggest colors to try instead.',
     aboutModesTitle: 'Two modes',
     aboutModesBody:
-      'User mode gives a quick check from a single screenshot. Developer mode takes an image or code and offers detailed analysis and alternative colors.',
+      'User mode compares the original and the simulation from a single screenshot. Developer mode takes an image or HTML/CSS code and shows the affected elements, along with suggested colors and fixes.',
     aboutCriteriaTitle: 'Analysis criteria',
     aboutCriteriaBody:
-      'Analysis is based on three representative conditions: protanopia, deuteranopia, and tritanopia. Even within one type, individuals differ, so we cannot perfectly reproduce every user’s vision — please keep that in mind.',
-    aboutSeverityTitle: 'Based on the most affected viewers',
+      'Analysis is based on three representative conditions: protanopia, deuteranopia, and tritanopia. Everyone sees color a little differently, so we cannot perfectly reproduce every user’s vision. Please treat the results as a reference.',
+    aboutSeverityTitle: 'Why use a representative condition?',
     aboutSeverityBody:
-      'Color vision deficiency varies from person to person — from slight confusion to barely seeing that color at all. We check against the most severe case, where someone can barely see that color. If the most affected person can still tell colors apart, milder cases can too. Checking only against mild cases would leave severe cases out, so we anchor on the most affected viewer to cover everyone.',
+      'Color vision deficiency varies from person to person. We use a representative condition for each type so we can analyze on a consistent basis. This condition is not the worst case for every user, but it lets us compare against the same standard.',
     aboutGoalTitle: 'Our goal',
     aboutGoalBody:
-      'Beyond simply showing how colors look different, we aim to help you actually find and fix color-accessibility problems.',
+      'Beyond showing how colors look different, we want to help reduce situations where color causes people to miss information or struggle to use a feature. It is not a perfect solution, but we hope small improvements lead to a more convenient web.',
     switchToDeveloper: 'Want deeper analysis? Try Developer mode',
     switchToUser: 'Want a quick check? Try User mode',
     teamLabel: 'Team',
@@ -535,17 +538,20 @@ export const messages = {
     deleteItem: 'Delete',
     // ---- Terms page ----
     termsIntro:
-      'CVDS is a school team project that analyzes whether web screen colors stay distinguishable for users with color vision deficiency, and suggests improvements.',
+      'CVDS is a school team project by Industry-Collaboration Team 30 that analyzes whether the colors of a web screen stay distinguishable for users with color vision deficiency, and suggests improvements. It was built to help reduce situations where color causes people to miss important information or struggle to use a feature they need.',
     termsUpdated: 'Last updated: November 15, 2026',
     termsAnalysisTitle: 'Analysis method',
     termsAnalysisBody:
-      'Color vision deficiency simulation uses the Machado (2009) model, color distance uses OKLab ΔE (Ottosson 2020), and contrast verdicts follow the WCAG 2 AA criteria. How much colors overlap is judged from the color distance after simulation, and suggested colors are offered only after re-verifying contrast and distinguishability.',
+      'Color vision deficiency simulation uses the Machado (2009) model. Contrast is checked against the WCAG 2 AA criteria, and how much colors overlap is judged from the OKLab color distance (ΔE). The color-distance judgment is this project’s own standard, not an official WCAG criterion for color vision deficiency. Suggested colors are offered only after re-verifying contrast and distinguishability. The AI only explains and translates the results; it does not compute numbers or make verdicts.',
     termsPagePrivacyTitle: 'Privacy',
     termsPagePrivacyBody:
-      'Analysis results of logged-in users are stored in the server database as history. Passwords are stored only as a bcrypt hash. Analysis results of non-logged-in users are processed in memory only and disappear on refresh. Uploaded images are discarded from the server right after analysis, regardless of login. Authentication tokens are kept in server memory only and vanish on server restart.',
-    termsLimitTitle: 'Limitations',
+      'Analysis results of logged-in users are stored in the server database and used as history. Passwords are stored only as a bcrypt hash. Analysis results of non-logged-in users are not stored on the server; they are processed in memory only and disappear when you refresh the page. Uploaded images are not kept on the server after analysis, regardless of login. Authentication tokens are kept in server memory only, so restarting the server logs you out.',
+    termsLimitTitle: 'Limitations of the analysis',
     termsLimitBody:
-      'Image analysis is affected by compression and anti-aliasing, and is based on colors as they appear on screen rather than actual CSS values. Dynamically generated UI may not be analyzed accurately.',
+      'Image analysis is affected by compression and by anti-aliasing (the way screens smooth the edges of text and shapes), and is based on the colors as they appear on screen rather than actual CSS values. Dynamically generated UI may not be analyzed accurately. Everyone sees color a little differently, so results may vary, and color alone cannot fully convey the meaning or function of information. Suggested colors are not optimal for every user; we recommend checking with real users. Beyond changing colors, also consider using icons and text labels together, or adjusting color only where it is needed. Partial color-correction filters are not a feature this site provides.',
+    termsAspireTitle: 'What we aim for',
+    termsAspireBody:
+      'We cannot perfectly reproduce the vision of every person with color vision deficiency, or solve every accessibility problem. But we want to help reduce, even a little, the situations where color causes people to miss information or struggle to use a feature. CVDS is an attempt to find those problems and a direction for improving them.',
     // ---- Info popover (ⓘ) and improved summary (developer mode image results) ----
     infoLabel: 'Info',
     imgResultIntro:
