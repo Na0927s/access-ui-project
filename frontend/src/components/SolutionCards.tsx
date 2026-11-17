@@ -65,7 +65,7 @@ export default function SolutionCards({ boxes }: { boxes: SolutionBox[] }) {
             {b.css_fix && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-stretch gap-2">
-                  <pre className="flex-1 overflow-x-auto rounded-lg bg-paper p-2.5 text-xs">{b.css_fix}</pre>
+                  <pre className="thin-scroll flex-1 overflow-x-auto whitespace-pre-wrap break-all rounded-lg bg-paper p-2.5 text-xs">{b.css_fix}</pre>
                   <button
                     type="button"
                     className="shrink-0 rounded-lg border border-ink px-3 text-xs font-medium transition-colors hover:bg-ink hover:text-white"
